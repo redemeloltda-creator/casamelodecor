@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo de Cozinha | Casa Melo Decor</title>
+
+<style>
+body{
+    font-family:Arial, sans-serif;
+    background:#fff7f7;
+    margin:0;
+}
+
+/* TOPO */
+header{
+    background:#000;
+    color:#fff;
+    text-align:center;
+    padding:20px;
+}
+
+header a{
+    color:#fff;
+    text-decoration:none;
+    font-size:14px;
+}
+
+/* CONTEÚDO */
+.section{
+    padding:40px 20px;
+    text-align:center;
+}
+
+.produtos{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:25px;
+}
+
+.produto{
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    overflow:hidden;
+}
+
+.produto img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+}
+
+.produto div{
+    padding:20px;
+}
+
+/* BOTÃO */
+.botao{
+    display:inline-block;
+    margin-top:10px;
+    padding:10px 18px;
+    background:#000;
+    color:#fff;
+    text-decoration:none;
+    border-radius:6px;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h2>Catálogo de Cozinha</h2>
+    <a href="index.html">← Voltar para o site</a>
+</header>
+
+<section class="section">
+
+    <div class="produtos">
+
+        <div class="produto">
+            <img src="https://images.unsplash.com/photo-1586201375761-83865001e31c">
+            <div>
+                <h3>Jogo de Panelas</h3>
+                <p>Alta qualidade e durabilidade</p>
+                <a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Jogo de Panelas" target="_blank">
+                    Consultar
+                </a>
+            </div>
+        </div>
+
+        <div class="produto">
+            <img src="https://images.unsplash.com/photo-1606312619070-d48b4c652a52">
+            <div>
+                <h3>Kit de Facas</h3>
+                <p>Precisão e elegância</p>
+                <a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Kit de Facas" target="_blank">
+                    Consultar
+                </a>
+            </div>
+        </div>
+
+        <div class="produto">
+            <img src="https://images.unsplash.com/photo-1588854337221-4cf9fa96059c">
+            <div>
+                <h3>Organizador de Temperos</h3>
+                <p>Mais praticidade no dia a dia</p>
+                <a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Organizador de Temperos" target="_blank">
+                    Consultar
+                </a>
+            </div>
+        </div>
+
+        <div class="produto">
+            <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136">
+            <div>
+                <h3>Kit de Potes</h3>
+                <p>Organização e beleza</p>
+                <a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Kit de Potes" target="_blank">
+                    Consultar
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+</body>
+</html>
