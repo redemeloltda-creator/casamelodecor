@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luminarias</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f5f5f5;
+}
+
+header {
+    background-color: #111;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header a {
+    color: #ccc;
+    text-decoration: none;
+}
+
+.container {
+    padding: 30px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.card img:hover {
+    transform: scale(1.05);
+}
+
+.card-content {
+    padding: 15px;
+}
+
+.card h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.price {
+    font-size: 18px;
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.btn-whatsapp {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: #25D366;
+    color: white;
+    font-size: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-whatsapp:hover {
+    background: #1ebe5d;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    padding-top: 60px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+}
+
+.modal-content {
+    display: block;
+    margin: auto;
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 10px;
+}
+
+.close {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: white;
+    font-size: 35px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>LUMINARIAS</h1>
+    <a href="decoracao.html">← Voltar para o site</a>
+    <p>Confira nossa seleção</p>
+</header>
+
+<div class="container">
+<div class="grid">
+
+        <div class="card">
+<img src="7895730618297.png" class="product-img">
+            <div class="card-content">
+                <h3>LUMINARIA LED 34CM WOLFF SOMBRIA</h3>
+                <p>Material:Metal.</p>
+                <p>Marca:Wolff.</p>
+                <p>Tamanho:30cm.</p>
+                <div class="price">R$ 179,99</div>
+              <a href="https://wa.me/p/25898652066439804/553899140400">
+            <button class="btn-whatsapp">Comprar no WhatsApp</button>
+        </a>
+    </div>
+</div>
+
+     <div class="card">
+<img src="7908323304894.jpeg" class="product-img">
+            <div class="card-content">
+                <h3>LUMINARIA GAIOLA PASSARO LED 22CM</h3>
+                <p>Material:Metal.</p>
+                <p>Marca:GiftHome.</p>
+                <p>Tamanho:22cm.</p>
+                <div class="price">R$ 189,99</div>
+              <a href="https://wa.me/p/25601884226179112/553899140400">
+            <button class="btn-whatsapp">Comprar no WhatsApp</button>
+        </a>
+    </div>
+</div>
+
+     <div class="card">
+<img src="7891100064824.jpeg" class="product-img">
+            <div class="card-content">
+                <h3>LUMINARIA LED MESA CHARTI CRISTAL 26CM</h3>
+                <p>Material:Plastico.</p>
+                <p>Marca:Charti.</p>
+                <p>Tamanho:26cm.</p>
+                <div class="price">R$ 99,99</div>
+              <a href="https://wa.me/p/26142230972131933/553899140400">
+            <button class="btn-whatsapp">Comprar no WhatsApp</button>
+        </a>
+    </div>
+</div>
+        
+
+
+
+     <div class="card">
+<img src="6991984042756.jpeg" class="product-img">
+            <div class="card-content">
+                <h3>LUMINARIA LED PILHA 24CM</h3>
+                <p>Material:Plastico.</p>
+                <p>Marca:planeta.</p>
+                <p>Tamanho:24cm.</p>
+                <div class="price">R$ 79,99</div>
+              <a href="https://wa.me/p/33889963340647937/553899140400">
+            <button class="btn-whatsapp">Comprar no WhatsApp</button>
+        </a>
+    </div>
+</div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImg">
+</div>
+
+<script>
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("modalImg");
+const closeBtn = document.querySelector(".close");
+
+document.querySelectorAll(".product-img").forEach(img => {
+    img.addEventListener("click", function(){
+        modal.style.display = "block";
+        modalImg.src = this.src;
+    });
+});
+
+closeBtn.onclick = () => modal.style.display = "none";
+
+modal.onclick = function(e) {
+    if (e.target !== modalImg) {
+        modal.style.display = "none";
+    }
+}
+</script>
+
+</body>
+</html>
+
+
+
+
