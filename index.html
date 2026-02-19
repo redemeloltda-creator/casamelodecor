@@ -75,6 +75,121 @@ nav a:hover{
     color:#f0baba;
 }
 
+.botao-lupa{
+    margin-left:8px;
+    border:1px solid #fff;
+    background:transparent;
+    color:#fff;
+    border-radius:999px;
+    padding:6px 10px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.busca-inicio{
+    display:none;
+    max-width:860px;
+    margin:16px auto 0;
+    padding:16px;
+    background:#fff;
+    border:1px solid #f0d2d2;
+    border-radius:12px;
+}
+
+.busca-inicio.ativa{
+    display:block;
+}
+
+.campo-busca{
+    width:100%;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:8px;
+}
+
+.resultados-catalogo{
+    margin: 20px auto 0;
+    display: grid;
+    gap: 14px;
+    max-width: 920px;
+    text-align: left;
+}
+
+.resultado-item{
+    background: linear-gradient(180deg, #ffffff 0%, #fff9f9 100%);
+    border:1px solid #ecdede;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 8px 22px rgba(0,0,0,0.08);
+    cursor:pointer;
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resultado-item:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 24px rgba(0,0,0,0.12);
+}
+
+.resultado-link{
+    display:flex;
+    gap:14px;
+    color:inherit;
+    text-decoration:none;
+    align-items:stretch;
+}
+
+.resultado-imagem{
+    width:140px;
+    min-width:140px;
+    height:140px;
+    object-fit:cover;
+}
+
+.resultado-info{
+    padding:14px 14px 14px 0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+.resultado-item h4{
+    margin:0 0 8px;
+    font-size:16px;
+}
+
+.resultado-item p{
+    margin:3px 0;
+    color:#444;
+}
+
+.resultado-cta{
+    margin-top:10px;
+    display:inline-block;
+    background:#000;
+    color:#fff;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:bold;
+    width:max-content;
+}
+
+@media(max-width:640px){
+.resultado-link{
+        flex-direction:column;
+    }
+
+    .resultado-imagem{
+        width:100%;
+        min-width:100%;
+        height:200px;
+    }
+
+    .resultado-info{
+        padding:0 14px 14px;
+    }
+}
+
 /* HERO */
 .hero{
     background:linear-gradient(rgba(227,177,177,0.85), rgba(227,177,177,0.85)),
@@ -215,7 +330,20 @@ footer{
     <a href="#diferenciais">Por que comprar</a>
     <a href="#local">Localização</a>
     <a href="#contato">Contato</a>
+    <button class="botao-lupa" id="abrir-busca" aria-label="Abrir busca de produtos">🔍</button>
 </nav>
+
+<section id="busca-inicio" class="busca-inicio" aria-live="polite">
+    <input
+        type="search"
+        id="busca-produto"
+        class="campo-busca"
+        placeholder="Ex: vaso vidro, luminária metal, porta retrato"
+        aria-label="Buscar produtos no catálogo"
+    >
+    <div id="resultados-catalogo" class="resultados-catalogo"></div>
+    <p id="sem-resultados" hidden>Nenhum produto encontrado no catálogo para esta busca.</p>
+</section>
 
 <section class="hero">
     <h2>Transforme sua casa com elegância</h2>
@@ -319,8 +447,22 @@ WhatsApp
     <p>@casamelodecor</p>
 </footer>
 
+<script src="catalog-search.js"></script>
+<script>
+const botaoBusca = document.getElementById('abrir-busca');
+const painelBusca = document.getElementById('busca-inicio');
+const campoBuscaInicio = document.getElementById('busca-produto');
+
+botaoBusca.addEventListener('click', () => {
+    painelBusca.classList.toggle('ativa');
+
+    if (painelBusca.classList.contains('ativa')) {
+        campoBuscaInicio.focus();
+    }
+});
+</script>
+
 </body>
 </html>
-
 
 
