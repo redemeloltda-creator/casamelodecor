@@ -66,6 +66,10 @@ nav a:hover{
     color:#f0baba;
 }
 
+nav form{
+    display:inline;
+}
+
 nav input{
     margin-left:20px;
     padding:6px 12px;
@@ -134,11 +138,6 @@ nav input{
     border-radius:12px;
     box-shadow:0 4px 12px rgba(0,0,0,0.08);
     overflow:hidden;
-    transition:0.3s;
-}
-
-.produto:hover{
-    transform:translateY(-5px);
 }
 
 .produto img{
@@ -201,8 +200,8 @@ footer{
     }
 
     nav input{
-        margin-top:10px;
         display:block;
+        margin:10px auto 0 auto;
     }
 }
 </style>
@@ -223,7 +222,15 @@ footer{
     <a href="#local">Localização</a>
     <a href="#contato">Contato</a>
 
-    <input type="text" id="searchInput" placeholder="Pesquisar produtos..." onkeyup="buscarProduto()">
+    <!-- BUSCA ENTRE PÁGINAS -->
+    <form action="busca.html" method="GET">
+        <input 
+            type="text" 
+            name="q" 
+            placeholder="Pesquisar produtos..."
+            required
+        >
+    </form>
 </nav>
 
 <section class="hero">
@@ -283,35 +290,6 @@ footer{
     </div>
 </section>
 
-<section class="section diferenciais" id="diferenciais">
-    <h2>Por que escolher a Casa Melo Decor?</h2>
-    <div class="lista">
-        ✔ Loja física no centro da cidade<br>
-        ✔ Produtos selecionados com qualidade<br>
-        ✔ Atendimento rápido pelo WhatsApp<br>
-        ✔ Novidades toda semana no Instagram<br>
-        ✔ Atendimento local e personalizado
-    </div>
-</section>
-
-<section class="section mapa" id="local">
-    <h2>Onde estamos</h2>
-    <iframe src="https://maps.google.com/maps?q=Rua%20Luiz%20Pires%20378%20Coracao%20de%20Jesus&t=&z=15&ie=UTF8&iwloc=&output=embed"></iframe>
-</section>
-
-<section class="section" id="contato">
-    <h2>Contato</h2>
-    <p>Rua Luiz Pires, 378 – Centro</p>
-    <p>Coração de Jesus – MG</p>
-    <p><strong>Horário:</strong><br>
-    Seg a Sex: 8h às 18h<br>
-    Sábado: 8h às 12h</p>
-
-    <a class="botao" href="https://wa.me/5538999140400" target="_blank">
-        Atendimento no WhatsApp
-    </a>
-</section>
-
 <a class="whatsapp" href="https://wa.me/5538999140400" target="_blank">
 WhatsApp
 </a>
@@ -320,23 +298,6 @@ WhatsApp
     <p>© 2026 Casa Melo Decor</p>
     <p>@casamelodecor</p>
 </footer>
-
-<script>
-function buscarProduto() {
-    let input = document.getElementById("searchInput").value.toLowerCase();
-    let produtos = document.querySelectorAll(".produto");
-
-    produtos.forEach(function(produto) {
-        let texto = produto.innerText.toLowerCase();
-
-        if (texto.includes(input)) {
-            produto.style.display = "block";
-        } else {
-            produto.style.display = "none";
-        }
-    });
-}
-</script>
 
 </body>
 </html>
