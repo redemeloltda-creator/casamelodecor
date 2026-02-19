@@ -82,48 +82,46 @@
   const paginaAtual =
     window.location.pathname.split('/').pop() || 'index.html';
 
-  /* =========================
-     CARREGAR PRODUTOS EXTRAS (HOME)
-  ========================== */
+ /* =========================
+   CARREGAR PRODUTOS DE TODAS AS PÁGINAS
+========================== */
 
-  const carregarProdutosExtrasHome = async () => {
-    if (paginaAtual !== 'index.html' && paginaAtual !== '') return;
+const carregarTodosProdutos = async () => {
 
-    const paginasCatalogo = [
-      { arquivo: 'presentes.html', categoria: 'Presentes' },
-      { arquivo: 'cozinha.html', categoria: 'Cozinha' },
-      { arquivo: 'organizacao.html', categoria: 'Organização' }
-    ];
+  // 🔥 Liste aqui TODAS as páginas de catálogo do site
+  const paginasCatalogo = [
+    { arquivo: 'index.html', categoria: 'Produtos' },
+    { arquivo: 'presentes.html', categoria: 'Presentes' },
+    { arquivo: 'cozinha.html', categoria: 'Cozinha' },
+    { arquivo: 'organizacao.html', categoria: 'Organização' },
+    { arquivo: 'decoracao.html', categoria: 'Decoração' }
+  ];
 
-    const produtosExtras = [];
+  const produtosExtras = [];
 
-    for (const pagina of paginasCatalogo) {
-      try {
-        const resposta = await fetch(pagina.arquivo);
-        if (!resposta.ok) continue;
+  for (const pagina of paginasCatalogo) {
+    try {
+      const resposta = await fetch(pagina.arquivo);
+      if (!resposta.ok) continue;
 
-        const html = await resposta.text();
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const cardsCatalogo =
-          doc.querySelectorAll('.produtos .produto');
+      const html = await resposta.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const cardsCatalogo = doc.querySelectorAll('.produtos .produto');
 
-        cardsCatalogo.forEach((card) => {
-          produtosExtras.push(
-            extrairProdutoDoCard(card, pagina.categoria)
-          );
-        });
-      } catch (_erro) {
-        // Se falhar, mantém busca local
-      }
+      cardsCatalogo.forEach((card) => {
+        produtosExtras.push(
+          extrairProdutoDoCard(card, pagina.categoria)
+        );
+      });
+
+    } catch (_erro) {
+      console.warn('Erro ao carregar:', pagina.arquivo);
     }
+  }
 
-    if (produtosExtras.length) {
-      produtosPreparados = [
-        ...produtosPreparados,
-        ...produtosExtras
-      ];
-    }
-  };
+  // Substitui todos os produtos pelos globais
+  produtosPreparados = produtosExtras;
+};
 
   /* =========================
      FILTRO DE BUSCA
