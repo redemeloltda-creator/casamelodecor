@@ -1,4 +1,3 @@
-<script>
 (function () {
 
   const produtosCatalogo = [
@@ -108,4 +107,3 @@
   });
 
 })();
-</script>
