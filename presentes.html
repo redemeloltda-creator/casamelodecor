@@ -84,66 +84,78 @@ header a{
     font-weight:bold;
 }
 
-/* RESULTADOS DA BUSCA */
-.resultados-catalogo{
-    margin:20px auto 0;
-    display:grid;
-    gap:14px;
-    max-width:860px;
-    text-align:left;
+.busca-container {
+    position: relative;
+    max-width: 650px;
+    margin: 20px auto;
 }
 
-.resultado-link{
-    text-decoration:none;
-    color:inherit;
+#campoBusca {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    outline: none;
 }
 
-.resultado-item{
-    display:flex;
-    gap:14px;
-    align-items:center;
-    background:#fff;
-    border:1px solid #e9dede;
-    border-radius:12px;
-    padding:14px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.08);
-    transition:transform 0.2s ease, box-shadow 0.2s ease;
+#campoBusca:focus {
+    border-color: #000;
 }
 
-.resultado-item:hover{
-    transform:translateY(-2px);
-    box-shadow:0 10px 22px rgba(0,0,0,0.12);
+.resultados {
+    position: absolute;
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    max-height: 450px;
+    overflow-y: auto;
+    display: none;
+    z-index: 999;
+    text-align: left;
 }
 
-.resultado-thumb{
-    width:92px;
-    height:92px;
-    object-fit:cover;
-    border-radius:10px;
-    flex-shrink:0;
+.resultado-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-.resultado-detalhes h4{
-    margin:0 0 6px;
-    font-size:16px;
+.resultado-item:hover,
+.resultado-item.ativo {
+    background: #f3f3f3;
 }
 
-.resultado-detalhes p{
-    margin:4px 0;
-    color:#555;
-    font-size:14px;
+.resultado-item img {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 6px;
 }
 
-.resultado-cta{
-    display:inline-block;
-    margin-top:8px;
-    padding:7px 12px;
-    border-radius:999px;
-    background:#111;
-    color:#fff;
-    font-size:13px;
-    font-weight:bold;
-    text-decoration:none;
+.resultado-info h4 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.resultado-info p {
+    margin: 2px 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.highlight {
+    background: yellow;
+    font-weight: bold;
+}
+
+.sem-resultado {
+    padding: 15px;
+    text-align: center;
+    color: #777;
 }
 </style>
 </head>
@@ -160,13 +172,10 @@ header a{
 
 <section class="section">
 
-    <input
-        type="search"
-        id="busca-produto"
-        placeholder="Ex: cesta, kit café, aromático..."
-        aria-label="Pesquisar produtos por característica"
-        style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
-    >
+    <div class="busca-container">
+      <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
+      <div id="resultadosBusca" class="resultados"></div>
+    </div>
 
     <div class="produtos">
 
@@ -215,9 +224,6 @@ header a{
         </div>
 
     </div>
-
-    <div id="resultados-catalogo" class="resultados-catalogo"></div>
-    <p id="sem-resultados" hidden>Nenhum produto encontrado no catálogo para esta busca.</p>
 
 </section>
 
