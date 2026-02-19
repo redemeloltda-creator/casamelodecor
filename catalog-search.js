@@ -1,10 +1,6 @@
 (function () {
   const LIMITE_RESULTADOS = 8;
 
-  /* =========================
-     NORMALIZAÇÃO
-  ========================== */
-
   const normalizarTexto = (texto) =>
     (texto || '')
       .toLowerCase()
@@ -36,91 +32,59 @@
   const escaparRegex = (str) =>
     str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  /* =========================
-     ELEMENTOS DOM
-  ========================== */
-
   const campoBusca = document.getElementById('campoBusca');
   const resultadosDiv = document.getElementById('resultadosBusca');
 
   if (!campoBusca || !resultadosDiv) return;
 
-  let produtosPreparados = [];
+  let produtos = [];
 
   /* =========================
-     EXTRAÇÃO DE PRODUTO
+     CARREGAR JSON
   ========================== */
 
-  const extrairProdutoDoCard = (card, categoria) => {
-    const nome = card.querySelector('h3')?.textContent?.trim() || '';
-    const descricao = card.querySelector('p')?.textContent?.trim() || '';
-    const link = card.querySelector('a')?.getAttribute('href') || '#';
-    const imagem = card.querySelector('img')?.getAttribute('src') || '';
+  const carregarProdutos = async () => {
+    try {
+      const resposta = await fetch('produtos.json');
+      produtos = await resposta.json();
 
-    return {
-      nome,
-      categoria,
-      material: descricao,
-      marca: 'Casa Melo Decor',
-      tamanho: 'Consulte opções',
-      link,
-      imagem,
-      busca: tokenizar(`${nome} ${categoria} ${descricao}`).join(' ')
-    };
-  };
-
-  /* =========================
-     CARREGAR PRODUTOS DE TODAS AS PÁGINAS
-  ========================== */
-
-  const carregarTodosProdutos = async () => {
-    const paginasCatalogo = [
-      { arquivo: 'index.html', categoria: 'Produtos' },
-      { arquivo: 'presentes.html', categoria: 'Presentes' },
-      { arquivo: 'cozinha.html', categoria: 'Cozinha' },
-      { arquivo: 'organizacao.html', categoria: 'Organização' },
-      { arquivo: 'decoracao.html', categoria: 'Decoração' }
-    ];
-
-    for (const pagina of paginasCatalogo) {
-      try {
-        const resposta = await fetch(pagina.arquivo);
-        if (!resposta.ok) continue;
-
-        const html = await resposta.text();
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const cards = doc.querySelectorAll('.produtos .produto');
-
-        cards.forEach((card) => {
-          produtosPreparados.push(
-            extrairProdutoDoCard(card, pagina.categoria)
-          );
-        });
-
-      } catch (erro) {
-        console.warn('Erro ao carregar:', pagina.arquivo);
-      }
+      // Criar campo de busca otimizado
+      produtos = produtos.map((produto) => ({
+        ...produto,
+        busca: tokenizar(
+          `${produto.nome} ${produto.categoria} ${produto.material}`
+        ).join(' ')
+      }));
+    } catch (erro) {
+      console.error('Erro ao carregar produtos.json');
     }
   };
 
   /* =========================
-     FILTRO
+     FILTRO COM RELEVÂNCIA
   ========================== */
 
   const filtrarProdutos = (termo) => {
     const tokens = tokenizar(termo);
     if (!tokens.length) return [];
 
-    return produtosPreparados.filter((produto) =>
-      tokens.every((token) =>
-        produto.busca.includes(token)
-      )
-    );
-  };
+    return produtos
+      .map((produto) => {
+        let score = 0;
 
-  /* =========================
-     RENDERIZAÇÃO
-  ========================== */
+        tokens.forEach((token) => {
+          if (normalizarTexto(produto.nome).includes(token)) score += 3;
+          if (normalizarTexto(produto.categoria).includes(token)) score += 2;
+          if (normalizarTexto(produto.material).includes(token)) score += 1;
+        });
+
+        return { ...produto, score };
+      })
+      .filter((produto) =>
+        tokens.every((token) => produto.busca.includes(token))
+      )
+      .sort((a, b) => b.score - a.score);
+  };
 
   let indiceAtivo = -1;
   let resultadosAtuais = [];
@@ -168,7 +132,7 @@
       `;
 
       div.addEventListener('click', () => {
-        window.open(produto.link, '_blank');
+        window.location.href = produto.link;
       });
 
       resultadosDiv.appendChild(div);
@@ -176,10 +140,6 @@
 
     resultadosDiv.style.display = 'block';
   };
-
-  /* =========================
-     EVENTOS
-  ========================== */
 
   campoBusca.addEventListener('input', function () {
     const termo = this.value;
@@ -214,7 +174,7 @@
     if (e.key === 'Enter') {
       e.preventDefault();
       if (indiceAtivo >= 0 && resultadosAtuais[indiceAtivo]) {
-        window.open(resultadosAtuais[indiceAtivo].link, '_blank');
+        window.location.href = resultadosAtuais[indiceAtivo].link;
       }
     }
 
@@ -237,11 +197,7 @@
     }
   });
 
-  /* =========================
-     INICIALIZAÇÃO
-  ========================== */
-
   (async () => {
-    await carregarTodosProdutos();
+    await carregarProdutos();
   })();
 })();
