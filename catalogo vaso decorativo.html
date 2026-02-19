@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vasos Decorativos | Casa Melo Decor</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f5f5f5;
+}
+
+header {
+    background-color: #111;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header a {
+    color: #ccc;
+    text-decoration: none;
+}
+
+.logo-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    background: #fff;
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.logo-link img {
+    width: 90px;
+    height: auto;
+}
+
+.container {
+    padding: 30px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 15px;
+}
+
+.price {
+    font-size: 18px;
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.btn-whatsapp {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: #25D366;
+    color: white;
+    font-size: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+        <img src="logo.png" alt="Casa Melo Decor">
+    </a>
+    <h1>VASOS DECORATIVOS</h1>
+    <a href="index.html">← Voltar para o site</a>
+    <p>Confira nossa seleção</p>
+</header>
+
+<div class="container">
+    <div class="grid">
+        <div class="card">
+            <img src="vaso.jpg" alt="Vaso decorativo moderno">
+            <div class="card-content">
+                <h3>Vaso Decorativo Moderno</h3>
+                <p>Ideal para sala e aparador.</p>
+                <div class="price">Consulte no WhatsApp</div>
+                <a href="https://wa.me/5538999140400?text=Tenho%20interesse%20no%20Vaso%20Decorativo%20Moderno">
+                    <button class="btn-whatsapp">Comprar no WhatsApp</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
