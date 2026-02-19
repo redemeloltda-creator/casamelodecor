@@ -85,6 +85,82 @@ header a {
     border-radius: 5px;
     cursor: pointer;
 }
+
+
+.busca-container {
+    position: relative;
+    max-width: 650px;
+    margin: 0 auto 24px;
+}
+
+#campoBusca {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    outline: none;
+    box-sizing: border-box;
+}
+
+#campoBusca:focus {
+    border-color: #000;
+}
+
+.resultados {
+    position: absolute;
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    max-height: 450px;
+    overflow-y: auto;
+    display: none;
+    z-index: 999;
+}
+
+.resultado-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.resultado-item:hover,
+.resultado-item.ativo {
+    background: #f3f3f3;
+}
+
+.resultado-item img {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.resultado-info h4 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.resultado-info p {
+    margin: 2px 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.highlight {
+    background: yellow;
+    font-weight: bold;
+}
+
+.sem-resultado {
+    padding: 15px;
+    text-align: center;
+    color: #777;
+}
+
 </style>
 </head>
 
@@ -100,6 +176,12 @@ header a {
 </header>
 
 <div class="container">
+
+<div class="busca-container">
+  <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
+  <div id="resultadosBusca" class="resultados"></div>
+</div>
+
     <div class="grid">
         <div class="card">
             <img src="quadro.jpg" alt="Quadro decorativo">
@@ -114,6 +196,160 @@ header a {
         </div>
     </div>
 </div>
+
+
+<script>
+(function () {
+  const LIMITE_RESULTADOS = 8;
+
+  const normalizarTexto = (texto) =>
+    (texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const mapaSinonimos = {
+    vasos: 'vaso',
+    vidros: 'vidro',
+    retratos: 'retrato',
+    luminarias: 'luminaria',
+    quadros: 'quadro',
+    metalico: 'metal',
+    metalica: 'metal',
+    plastico: 'plastico',
+    dourada: 'dourado',
+    douradas: 'dourado'
+  };
+
+  const tokenizar = (texto) =>
+    normalizarTexto(texto)
+      .split(' ')
+      .filter(Boolean)
+      .map((token) => mapaSinonimos[token] || token);
+
+  const campoBusca = document.getElementById('campoBusca');
+  const resultadosDiv = document.getElementById('resultadosBusca');
+
+  if (!campoBusca || !resultadosDiv) return;
+
+  const PRODUTOS_CATALOGO = Array.from(document.querySelectorAll('.grid .card')).map((card) => {
+    const nome = card.querySelector('h3')?.textContent.trim() || '';
+    const imagem = card.querySelector('img')?.getAttribute('src') || '';
+    const material = (card.querySelector('p:nth-of-type(1)')?.textContent || '').replace(/^Material:\s*/i, '').trim();
+    const marca = (card.querySelector('p:nth-of-type(2)')?.textContent || '').replace(/^Marca:\s*/i, '').trim();
+    const tamanho = (card.querySelector('p:nth-of-type(3)')?.textContent || '').replace(/^Tamanho:\s*/i, '').trim();
+    const link = card.querySelector('a')?.getAttribute('href') || '#';
+
+    return { nome, categoria: document.title, material, marca, tamanho, imagem, link };
+  });
+
+  const produtosPreparados = PRODUTOS_CATALOGO.map((produto) => ({
+    ...produto,
+    busca: tokenizar(`${produto.nome} ${produto.categoria} ${produto.material} ${produto.marca} ${produto.tamanho}`).join(' ')
+  }));
+
+  const filtrarProdutos = (termo) => {
+    const tokens = tokenizar(termo);
+    if (!tokens.length) return [];
+
+    return produtosPreparados.filter((produto) => tokens.every((token) => produto.busca.includes(token)));
+  };
+
+  let indiceAtivo = -1;
+  let resultadosAtuais = [];
+
+  const destacarTexto = (texto, termo) => {
+    const tokens = tokenizar(termo);
+    let resultado = texto;
+
+    tokens.forEach((token) => {
+      const regex = new RegExp(`(${token})`, 'gi');
+      resultado = resultado.replace(regex, '<span class="highlight">$1</span>');
+    });
+
+    return resultado;
+  };
+
+  const renderizarResultados = (resultados, termo) => {
+    resultadosDiv.innerHTML = '';
+    indiceAtivo = -1;
+
+    if (!resultados.length) {
+      resultadosDiv.innerHTML = '<div class="sem-resultado">Nenhum produto encontrado</div>';
+      resultadosDiv.style.display = 'block';
+      return;
+    }
+
+    resultados.slice(0, LIMITE_RESULTADOS).forEach((produto) => {
+      const div = document.createElement('div');
+      div.className = 'resultado-item';
+
+      div.innerHTML = `
+        <img src="${produto.imagem}" alt="${produto.nome}">
+        <div class="resultado-info">
+          <h4>${destacarTexto(produto.nome, termo)}</h4>
+          <p>${produto.categoria} | ${produto.material}</p>
+          <p>Marca: ${produto.marca} | Tam: ${produto.tamanho}</p>
+        </div>
+      `;
+
+      div.addEventListener('click', () => {
+        window.open(produto.link, '_blank');
+      });
+
+      resultadosDiv.appendChild(div);
+    });
+
+    resultadosDiv.style.display = 'block';
+  };
+
+  campoBusca.addEventListener('input', function () {
+    const termo = this.value;
+    resultadosAtuais = filtrarProdutos(termo);
+    renderizarResultados(resultadosAtuais, termo);
+  });
+
+  campoBusca.addEventListener('keydown', function (e) {
+    const itens = resultadosDiv.querySelectorAll('.resultado-item');
+
+    if (e.key === 'ArrowDown' && itens.length) {
+      e.preventDefault();
+      indiceAtivo = (indiceAtivo + 1) % itens.length;
+      atualizarSelecao(itens);
+    }
+
+    if (e.key === 'ArrowUp' && itens.length) {
+      e.preventDefault();
+      indiceAtivo = indiceAtivo <= 0 ? itens.length - 1 : indiceAtivo - 1;
+      atualizarSelecao(itens);
+    }
+
+    if (e.key === 'Enter') {
+      if (indiceAtivo >= 0 && resultadosAtuais[indiceAtivo]) {
+        window.open(resultadosAtuais[indiceAtivo].link, '_blank');
+      }
+    }
+  });
+
+  function atualizarSelecao(itens) {
+    itens.forEach((item) => item.classList.remove('ativo'));
+    if (itens[indiceAtivo]) {
+      itens[indiceAtivo].classList.add('ativo');
+      itens[indiceAtivo].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    const container = document.querySelector('.busca-container');
+    if (container && !container.contains(e.target)) {
+      resultadosDiv.style.display = 'none';
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
