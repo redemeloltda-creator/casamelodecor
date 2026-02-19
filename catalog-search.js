@@ -1,10 +1,7 @@
-<script>
 (function () {
-
-  const LIMITE_RESULTADOS = 8;
-
-  const normalizarTexto = (texto) =>
-    texto.toLowerCase()
+  const normalizar = (texto) =>
+    (texto || '')
+      .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9\s]/g, ' ')
@@ -25,121 +22,92 @@
   };
 
   const tokenizar = (texto) =>
-    normalizarTexto(texto)
+    normalizar(texto)
       .split(' ')
       .filter(Boolean)
-      .map(token => mapaSinonimos[token] || token);
+      .map((token) => mapaSinonimos[token] || token);
 
-  const produtosPreparados = PRODUTOS_CATALOGO.map(produto => ({
-    ...produto,
-    busca: tokenizar(
-      `${produto.nome} ${produto.categoria} ${produto.material} ${produto.marca} ${produto.tamanho}`
-    ).join(' ')
-  }));
+  const campoBusca =
+    document.getElementById('busca-produto') ||
+    document.getElementById('busca-produto-home') ||
+    document.getElementById('campoBusca');
 
-  const filtrarProdutos = (termo) => {
-    const tokens = tokenizar(termo);
-    if (!tokens.length) return [];
+  if (!campoBusca) return;
 
-    return produtosPreparados.filter(produto =>
-      tokens.every(token => produto.busca.includes(token))
-    );
-  };
+  const cards = Array.from(document.querySelectorAll('.produtos .produto'));
 
-  const campoBusca = document.getElementById('campoBusca');
-  const resultadosDiv = document.getElementById('resultadosBusca');
+  if (!cards.length) return;
 
-  let indiceAtivo = -1;
-  let resultadosAtuais = [];
+  const resultadosContainer =
+    document.getElementById('resultados-catalogo') ||
+    document.getElementById('resultados-home') ||
+    document.getElementById('resultadosBusca');
 
-  const destacarTexto = (texto, termo) => {
-    const tokens = tokenizar(termo);
-    let resultado = texto;
+  const semResultados =
+    document.getElementById('sem-resultados') ||
+    document.getElementById('sem-resultados-home');
 
-    tokens.forEach(token => {
-      const regex = new RegExp(`(${token})`, 'gi');
-      resultado = resultado.replace(regex, '<span class="highlight">$1</span>');
-    });
+  const produtos = cards.map((card) => {
+    const nome = card.querySelector('h3')?.textContent?.trim() || '';
+    const descricao = card.querySelector('p')?.textContent?.trim() || '';
+    const link = card.querySelector('a')?.getAttribute('href') || '#';
+    const imagem = card.querySelector('img')?.getAttribute('src') || '';
 
-    return resultado;
-  };
+    return {
+      nome,
+      descricao,
+      link,
+      imagem,
+      busca: tokenizar(`${nome} ${descricao}`).join(' ')
+    };
+  });
 
-  const renderizarResultados = (resultados, termo) => {
-    resultadosDiv.innerHTML = '';
-    indiceAtivo = -1;
+  const renderizarResultados = (lista) => {
+    if (!resultadosContainer) return;
 
-    if (!resultados.length) {
-      resultadosDiv.innerHTML = '<div class="sem-resultado">Nenhum produto encontrado</div>';
-      resultadosDiv.style.display = 'block';
+    if (!lista.length) {
+      resultadosContainer.innerHTML = '';
       return;
     }
 
-    resultados.slice(0, LIMITE_RESULTADOS).forEach((produto, index) => {
-
-      const div = document.createElement('div');
-      div.className = 'resultado-item';
-
-      div.innerHTML = `
-        <img src="${produto.imagem}" alt="${produto.nome}">
-        <div class="resultado-info">
-          <h4>${destacarTexto(produto.nome, termo)}</h4>
-          <p>${produto.categoria} | ${produto.material}</p>
-          <p>Marca: ${produto.marca} | Tam: ${produto.tamanho}</p>
-        </div>
-      `;
-
-      div.addEventListener('click', () => {
-        window.open(produto.link, '_blank');
-      });
-
-      resultadosDiv.appendChild(div);
-    });
-
-    resultadosDiv.style.display = 'block';
+    resultadosContainer.innerHTML = lista
+      .map(
+        (produto) => `
+        <a class="resultado-link" href="${produto.link}">
+          <div class="resultado-item">
+            <img class="resultado-thumb" src="${produto.imagem}" alt="${produto.nome}">
+            <div class="resultado-detalhes">
+              <h4>${produto.nome}</h4>
+              <p>${produto.descricao}</p>
+              <span>Ver catálogo</span>
+            </div>
+          </div>
+        </a>
+      `
+      )
+      .join('');
   };
 
   campoBusca.addEventListener('input', function () {
     const termo = this.value;
-    resultadosAtuais = filtrarProdutos(termo);
-    renderizarResultados(resultadosAtuais, termo);
-  });
+    const tokens = tokenizar(termo);
 
-  campoBusca.addEventListener('keydown', function (e) {
-
-    const itens = document.querySelectorAll('.resultado-item');
-
-    if (e.key === 'ArrowDown') {
-      indiceAtivo++;
-      if (indiceAtivo >= itens.length) indiceAtivo = 0;
-      atualizarSelecao(itens);
+    if (!tokens.length) {
+      cards.forEach((card) => card.classList.remove('oculto'));
+      if (resultadosContainer) resultadosContainer.innerHTML = '';
+      if (semResultados) semResultados.hidden = true;
+      return;
     }
 
-    if (e.key === 'ArrowUp') {
-      indiceAtivo--;
-      if (indiceAtivo < 0) indiceAtivo = itens.length - 1;
-      atualizarSelecao(itens);
-    }
+    const filtrados = produtos.filter((produto) =>
+      tokens.every((token) => produto.busca.includes(token))
+    );
 
-    if (e.key === 'Enter') {
-      if (indiceAtivo >= 0 && resultadosAtuais[indiceAtivo]) {
-        window.open(resultadosAtuais[indiceAtivo].link, '_blank');
-      }
-    }
+    cards.forEach((card) => card.classList.add('oculto'));
+    renderizarResultados(filtrados);
 
-  });
-
-  function atualizarSelecao(itens) {
-    itens.forEach(item => item.classList.remove('ativo'));
-    if (itens[indiceAtivo]) {
-      itens[indiceAtivo].classList.add('ativo');
-    }
-  }
-
-  document.addEventListener('click', function (e) {
-    if (!document.querySelector('.busca-container').contains(e.target)) {
-      resultadosDiv.style.display = 'none';
+    if (semResultados) {
+      semResultados.hidden = filtrados.length > 0;
     }
   });
-
 })();
-</script>
