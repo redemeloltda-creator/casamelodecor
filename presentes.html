@@ -83,6 +83,66 @@ gap: 18px;
     border-radius:4px;
     font-weight:bold;
 }
+
+.resultados-catalogo{
+    margin: 20px auto 0;
+    display: grid;
+    gap: 14px;
+    max-width: 760px;
+    text-align: left;
+}
+
+.resultado-link{
+    text-decoration:none;
+    color:inherit;
+}
+
+.resultado-item{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    background:#fff;
+    border:1px solid #e9dede;
+    border-radius:12px;
+    padding:12px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resultado-item:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 22px rgba(0,0,0,0.12);
+}
+
+.resultado-thumb{
+    width:92px;
+    height:92px;
+    object-fit:cover;
+    border-radius:10px;
+    flex-shrink:0;
+}
+
+.resultado-detalhes h4{
+    margin:0 0 6px;
+    font-size:16px;
+}
+
+.resultado-detalhes p{
+    margin:2px 0;
+    color:#555;
+    font-size:14px;
+}
+
+.resultado-cta{
+    display:inline-block;
+    margin-top:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#111;
+    color:#fff;
+    font-size:13px;
+    font-weight:bold;
+}
 </style>
 </head>
 
@@ -101,7 +161,7 @@ gap: 18px;
     <input
         type="search"
         id="busca-produto"
-        placeholder="Ex: elegante, especial, conforto"
+        placeholder="Ex: vaso vidro, luminária metal, porta retrato"
         aria-label="Pesquisar produtos por característica"
         style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
     >
@@ -154,37 +214,13 @@ gap: 18px;
 
     </div>
 
-    <p id="sem-resultados" hidden>Nenhum produto encontrado com essa característica.</p>
+    <div id="resultados-catalogo" class="resultados-catalogo"></div>
+
+    <p id="sem-resultados" hidden>Nenhum produto encontrado no catálogo para esta busca.</p>
 
 </section>
 
-<script>
-const campoBusca = document.getElementById('busca-produto');
-const listaProdutos = document.querySelectorAll('.produto');
-const mensagemSemResultados = document.getElementById('sem-resultados');
-
-const normalizarTexto = (texto) => texto
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
-
-campoBusca.addEventListener('input', (evento) => {
-    const termo = normalizarTexto(evento.target.value.trim());
-    let produtosVisiveis = 0;
-
-    listaProdutos.forEach((produto) => {
-        const textoProduto = normalizarTexto(produto.textContent);
-        const encontrou = textoProduto.includes(termo);
-        produto.style.display = encontrou ? '' : 'none';
-
-        if (encontrou) {
-            produtosVisiveis += 1;
-        }
-    });
-
-    mensagemSemResultados.hidden = produtosVisiveis !== 0;
-});
-</script>
+<script src="catalog-search.js"></script>
 
 </body>
 </html>
