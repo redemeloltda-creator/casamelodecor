@@ -66,6 +66,14 @@ header a{
     border-radius:6px;
     font-weight:bold;
 }
+
+.resultados-globais{
+    margin-top:30px;
+}
+
+.resultados-globais h3{
+    margin-bottom:20px;
+}
 </style>
 </head>
 
@@ -134,35 +142,184 @@ header a{
 
     </div>
 
-    <p id="sem-resultados" hidden>Nenhum produto encontrado com essa característica.</p>
+        <p id="sem-resultados" hidden>Nenhum produto encontrado em todo o catálogo.</p>
 
-</section>
+    <section id="resultados-globais" class="resultados-globais" hidden>
+        <h3>Resultados em todo o catálogo</h3>
+        <div id="lista-global" class="produtos"></div>
+    </section>
 
 <script>
 const campoBusca = document.getElementById('busca-produto');
 const listaProdutos = document.querySelectorAll('.produto');
 const mensagemSemResultados = document.getElementById('sem-resultados');
+const resultadosGlobais = document.getElementById('resultados-globais');
+const listaGlobal = document.getElementById('lista-global');
+
+const catalogoCompleto = [
+    {
+        nome: 'Vaso Decorativo',
+        descricao: 'Elegância para sala ou quarto',
+        imagem: 'vaso.jpg',
+        link: 'catalogo vaso decorativo.html',
+        categoria: 'Decoração'
+    },
+    {
+        nome: 'Quadro Decorativo',
+        descricao: 'Estilo moderno para sua parede',
+        imagem: 'quadro.jpg',
+        link: 'catalogo quadro decorativo.html',
+        categoria: 'Decoração'
+    },
+    {
+        nome: 'Luminária',
+        descricao: 'Iluminação com design sofisticado',
+        imagem: 'luminaria.jpg',
+        link: 'catalogo luminaria.html',
+        categoria: 'Decoração'
+    },
+    {
+        nome: 'Porta-retratos',
+        descricao: 'Guarde seus momentos especiais',
+        imagem: 'porta retrato.jpg',
+        link: 'catalogo porta retrato.html',
+        categoria: 'Decoração'
+    },
+    {
+        nome: 'Jogo de Panelas',
+        descricao: 'Alta qualidade e durabilidade',
+        imagem: 'https://images.unsplash.com/photo-1586201375761-83865001e31c',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse no Jogo de Panelas',
+        categoria: 'Cozinha'
+    },
+    {
+        nome: 'Kit de Facas',
+        descricao: 'Precisão e elegância',
+        imagem: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse no Kit de Facas',
+        categoria: 'Cozinha'
+    },
+    {
+        nome: 'Organizador de Temperos',
+        descricao: 'Mais praticidade no dia a dia',
+        imagem: 'https://images.unsplash.com/photo-1588854337221-4cf9fa96059c',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse no Organizador de Temperos',
+        categoria: 'Cozinha'
+    },
+    {
+        nome: 'Kit de Potes',
+        descricao: 'Organização e beleza',
+        imagem: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse no Kit de Potes',
+        categoria: 'Cozinha'
+    },
+    {
+        nome: 'Caixas Organizadoras',
+        descricao: 'Ideal para armários e prateleiras',
+        imagem: 'https://images.unsplash.com/photo-1582582429416-6b3a2bcd1c4d',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse nas Caixas Organizadoras',
+        categoria: 'Organização'
+    },
+    {
+        nome: 'Organizador de Gavetas',
+        descricao: 'Mais praticidade no dia a dia',
+        imagem: 'https://images.unsplash.com/photo-1598300053653-1c3c0a1e5a52',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse no Organizador de Gavetas',
+        categoria: 'Organização'
+    },
+    {
+        nome: 'Cestos Multiuso',
+        descricao: 'Funcionalidade com estilo',
+        imagem: 'https://images.unsplash.com/photo-1600210492493-0946911123ea',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse nos Cestos Multiuso',
+        categoria: 'Organização'
+    },
+    {
+        nome: 'Organizador de Armário',
+        descricao: 'Mais espaço e organização',
+        imagem: 'https://images.unsplash.com/photo-1600607687644-c7f34b3c06e3',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse no Organizador de Armário',
+        categoria: 'Organização'
+    },
+    {
+        nome: 'Cesta Presenteável',
+        descricao: 'Ideal para datas especiais',
+        imagem: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse na Cesta Presenteável',
+        categoria: 'Presentes'
+    },
+    {
+        nome: 'Kit Café',
+        descricao: 'Elegante e funcional',
+        imagem: 'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse no Kit Café',
+        categoria: 'Presentes'
+    },
+    {
+        nome: 'Kit Aromático',
+        descricao: 'Perfume e conforto para o ambiente',
+        imagem: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse no Kit Aromático',
+        categoria: 'Presentes'
+    },
+    {
+        nome: 'Caneca Presente',
+        descricao: 'Perfeita para surpreender',
+        imagem: 'https://images.unsplash.com/photo-1512909006721-3d6018887383',
+        link: 'https://wa.me/5538999140400?text=Tenho interesse na Caneca Presente',
+        categoria: 'Presentes'
+    }
+];
 
 const normalizarTexto = (texto) => texto
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '');
 
+const renderizarResultadosGlobais = (produtos) => {
+    listaGlobal.innerHTML = produtos.map((produto) => `
+        <article class="produto">
+            <img src="${produto.imagem}" alt="${produto.nome}">
+            <div>
+                <h3>${produto.nome}</h3>
+                <p>${produto.descricao}</p>
+                <p><strong>Categoria:</strong> ${produto.categoria}</p>
+                <a class="botao" href="${produto.link}" target="_blank" rel="noopener noreferrer">Consultar</a>
+            </div>
+        </article>
+    `).join('');
+};
+
 campoBusca.addEventListener('input', (evento) => {
     const termo = normalizarTexto(evento.target.value.trim());
-    let produtosVisiveis = 0;
+
+    if (!termo) {
+        listaProdutos.forEach((produto) => {
+            produto.style.display = '';
+        });
+        resultadosGlobais.hidden = true;
+        mensagemSemResultados.hidden = true;
+        return;
+    }
 
     listaProdutos.forEach((produto) => {
-        const textoProduto = normalizarTexto(produto.textContent);
-        const encontrou = textoProduto.includes(termo);
-        produto.style.display = encontrou ? '' : 'none';
-
-        if (encontrou) {
-            produtosVisiveis += 1;
-        }
+        produto.style.display = 'none';
     });
 
-    mensagemSemResultados.hidden = produtosVisiveis !== 0;
+    const produtosFiltrados = catalogoCompleto.filter((produto) => {
+        const textoProduto = normalizarTexto(`${produto.nome} ${produto.descricao} ${produto.categoria}`);
+        return textoProduto.includes(termo);
+    });
+
+    if (produtosFiltrados.length === 0) {
+        resultadosGlobais.hidden = true;
+        mensagemSemResultados.hidden = false;
+        return;
+    }
+
+    renderizarResultadosGlobais(produtosFiltrados);
+    resultadosGlobais.hidden = false;
+    mensagemSemResultados.hidden = true;
 });
 </script>
 
