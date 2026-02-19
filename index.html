@@ -1,3 +1,5 @@
+agora junte esse modelo com esse 
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -66,18 +68,6 @@ nav a:hover{
     color:#f0baba;
 }
 
-nav form{
-    display:inline;
-}
-
-nav input{
-    margin-left:20px;
-    padding:6px 12px;
-    border-radius:20px;
-    border:none;
-    outline:none;
-}
-
 /* HERO */
 .hero{
     background:linear-gradient(rgba(227,177,177,0.85), rgba(227,177,177,0.85)),
@@ -129,8 +119,6 @@ nav input{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(250px,1fr));
     gap:25px;
-    max-width:1200px;
-    margin:auto;
 }
 
 .produto{
@@ -198,11 +186,6 @@ footer{
     .hero h2{
         font-size:26px;
     }
-
-    nav input{
-        display:block;
-        margin:10px auto 0 auto;
-    }
 }
 </style>
 </head>
@@ -221,16 +204,6 @@ footer{
     <a href="#diferenciais">Por que comprar</a>
     <a href="#local">Localização</a>
     <a href="#contato">Contato</a>
-
-    <!-- BUSCA ENTRE PÁGINAS -->
-    <form action="busca.html" method="GET">
-        <input 
-            type="text" 
-            name="q" 
-            placeholder="Pesquisar produtos..."
-            required
-        >
-    </form>
 </nav>
 
 <section class="hero">
@@ -249,45 +222,85 @@ footer{
 <section class="section" id="produtos">
     <h2>Nossos Produtos</h2>
 
-    <div class="produtos">
-
-        <div class="produto">
-            <img src="decoracao logo.jpg">
-            <div>
-                <h3>Decoração</h3>
-                <p>Vasos, quadros e peças sofisticadas</p>
-                <a class="botao" href="decoracao.html">Ver catálogo</a>
-            </div>
-        </div>
-
-        <div class="produto">
-            <img src="cozinha logo.jpg">
-            <div>
-                <h3>Cozinha</h3>
-                <p>Utensílios modernos e práticos</p>
-                <a class="botao" href="cozinha.html">Ver catálogo</a>
-            </div>
-        </div>
-
-        <div class="produto">
-            <img src="organizador logo.jpg">
-            <div>
-                <h3>Organização</h3>
-                <p>Mais praticidade para o dia a dia</p>
-                <a class="botao" href="organizacao.html">Ver catálogo</a>
-            </div>
-        </div>
-
-        <div class="produto">
-            <img src="presentes logo.jpg">
-            <div>
-                <h3>Presentes</h3>
-                <p>Opções elegantes para todas as ocasiões</p>
-                <a class="botao" href="presentes.html">Ver catálogo</a>
-            </div>
-        </div>
-
+    <div class="produto">
+    <img src="decoracao logo.jpg">
+    <div>
+        <h3>Decoração</h3>
+        <p>Vasos, quadros e peças sofisticadas</p>
+        <a class="botao" href="decoracao.html">
+            Ver catálogo
+        </a>
     </div>
+</div>
+
+
+
+        <div class="produto">
+    <img src="cozinha logo.jpg">
+    <div>
+        <h3>Cozinha</h3>
+        <p>Utensílios modernos e práticos</p>
+        <a class="botao" href="cozinha.html">
+            Ver catálogo
+        </a>
+    </div>
+</div>
+
+
+        <div class="produto">
+    <img src="organizador logo.jpg">
+    <div>
+        <h3>Organização</h3>
+        <p>Mais praticidade para o dia a dia</p>
+        <a class="botao" href="organizacao.html">
+            Ver catálogo
+        </a>
+    </div>
+</div>
+
+
+       <div class="produto">
+    <img src="presentes logo.jpg">
+    <div>
+        <h3>Presentes</h3>
+        <p>Opções elegantes para todas as ocasiões</p>
+        <a class="botao" href="presentes.html">
+            Ver catálogo
+        </a>
+    </div>
+</div>
+
+
+</section>
+
+<section class="section diferenciais" id="diferenciais">
+    <h2>Por que escolher a Casa Melo Decor?</h2>
+
+    <div class="lista">
+        ✔ Loja física no centro da cidade<br>
+        ✔ Produtos selecionados com qualidade<br>
+        ✔ Atendimento rápido pelo WhatsApp<br>
+        ✔ Novidades toda semana no Instagram<br>
+        ✔ Atendimento local e personalizado
+    </div>
+</section>
+
+<section class="section mapa" id="local">
+    <h2>Onde estamos</h2>
+    <iframe src="https://maps.google.com/maps?q=Rua%20Luiz%20Pires%20378%20Coracao%20de%20Jesus&t=&z=15&ie=UTF8&iwloc=&output=embed"></iframe>
+</section>
+
+<section class="section" id="contato">
+    <h2>Contato</h2>
+    <p>Rua Luiz Pires, 378 – Centro</p>
+    <p>Coração de Jesus – MG</p>
+    <p><strong>Horário:</strong><br>
+    Seg a Sex: 8h às 18h<br>
+    Sábado: 8h às 12h</p>
+
+    <a class="botao" href="https://wa.me/5538999140400" target="_blank">
+        Atendimento no WhatsApp
+    </a>
 </section>
 
 <a class="whatsapp" href="https://wa.me/5538999140400" target="_blank">
@@ -301,3 +314,9 @@ WhatsApp
 
 </body>
 </html>
+
+
+
+
+
+subistituindo as partes que sao iguais e adicionando qoe tiver que adicionar
