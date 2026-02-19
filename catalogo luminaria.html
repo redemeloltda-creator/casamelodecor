@@ -32,25 +32,27 @@ header a {
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 190px));
+    justify-content: center;
+    gap: 16px;
 }
 
 .card {
+    max-width: 190px;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     overflow: hidden;
-    transition: 0.3s;
+    transition: 0.2s;
 }
 
 .card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-2px);
 }
 
 .card img {
     width: 100%;
-    height: 200px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
     cursor: pointer;
     transition: transform 0.3s ease;
@@ -61,12 +63,12 @@ header a {
 }
 
 .card-content {
-    padding: 15px;
+    padding: 12px;
 }
 
 .card h3 {
-    margin: 0 0 10px;
-    font-size: 16px;
+    margin: 0 0 8px;
+    font-size: 14px;
 }
 
 .price {
