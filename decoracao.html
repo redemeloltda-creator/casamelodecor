@@ -78,6 +78,14 @@ header a{
 
 <section class="section">
 
+    <input
+        type="search"
+        id="busca-produto"
+        placeholder="Ex: elegante, parede, quarto"
+        aria-label="Pesquisar produtos por característica"
+        style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
+    >
+
     <div class="produtos">
 
         <div class="produto">
@@ -126,11 +134,40 @@ header a{
 
     </div>
 
+    <p id="sem-resultados" hidden>Nenhum produto encontrado com essa característica.</p>
+
 </section>
+
+<script>
+const campoBusca = document.getElementById('busca-produto');
+const listaProdutos = document.querySelectorAll('.produto');
+const mensagemSemResultados = document.getElementById('sem-resultados');
+
+const normalizarTexto = (texto) => texto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+
+campoBusca.addEventListener('input', (evento) => {
+    const termo = normalizarTexto(evento.target.value.trim());
+    let produtosVisiveis = 0;
+
+    listaProdutos.forEach((produto) => {
+        const textoProduto = normalizarTexto(produto.textContent);
+        const encontrou = textoProduto.includes(termo);
+        produto.style.display = encontrou ? '' : 'none';
+
+        if (encontrou) {
+            produtosVisiveis += 1;
+        }
+    });
+
+    mensagemSemResultados.hidden = produtosVisiveis !== 0;
+});
+</script>
 
 </body>
 </html>
-
 
 
 
