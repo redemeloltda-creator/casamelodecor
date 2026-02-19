@@ -40,7 +40,9 @@
   const categoriaPagina =
     document.querySelector('header h2')?.textContent?.replace('Catálogo de ', '').trim() || 'Produtos';
 
+
   const extrairProdutoDoCard = (card, categoria = categoriaPagina) => {
+  const produtosPreparados = cards.map((card) => {
     const nome = card.querySelector('h3')?.textContent?.trim() || '';
     const descricao = card.querySelector('p')?.textContent?.trim() || '';
     const link = card.querySelector('a')?.getAttribute('href') || '#';
@@ -49,12 +51,15 @@
     return {
       nome,
       categoria,
+      categoria: categoriaPagina,
       material: descricao,
       marca: 'Casa Melo Decor',
       tamanho: 'Consulte opções',
       link,
       imagem,
+
       busca: tokenizar(`${nome} ${categoria} ${descricao}`).join(' ')
+      busca: tokenizar(`${nome} ${categoriaPagina} ${descricao}`).join(' ')
     };
   };
 
@@ -105,7 +110,13 @@
       tokens.every((token) => produto.busca.includes(token))
     );
   };
-
+  const filtrarProdutos = (termo) => {
+    const tokens = tokenizar(termo);
+    if (!tokens.length) return [];
+    return produtosPreparados.filter((produto) =>
+      tokens.every((token) => produto.busca.includes(token))
+    );
+  };
   let indiceAtivo = -1;
   let resultadosAtuais = [];
 
@@ -172,14 +183,18 @@
     const itens = document.querySelectorAll('.resultado-item');
 
     if (!itens.length) return;
-
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       indiceAtivo++;
       if (indiceAtivo >= itens.length) indiceAtivo = 0;
       atualizarSelecao(itens);
     }
-
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      indiceAtivo++;
+      if (indiceAtivo >= itens.length) indiceAtivo = 0;
+      atualizarSelecao(itens);
+    }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       indiceAtivo--;
