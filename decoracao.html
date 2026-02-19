@@ -2,188 +2,50 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/png" href="favicon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Catálogo de Decoração | Casa Melo Decor</title>
-
-<style>
-body{
-    font-family:Arial, sans-serif;
-    background:#fff7f7;
-    margin:0;
-}
-
-/* TOPO */
-header{
-    background:#000;
-    color:#fff;
-    text-align:center;
-    padding:20px;
-}
-
-header a{
-    color:#fff;
-    text-decoration:none;
-    font-size:14px;
-}
-
-.logo-link{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    margin-bottom:10px;
-    background:#fff;
-    padding:8px 12px;
-    border-radius:10px;
-}
-
-.logo-link img{
-    width:90px;
-    height:auto;
-}
-
-/* CONTEÚDO */
-.section{
-    padding:40px 20px;
-    text-align:center;
-}
-
-.produtos{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(200px, 220px));
-    justify-content:center;
-    gap:18px;
-}
-
-.produto{
-    background:#fff;
-    border-radius:8px;
-    box-shadow:0 1px 5px rgba(0,0,0,0.08);
-    border:1px solid #f1e1e1;
-    overflow:hidden;
-}
-
-.produto img{
-    width:100%;
-    aspect-ratio:1/1;
-    object-fit:cover;
-}
-
-.produto div{
-    padding:10px;
-}
-
-/* BOTÃO */
-.botao{
-    display:inline-block;
-    margin-top:8px;
-    padding:8px 12px;
-    background:#000;
-    color:#fff;
-    text-decoration:none;
-    border-radius:4px;
-    font-weight:bold;
-}
-
-/* RESULTADOS DA BUSCA */
-.resultados-catalogo{
-    margin:20px auto 0;
-    display:grid;
-    gap:14px;
-    max-width:760px;
-    text-align:left;
-}
-
-
-.resultado-link{
-    text-decoration:none;
-    color:inherit;
-}
-
-.resultado-item{
-    display:flex;
-    gap:14px;
-    align-items:center;
-    background:#fff;
-    border:1px solid #e9dede;
-    border-radius:12px;
-    padding:14px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.08);
-    transition:transform 0.2s ease, box-shadow 0.2s ease;
-    cursor:pointer;
-}
-
-.resultado-item:hover{
-    transform:translateY(-2px);
-    box-shadow:0 10px 22px rgba(0,0,0,0.12);
-}
-
-.resultado-thumb{
-    width:92px;
-    height:92px;
-    object-fit:cover;
-    border-radius:10px;
-    flex-shrink:0;
-}
-
-.resultado-detalhes h4{
-    margin:0 0 6px;
-    font-size:16px;
-}
-
-.resultado-detalhes p{
-    margin:4px 0;
-    color:#555;
-    font-size:14px;
-}
-
-.resultado-cta{
-    display:inline-block;
-    margin-top:8px;
-    padding:7px 12px;
-    border-radius:999px;
-    background:#111;
-    color:#fff;
-    font-size:13px;
-    font-weight:bold;
-    text-decoration:none;
-}
-
-@media(max-width:640px){
-    .resultado-item{
-        flex-direction:column;
-        align-items:flex-start;
-    }
-
-    .resultado-thumb{
-        width:100%;
-        height:180px;
-    }
-}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
 <header>
-    <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
-        <img src="logo.png" alt="Casa Melo Decor">
-    </a>
+    <div class="header-topo">
+        <div class="header-esquerda">
+            <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+                <img src="logo.png" alt="Casa Melo Decor">
+            </a>
+            <a class="botao botao-pesquisa" href="#busca-produto">Pesquisar</a>
+        </div>
+    </div>
     <h2>Catálogo de Decoração</h2>
-    <a href="index.html">← Voltar para o site</a>
+    <p>Seleções sofisticadas para transformar seu ambiente.</p>
 </header>
+
+<nav>
+    <div class="nav-conteudo">
+        <div class="menu-links">
+            <a href="index.html">Início</a>
+            <a href="decoracao.html">Decoração</a>
+            <a href="cozinha.html">Cozinha</a>
+            <a href="organizacao.html">Organização</a>
+            <a href="presentes.html">Presentes</a>
+        </div>
+    </div>
+</nav>
 
 <section class="section">
 
+<div class="busca-container">
 <input
     type="search"
     id="busca-produto"
     placeholder="Ex: vaso vidro 30cm azul dourado, material:vidro, marca:royal"
     aria-label="Pesquisar produtos"
-    style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
 >
+</div>
 
 <div class="produtos">
-
     <div class="produto">
         <img src="vaso.jpg">
         <div>
@@ -219,16 +81,18 @@ header a{
             <a class="botao" href="catalogo porta retrato.html">Consultar</a>
         </div>
     </div>
-
 </div>
 
 <div id="resultados-catalogo" class="resultados-catalogo"></div>
-
 <p id="sem-resultados" hidden>Nenhum produto encontrado no catálogo para esta busca.</p>
-
 </section>
 
-<script src="catalog-search.js"></script>
+<a class="whatsapp" href="https://wa.me/5538999140400" target="_blank">WhatsApp</a>
+<footer>
+    <p>© 2026 Casa Melo Decor</p>
+    <p>@casamelodecor</p>
+</footer>
 
+<script src="catalog-search.js"></script>
 </body>
 </html>

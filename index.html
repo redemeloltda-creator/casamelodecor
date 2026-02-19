@@ -9,303 +9,22 @@
 
 <meta name="description" content="Casa Melo Decor em Coração de Jesus MG. Decoração, utilidades e presentes. Atendimento pelo WhatsApp e Instagram. Loja física no centro.">
 
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    scroll-behavior:smooth;
-}
-
-body{
-    font-family:Arial, sans-serif;
-    background:#fff7f7;
-    color:#333;
-}
-
-/* TOPO */
-header{
-    background:#fff;
-    text-align:center;
-    padding:25px;
-    border-bottom:2px solid #f0d2d2;
-}
-
-header img{
-    width:120px;
-}
-
-.logo-link{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    background:#fff;
-    padding:8px 12px;
-    border-radius:10px;
-}
-
-header h1{
-    margin-top:10px;
-    letter-spacing:2px;
-}
-
-header p{
-    color:#777;
-}
-
-/* MENU */
-nav{
-    background:#000;
-    text-align:center;
-    padding:14px;
-    position:sticky;
-    top:0;
-    z-index:1000;
-}
-
-.nav-conteudo{
-    max-width:1100px;
-    margin:0 auto;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-    flex-wrap:wrap;
-}
-
-.menu-links{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:12px;
-    flex-wrap:wrap;
-}
-
-nav a{
-    color:#fff;
-    text-decoration:none;
-    font-weight:bold;
-    font-size:14px;
-}
-
-nav a:hover{
-    color:#f0baba;
-}
-
-.busca-container {
-    position: relative;
-    max-width: 650px;
-    margin: 20px auto;
-}
-
-#campoBusca {
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    outline: none;
-}
-
-#campoBusca:focus {
-    border-color: #000;
-}
-
-.resultados {
-    position: absolute;
-    width: 100%;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    max-height: 450px;
-    overflow-y: auto;
-    display: none;
-    z-index: 999;
-    text-align: left;
-}
-
-.resultado-item {
-    display: flex;
-    gap: 15px;
-    padding: 12px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.resultado-item:hover,
-.resultado-item.ativo {
-    background: #f3f3f3;
-}
-
-.resultado-item img {
-    width: 65px;
-    height: 65px;
-    object-fit: cover;
-    border-radius: 6px;
-}
-
-.resultado-info h4 {
-    margin: 0;
-    font-size: 14px;
-}
-
-.resultado-info p {
-    margin: 2px 0;
-    font-size: 12px;
-    color: #666;
-}
-
-.highlight {
-    background: yellow;
-    font-weight: bold;
-}
-
-.sem-resultado {
-    padding: 15px;
-    text-align: center;
-    color: #777;
-}
-
-/* HERO */
-.hero{
-    background:linear-gradient(rgba(227,177,177,0.85), rgba(0)),
-    url(bunner.jpg) center/cover;
-    text-align:center;
-    padding:100px 20px;
-}
-
-.hero h2{
-    font-size:36px;
-    margin-bottom:10px;
-}
-
-.hero p{
-    font-size:18px;
-    margin-bottom:20px;
-}
-
-/* BOTÕES */
-.botao{
-    display:inline-block;
-    padding:14px 24px;
-    margin:5px;
-    background:#000;
-    color:#fff;
-    text-decoration:none;
-    border-radius:6px;
-    font-weight:bold;
-    transition:0.3s;
-}
-
-.botao:hover{
-    background:#444;
-}
-
-/* SEÇÕES */
-.section{
-    padding:60px 20px;
-    text-align:center;
-}
-
-.section h2{
-    font-size:28px;
-    margin-bottom:25px;
-}
-
-/* PRODUTOS */
-.produtos{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(160px, 200px));
-    justify-content:center;
-    gap:18px;
-}
-
-.produto{
-    background:#fff;
-    border-radius:8px;
-    box-shadow:0 1px 5px rgba(0,0,0,0.08);
-    border:1px solid #f1e1e1;
-    overflow:hidden;
-}
-
-.produto img{
-    width:100%;
-    aspect-ratio:1 / 1;
-    object-fit:cover;
-}
-
-.produto div{
-    padding:12px;
-}
-
-/* DIFERENCIAIS */
-.diferenciais{
-    background:#f8e6e6;
-}
-
-.lista{
-    max-width:800px;
-    margin:auto;
-    text-align:left;
-    font-size:18px;
-    line-height:1.8;
-}
-
-/* MAPA */
-.mapa iframe{
-    width:100%;
-    height:300px;
-    border:0;
-    border-radius:10px;
-}
-
-/* WHATSAPP FIXO */
-.whatsapp{
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    background:#25d366;
-    color:#fff;
-    padding:14px 20px;
-    border-radius:50px;
-    text-decoration:none;
-    font-weight:bold;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-}
-
-/* RODAPÉ */
-footer{
-    background:#000;
-    color:#fff;
-    text-align:center;
-    padding:30px;
-    margin-top:40px;
-}
-
-@media(max-width:600px){
-    .hero h2{
-        font-size:26px;
-    }
-
-    .resultado-item{
-        flex-direction:column;
-        align-items:flex-start;
-    }
-
-    .resultado-thumb{
-        width:100%;
-        height:180px;
-    }
-}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
 <header>
-    <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
-        <img src="logo.png" alt="Casa Melo Decor">
-    </a>
+    <div class="header-topo">
+        <div class="header-esquerda">
+            <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+                <img src="logo.png" alt="Casa Melo Decor">
+            </a>
+            <a class="botao botao-pesquisa" href="decoracao.html" aria-label="Ir para pesquisa de produtos">
+                Pesquisar
+            </a>
+        </div>
+    </div>
     <h1>CASA MELO DECOR</h1>
     <p>Decoração, utilidades e presentes em Coração de Jesus</p>
 </header>
@@ -335,12 +54,9 @@ footer{
     </a>
 </section>
 
+
 <section class="section" id="produtos">
     <h2>Nossos Produtos</h2>
-    <div class="busca-container">
-      <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
-      <div id="resultadosBusca" class="resultados"></div>
-    </div>
 
     <div class="produtos">
         <div class="produto">
