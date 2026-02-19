@@ -92,106 +92,78 @@ nav a:hover{
     color:#f0baba;
 }
 
-.busca-toggle{
-    border:1px solid #fff;
-    background:transparent;
-    color:#fff;
-    border-radius:999px;
-    width:38px;
-    height:38px;
-    cursor:pointer;
-    font-size:18px;
+.busca-container {
+    position: relative;
+    max-width: 650px;
+    margin: 20px auto;
 }
 
-.busca-toggle:hover,
-.busca-toggle:focus-visible{
-    background:#fff;
-    color:#000;
-    outline:none;
+#campoBusca {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    outline: none;
 }
 
-.barra-busca{
-    display:none;
-    width:100%;
-    margin-top:10px;
+#campoBusca:focus {
+    border-color: #000;
 }
 
-.barra-busca.ativa{
-    display:flex;
-    justify-content:center;
+.resultados {
+    position: absolute;
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    max-height: 450px;
+    overflow-y: auto;
+    display: none;
+    z-index: 999;
+    text-align: left;
 }
 
-.barra-busca input{
-    width:min(100%, 460px);
-    padding:10px 12px;
-    border-radius:6px;
-    border:none;
+.resultado-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-.produto.oculto{
-    display:none;
+.resultado-item:hover,
+.resultado-item.ativo {
+    background: #f3f3f3;
 }
 
-.busca-feedback{
-    margin-top:16px;
-    color:#777;
+.resultado-item img {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 6px;
 }
 
-
-.resultados-catalogo{
-    margin:20px auto 0;
-    display:grid;
-    gap:14px;
-    max-width:760px;
-    text-align:left;
+.resultado-info h4 {
+    margin: 0;
+    font-size: 14px;
 }
 
-
-.resultado-link{
-    text-decoration:none;
-    color:inherit;
+.resultado-info p {
+    margin: 2px 0;
+    font-size: 12px;
+    color: #666;
 }
 
-.resultado-item{
-    display:flex;
-    gap:14px;
-    align-items:center;
-    background:#fff;
-    border:1px solid #e9dede;
-    border-radius:12px;
-    padding:14px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+.highlight {
+    background: yellow;
+    font-weight: bold;
 }
 
-.resultado-thumb{
-    width:92px;
-    height:92px;
-    object-fit:cover;
-    border-radius:10px;
-    flex-shrink:0;
-}
-
-.resultado-detalhes h4{
-    margin:0 0 6px;
-    font-size:16px;
-}
-
-.resultado-detalhes p{
-    margin:4px 0;
-    color:#555;
-    font-size:14px;
-}
-
-.resultado-cta{
-    display:inline-block;
-    margin-top:8px;
-    padding:7px 12px;
-    border-radius:999px;
-    background:#111;
-    color:#fff;
-    font-size:13px;
-    font-weight:bold;
-    text-decoration:none;
+.sem-resultado {
+    padding: 15px;
+    text-align: center;
+    color: #777;
 }
 
 /* HERO */
@@ -347,10 +319,6 @@ footer{
             <a href="#local">Localização</a>
             <a href="#contato">Contato</a>
         </div>
-        <button class="busca-toggle" id="abrir-busca" aria-label="Abrir pesquisa" aria-controls="barra-busca" aria-expanded="false">⌕</button>
-        <div class="barra-busca" id="barra-busca">
-            <input type="search" id="busca-produto-home" placeholder="Pesquisar produto, material, marca..." aria-label="Pesquisar produtos">
-        </div>
     </div>
 </nav>
 
@@ -369,8 +337,10 @@ footer{
 
 <section class="section" id="produtos">
     <h2>Nossos Produtos</h2>
-    <div id="resultados-home" class="resultados-catalogo"></div>
-    <p class="busca-feedback" id="sem-resultados-home" hidden>Nenhum produto encontrado para esta busca.</p>
+    <div class="busca-container">
+      <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
+      <div id="resultadosBusca" class="resultados"></div>
+    </div>
 
     <div class="produtos">
         <div class="produto">
@@ -459,27 +429,6 @@ WhatsApp
 </footer>
 
 <script src="catalog-search.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const botaoBusca = document.getElementById('abrir-busca');
-    const barraBusca = document.getElementById('barra-busca');
-    const campoBusca = document.getElementById('busca-produto-home');
-
-    if (!botaoBusca || !barraBusca || !campoBusca) return;
-
-    botaoBusca.addEventListener('click', function () {
-        const aberta = barraBusca.classList.toggle('ativa');
-        botaoBusca.setAttribute('aria-expanded', String(aberta));
-
-        if (aberta) {
-            campoBusca.focus();
-        }
-    });
-});
-</script>
-
-
 </body>
 </html>
-
 
