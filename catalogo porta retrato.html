@@ -69,6 +69,21 @@ header a {
     text-decoration: none;
 }
 
+.logo-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    background: #fff;
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.logo-link img {
+    width: 90px;
+    height: auto;
+}
+
 .container {
     padding: 30px;
     max-width: 1200px;
@@ -172,8 +187,11 @@ header a {
 <body>
 
 <header>
+    <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+        <img src="logo.png" alt="Casa Melo Decor">
+    </a>
     <h1>PORTA RETRATOS</h1>
-    <a href="decoracao.html">← Voltar para o site</a>
+    <a href="index.html">← Voltar para o site</a>
     <p>Confira nossa seleção</p>
 </header>
 
