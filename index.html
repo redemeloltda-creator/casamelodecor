@@ -1,117 +1,96 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<link rel="icon" type="image/png" href="favicon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Casa Melo Decor | Decoração em Coração de Jesus MG</title>
-
-<meta name="description" content="Casa Melo Decor em Coração de Jesus MG. Decoração, utilidades e presentes. Atendimento pelo WhatsApp e Instagram. Loja física no centro.">
+<title>Catálogo de Decoração | Casa Melo Decor</title>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    scroll-behavior:smooth;
-}
-
 body{
     font-family:Arial, sans-serif;
     background:#fff7f7;
-    color:#333;
+    margin:0;
 }
 
 /* TOPO */
 header{
-    background:#fff;
+    background:#000;
+    color:#fff;
     text-align:center;
-    padding:25px;
-    border-bottom:2px solid #f0d2d2;
+    padding:20px;
 }
 
-header img{
-    width:120px;
+header a{
+    color:#fff;
+    text-decoration:none;
+    font-size:14px;
 }
 
 .logo-link{
     display:inline-flex;
     align-items:center;
     justify-content:center;
+    margin-bottom:10px;
     background:#fff;
     padding:8px 12px;
     border-radius:10px;
 }
 
-header h1{
-    margin-top:10px;
-    letter-spacing:2px;
+.logo-link img{
+    width:90px;
+    height:auto;
 }
 
-header p{
-    color:#777;
-}
-
-/* MENU */
-nav{
-    background:#000;
+/* CONTEÚDO */
+.section{
+    padding:40px 20px;
     text-align:center;
-    padding:14px;
-    position:sticky;
-    top:0;
-    z-index:1000;
 }
 
-nav a{
+.produtos{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px, 220px));
+    justify-content:center;
+    gap:18px;
+}
+
+.produto{
+    background:#fff;
+    border-radius:8px;
+    box-shadow:0 1px 5px rgba(0,0,0,0.08);
+    border:1px solid #f1e1e1;
+    overflow:hidden;
+}
+
+.produto img{
+    width:100%;
+    aspect-ratio:1/1;
+    object-fit:cover;
+}
+
+.produto div{
+    padding:10px;
+}
+
+/* BOTÃO */
+.botao{
+    display:inline-block;
+    margin-top:8px;
+    padding:8px 12px;
+    background:#000;
     color:#fff;
     text-decoration:none;
-    margin:0 12px;
+    border-radius:4px;
     font-weight:bold;
-    font-size:14px;
 }
 
-nav a:hover{
-    color:#f0baba;
-}
-
-.botao-lupa{
-    margin-left:8px;
-    border:1px solid #fff;
-    background:transparent;
-    color:#fff;
-    border-radius:999px;
-    padding:6px 10px;
-    cursor:pointer;
-    font-size:16px;
-}
-
-.busca-inicio{
-    display:none;
-    max-width:860px;
-    margin:16px auto 0;
-    padding:16px;
-    background:#fff;
-    border:1px solid #f0d2d2;
-    border-radius:12px;
-}
-
-.busca-inicio.ativa{
-    display:block;
-}
-
-.campo-busca{
-    width:100%;
-    padding:12px;
-    border:1px solid #ddd;
-    border-radius:8px;
-}
-
+/* RESULTADOS DA BUSCA */
 .resultados-catalogo{
-    margin-top:14px;
+    margin:20px auto 0;
     display:grid;
     gap:14px;
     text-align:left;
+    max-width:860px;
 }
 
 .resultado-link{
@@ -164,128 +143,7 @@ nav a:hover{
     color:#fff;
     font-size:13px;
     font-weight:bold;
-}
-
-/* HERO */
-.hero{
-    background:linear-gradient(rgba(227,177,177,0.85), rgba(227,177,177,0.85)),
-    url(bunner.jpg) center/cover;
-    text-align:center;
-    padding:100px 20px;
-}
-
-.hero h2{
-    font-size:36px;
-    margin-bottom:10px;
-}
-
-.hero p{
-    font-size:18px;
-    margin-bottom:20px;
-}
-
-/* BOTÕES */
-.botao{
-    display:inline-block;
-    padding:14px 24px;
-    margin:5px;
-    background:#000;
-    color:#fff;
     text-decoration:none;
-    border-radius:6px;
-    font-weight:bold;
-    transition:0.3s;
-}
-
-.botao:hover{
-    background:#444;
-}
-
-/* SEÇÕES */
-.section{
-    padding:60px 20px;
-    text-align:center;
-}
-
-.section h2{
-    font-size:28px;
-    margin-bottom:25px;
-}
-
-/* PRODUTOS */
-.produtos{
-    display:grid;
-grid-template-columns: repeat(auto-fit, minmax(200px, 220px));
-justify-content: center;
-gap: 18px;
-}
-
-.produto{
-    background:#fff;
-    border-radius:8px;
-    box-shadow:0 1px 5px rgba(0,0,0,0.08);
-    border:1px solid #f1e1e1;
-    overflow:hidden;
-}
-
-.produto img{
-    width:100%;
-    aspect-ratio:1 / 1;
-    object-fit:cover;
-}
-
-.produto div{
-    padding:12px;
-}
-
-/* DIFERENCIAIS */
-.diferenciais{
-    background:#f8e6e6;
-}
-
-.lista{
-    max-width:800px;
-    margin:auto;
-    text-align:left;
-    font-size:18px;
-    line-height:1.8;
-}
-
-/* MAPA */
-.mapa iframe{
-    width:100%;
-    height:300px;
-    border:0;
-    border-radius:10px;
-}
-
-/* WHATSAPP FIXO */
-.whatsapp{
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    background:#25d366;
-    color:#fff;
-    padding:14px 20px;
-    border-radius:50px;
-    text-decoration:none;
-    font-weight:bold;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-}
-
-/* RODAPÉ */
-footer{
-    background:#000;
-    color:#fff;
-    text-align:center;
-    padding:30px;
-    margin-top:40px;
-}
-
-@media(max-width:600px){
-    .hero h2{
-        font-size:26px;
-    }
 }
 </style>
 </head>
@@ -293,152 +151,69 @@ footer{
 <body>
 
 <header>
-<a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+    <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
         <img src="logo.png" alt="Casa Melo Decor">
     </a>
-    <h1>CASA MELO DECOR</h1>
-    <p>Decoração, utilidades e presentes em Coração de Jesus</p>
+    <h2>Catálogo de Decoração</h2>
+    <a href="index.html">← Voltar para o site</a>
 </header>
 
-<nav>
-    <a href="#">Início</a>
-    <a href="#produtos">Produtos</a>
-    <a href="#diferenciais">Por que comprar</a>
-    <a href="#local">Localização</a>
-    <a href="#contato">Contato</a>
-    <button class="botao-lupa" id="abrir-busca" aria-label="Abrir busca de produtos">🔍</button>
-</nav>
+<section class="section">
 
-<section id="busca-inicio" class="busca-inicio" aria-live="polite">
     <input
         type="search"
         id="busca-produto"
-        class="campo-busca"
         placeholder="Ex: vaso vidro, luminária metal, porta retrato"
-        aria-label="Buscar produtos no catálogo"
+        aria-label="Pesquisar produtos por característica"
+        style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
     >
-    <div id="resultados-catalogo" class="resultados-catalogo"></div>
-    <p id="sem-resultados" hidden>Nenhum produto encontrado no catálogo para esta busca.</p>
-</section>
-
-<section class="hero">
-    <h2>Transforme sua casa com elegância</h2>
-    <p>Loja física no centro de Coração de Jesus – MG</p>
-
-    <a class="botao" href="https://wa.me/5538999140400?text=Olá,%20vim%20pelo%20site%20da%20Casa%20Melo%20Decor" target="_blank">
-        Falar no WhatsApp
-    </a>
-
-    <a class="botao" href="https://instagram.com/casamelodecor" target="_blank">
-        Ver Instagram
-    </a>
-</section>
-
-<section class="section" id="produtos">
-    <h2>Nossos Produtos</h2>
 
     <div class="produtos">
+
         <div class="produto">
-            <img src="decoracao logo.jpg">
+            <img src="vaso.jpg">
             <div>
-                <h3>Decoração</h3>
-                <p>Vasos, quadros e peças sofisticadas</p>
-                <a class="botao" href="decoracao.html">
-                    Ver catálogo
-                </a>
+                <h3>Vaso Decorativo</h3>
+                <p>Elegância para sala ou quarto</p>
+                <a class="botao" href="catalogo vaso decorativo.html">Consultar</a>
             </div>
         </div>
 
         <div class="produto">
-            <img src="cozinha logo.jpg">
+            <img src="quadro.jpg">
             <div>
-                <h3>Cozinha</h3>
-                <p>Utensílios modernos e práticos</p>
-                <a class="botao" href="cozinha.html">
-                    Ver catálogo
-                </a>
+                <h3>Quadro Decorativo</h3>
+                <p>Estilo moderno para sua parede</p>
+                <a class="botao" href="catalogo quadro decorativo.html">Consultar</a>
             </div>
         </div>
 
         <div class="produto">
-            <img src="organizador logo.jpg">
+            <img src="luminaria.jpg">
             <div>
-                <h3>Organização</h3>
-                <p>Mais praticidade para o dia a dia</p>
-                <a class="botao" href="organizacao.html">
-                    Ver catálogo
-                </a>
+                <h3>Luminária</h3>
+                <p>Iluminação com design sofisticado</p>
+                <a class="botao" href="catalogo luminaria.html">Consultar</a>
             </div>
         </div>
 
         <div class="produto">
-            <img src="presentes logo.jpg">
+            <img src="porta retrato.jpg">
             <div>
-                <h3>Presentes</h3>
-                <p>Opções elegantes para todas as ocasiões</p>
-                <a class="botao" href="presentes.html">
-                    Ver catálogo
-                </a>
+                <h3>Porta-retratos</h3>
+                <p>Guarde seus momentos especiais</p>
+                <a class="botao" href="catalogo porta retrato.html">Consultar</a>
             </div>
         </div>
+
     </div>
+
+    <div id="resultados-catalogo" class="resultados-catalogo"></div>
+    <p id="sem-resultados" hidden>Nenhum produto encontrado no catálogo para esta busca.</p>
+
 </section>
-
-<section class="section diferenciais" id="diferenciais">
-    <h2>Por que escolher a Casa Melo Decor?</h2>
-
-    <div class="lista">
-        ✔ Loja física no centro da cidade<br>
-        ✔ Produtos selecionados com qualidade<br>
-        ✔ Atendimento rápido pelo WhatsApp<br>
-        ✔ Novidades toda semana no Instagram<br>
-        ✔ Atendimento local e personalizado
-    </div>
-</section>
-
-<section class="section mapa" id="local">
-    <h2>Onde estamos</h2>
-    <iframe src="https://maps.google.com/maps?q=Rua%20Luiz%20Pires%20378%20Coracao%20de%20Jesus&t=&z=15&ie=UTF8&iwloc=&output=embed"></iframe>
-</section>
-
-<section class="section" id="contato">
-    <h2>Contato</h2>
-    <p>Rua Luiz Pires, 378 – Centro</p>
-    <p>Coração de Jesus – MG</p>
-    <p><strong>Horário:</strong><br>
-    Seg a Sex: 8h às 18h<br>
-    Sábado: 8h às 12h</p>
-
-    <a class="botao" href="https://wa.me/5538999140400" target="_blank">
-        Atendimento no WhatsApp
-    </a>
-</section>
-
-<a class="whatsapp" href="https://wa.me/5538999140400" target="_blank">
-WhatsApp
-</a>
-
-<footer>
-    <p>© 2026 Casa Melo Decor</p>
-    <p>@casamelodecor</p>
-</footer>
 
 <script src="catalog-search.js"></script>
-<script>
-const botaoBusca = document.getElementById('abrir-busca');
-const painelBusca = document.getElementById('busca-inicio');
-const campoBuscaInicio = document.getElementById('busca-produto');
-
-botaoBusca.addEventListener('click', () => {
-    painelBusca.classList.toggle('ativa');
-
-    if (painelBusca.classList.contains('ativa')) {
-        campoBuscaInicio.focus();
-    }
-});
-</script>
 
 </body>
 </html>
-
-

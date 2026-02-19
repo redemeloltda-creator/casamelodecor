@@ -27,13 +27,13 @@ header a{
 }
 
 .logo-link{
-display: inline-flex;
-align-items: center;
-justify-content: center;
-margin-bottom: 10px;
-background: #fff;
-padding: 8px 12px;
-border-radius: 10px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:10px;
+    background:#fff;
+    padding:8px 12px;
+    border-radius:10px;
 }
 
 .logo-link img{
@@ -49,9 +49,9 @@ border-radius: 10px;
 
 .produtos{
     display:grid;
-grid-template-columns: repeat(auto-fit, minmax(200px, 220px));
-justify-content: center;
-gap: 18px;
+    grid-template-columns:repeat(auto-fit, minmax(200px, 220px));
+    justify-content:center;
+    gap:18px;
 }
 
 .produto{
@@ -64,7 +64,7 @@ gap: 18px;
 
 .produto img{
     width:100%;
-    aspect-ratio:1 / 1;
+    aspect-ratio:1/1;
     object-fit:cover;
 }
 
@@ -84,23 +84,18 @@ gap: 18px;
     font-weight:bold;
 }
 
+/* RESULTADOS DA BUSCA */
 .resultados-catalogo{
-    margin: 20px auto 0;
-    display: grid;
-gap: 14px;
-    max-width: 760px;
-    text-align: left;
-}
-
-.resultado-link{
-    text-decoration:none;
-    color:inherit;
+    margin:20px auto 0;
+    display:grid;
+    gap:14px;
+    max-width:760px;
+    text-align:left;
 }
 
 .resultado-item{
     display:flex;
-  gap: 14px;
-gap: 12px;
+    gap:14px;
     align-items:center;
     background:#fff;
     border:1px solid #e9dede;
@@ -108,6 +103,7 @@ gap: 12px;
     padding:14px;
     box-shadow:0 6px 18px rgba(0,0,0,0.08);
     transition:transform 0.2s ease, box-shadow 0.2s ease;
+    cursor:pointer;
 }
 
 .resultado-item:hover{
@@ -143,7 +139,19 @@ gap: 12px;
     color:#fff;
     font-size:13px;
     font-weight:bold;
+    text-decoration:none;
 }
+
+@media(max-width:640px){
+    .resultado-item{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .resultado-thumb{
+        width:100%;
+        height:180px;
+    }
 }
 </style>
 </head>
@@ -160,65 +168,30 @@ gap: 12px;
 
 <section class="section">
 
-    <input
-        type="search"
-        id="busca-produto"
-        placeholder="Ex: vaso vidro, luminária metal, porta retrato"
-        aria-label="Pesquisar produtos por característica"
-        style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
-    >
+<input
+    type="search"
+    id="busca-produto"
+    placeholder="Ex: vaso vidro, luminária metal, porta retrato"
+    aria-label="Pesquisar produtos"
+    style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
+>
 
-    <div class="produtos">
+<div class="produtos">
 
-        <div class="produto">
-            <img src="https://images.unsplash.com/photo-1586201375761-83865001e31c">
-            <div>
-                <h3>Jogo de Panelas</h3>
-                <p>Alta qualidade e durabilidade</p>
-                <a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Jogo de Panelas" target="_blank">
-                    Consultar
-                </a>
-            </div>
+    <div class="produto">
+        <img src="https://images.unsplash.com/photo-1586201375761-83865001e31c">
+        <div>
+            <h3>Jogo de Panelas</h3>
+            <p>Alta qualidade e durabilidade</p>
+            <a class="botao" href="#" target="_blank">Consultar</a>
         </div>
-
-        <div class="produto">
-            <img src="https://images.unsplash.com/photo-1606312619070-d48b4c652a52">
-            <div>
-                <h3>Kit de Facas</h3>
-                <p>Precisão e elegância</p>
-                <a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Kit de Facas" target="_blank">
-                    Consultar
-                </a>
-            </div>
-        </div>
-
-        <div class="produto">
-            <img src="https://images.unsplash.com/photo-1588854337221-4cf9fa96059c">
-            <div>
-                <h3>Organizador de Temperos</h3>
-                <p>Mais praticidade no dia a dia</p>
-                <a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Organizador de Temperos" target="_blank">
-                    Consultar
-                </a>
-            </div>
-        </div>
-
-        <div class="produto">
-            <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136">
-            <div>
-                <h3>Kit de Potes</h3>
-                <p>Organização e beleza</p>
-                <a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Kit de Potes" target="_blank">
-                    Consultar
-                </a>
-            </div>
-        </div>
-
     </div>
 
-    <div id="resultados-catalogo" class="resultados-catalogo"></div>
+</div>
 
-    <p id="sem-resultados" hidden>Nenhum produto encontrado no catálogo para esta busca.</p>
+<div id="resultados-catalogo" class="resultados-catalogo"></div>
+
+<p id="sem-resultados" hidden>Nenhum produto encontrado.</p>
 
 </section>
 
