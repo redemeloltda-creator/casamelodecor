@@ -8,26 +8,32 @@
 
 <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
 <header>
-    <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
-        <img src="logo.png" alt="Casa Melo Decor">
-    </a>
+    <div class="header-topo">
+        <div class="header-esquerda">
+            <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+                <img src="logo.png" alt="Casa Melo Decor">
+            </a>
+            <a class="botao botao-pesquisa" href="#campoBusca">Pesquisar</a>
+        </div>
+    </div>
     <h2>Catálogo de Cozinha</h2>
-    <a href="index.html">← Voltar para o site</a>
+    <p>Utilidades práticas com acabamento elegante.</p>
 </header>
 
-<section class="section">
+<nav><div class="nav-conteudo"><div class="menu-links">
+<a href="index.html">Início</a><a href="decoracao.html">Decoração</a><a href="cozinha.html">Cozinha</a><a href="organizacao.html">Organização</a><a href="presentes.html">Presentes</a>
+</div></div></nav>
 
+<section class="section">
 <div class="busca-container">
-      <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
-      <div id="resultadosBusca" class="resultados"></div>
-    </div>
+  <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
+  <div id="resultadosBusca" class="resultados"></div>
+</div>
 
 <div class="produtos">
-
     <div class="produto">
         <img src="https://images.unsplash.com/photo-1586201375761-83865001e31c">
         <div>
@@ -36,13 +42,11 @@
             <a class="botao" href="#" target="_blank">Consultar</a>
         </div>
     </div>
-
 </div>
-
-
 </section>
 
+<a class="whatsapp" href="https://wa.me/5538999140400" target="_blank">WhatsApp</a>
+<footer><p>© 2026 Casa Melo Decor</p><p>@casamelodecor</p></footer>
 <script src="catalog-search.js"></script>
-
 </body>
 </html>
