@@ -29,94 +29,63 @@
       .filter(Boolean)
       .map((token) => mapaSinonimos[token] || token);
 
+  const escaparRegex = (str) =>
+    str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   const campoBusca = document.getElementById('campoBusca');
   const resultadosDiv = document.getElementById('resultadosBusca');
 
   if (!campoBusca || !resultadosDiv) return;
 
-  const cards = Array.from(document.querySelectorAll('.produtos .produto'));
-  if (!cards.length) return;
+  let produtos = [];
 
-  const categoriaPagina =
-    document.querySelector('header h2')?.textContent?.replace('Catálogo de ', '').trim() || 'Produtos';
+  /* =========================
+     CARREGAR JSON
+  ========================== */
 
+  const carregarProdutos = async () => {
+    try {
+      const resposta = await fetch('produtos.json');
+      produtos = await resposta.json();
 
-  const extrairProdutoDoCard = (card, categoria = categoriaPagina) => {
-  const produtosPreparados = cards.map((card) => {
-    const nome = card.querySelector('h3')?.textContent?.trim() || '';
-    const descricao = card.querySelector('p')?.textContent?.trim() || '';
-    const link = card.querySelector('a')?.getAttribute('href') || '#';
-    const imagem = card.querySelector('img')?.getAttribute('src') || '';
-
-    return {
-      nome,
-      categoria,
-      categoria: categoriaPagina,
-      material: descricao,
-      marca: 'Casa Melo Decor',
-      tamanho: 'Consulte opções',
-      link,
-      imagem,
-
-      busca: tokenizar(`${nome} ${categoria} ${descricao}`).join(' ')
-      busca: tokenizar(`${nome} ${categoriaPagina} ${descricao}`).join(' ')
-    };
+      // Criar campo de busca otimizado
+      produtos = produtos.map((produto) => ({
+        ...produto,
+        busca: tokenizar(
+          `${produto.nome} ${produto.categoria} ${produto.material}`
+        ).join(' ')
+      }));
+    } catch (erro) {
+      console.error('Erro ao carregar produtos.json');
+    }
   };
 
-  let produtosPreparados = cards.map((card) => extrairProdutoDoCard(card));
+  /* =========================
+     FILTRO COM RELEVÂNCIA
+  ========================== */
 
-  const paginaAtual = window.location.pathname.split('/').pop() || 'index.html';
+  const filtrarProdutos = (termo) => {
+    const tokens = tokenizar(termo);
+    if (!tokens.length) return [];
 
-  const carregarProdutosExtrasHome = async () => {
-    if (paginaAtual !== 'index.html' && paginaAtual !== '') return;
+    return produtos
+      .map((produto) => {
+        let score = 0;
 
-    const paginasCatalogo = [
-      { arquivo: 'presentes.html', categoria: 'Presentes' },
-      { arquivo: 'cozinha.html', categoria: 'Cozinha' },
-      { arquivo: 'organizacao.html', categoria: 'Organização' }
-    ];
-
-    const produtosExtras = [];
-
-    for (const pagina of paginasCatalogo) {
-      try {
-        const resposta = await fetch(pagina.arquivo);
-        if (!resposta.ok) continue;
-
-        const html = await resposta.text();
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const cardsCatalogo = doc.querySelectorAll('.produtos .produto');
-
-        cardsCatalogo.forEach((card) => {
-          produtosExtras.push(extrairProdutoDoCard(card, pagina.categoria));
+        tokens.forEach((token) => {
+          if (normalizarTexto(produto.nome).includes(token)) score += 3;
+          if (normalizarTexto(produto.categoria).includes(token)) score += 2;
+          if (normalizarTexto(produto.material).includes(token)) score += 1;
         });
-      } catch (_erro) {
-        // mantém busca local caso não consiga carregar alguma página
-      }
-    }
 
-    if (produtosExtras.length) {
-      produtosPreparados = [...produtosPreparados, ...produtosExtras];
-    }
+        return { ...produto, score };
+      })
+      .filter((produto) =>
+        tokens.every((token) => produto.busca.includes(token))
+      )
+      .sort((a, b) => b.score - a.score);
   };
 
-  carregarProdutosExtrasHome();
-
-  const filtrarProdutos = (termo) => {
-    const tokens = tokenizar(termo);
-    if (!tokens.length) return [];
-
-    return produtosPreparados.filter((produto) =>
-      tokens.every((token) => produto.busca.includes(token))
-    );
-  };
-  const filtrarProdutos = (termo) => {
-    const tokens = tokenizar(termo);
-    if (!tokens.length) return [];
-    return produtosPreparados.filter((produto) =>
-      tokens.every((token) => produto.busca.includes(token))
-    );
-  };
   let indiceAtivo = -1;
   let resultadosAtuais = [];
 
@@ -125,8 +94,14 @@
     let resultado = texto;
 
     tokens.forEach((token) => {
-      const regex = new RegExp(`(${token})`, 'gi');
-      resultado = resultado.replace(regex, '<span class="highlight">$1</span>');
+      const regex = new RegExp(
+        `(${escaparRegex(token)})`,
+        'gi'
+      );
+      resultado = resultado.replace(
+        regex,
+        '<span class="highlight">$1</span>'
+      );
     });
 
     return resultado;
@@ -137,7 +112,8 @@
     indiceAtivo = -1;
 
     if (!resultados.length) {
-      resultadosDiv.innerHTML = '<div class="sem-resultado">Nenhum produto encontrado</div>';
+      resultadosDiv.innerHTML =
+        '<div class="sem-resultado">Nenhum produto encontrado</div>';
       resultadosDiv.style.display = 'block';
       return;
     }
@@ -156,7 +132,7 @@
       `;
 
       div.addEventListener('click', () => {
-        window.open(produto.link, '_blank');
+        window.location.href = produto.link;
       });
 
       resultadosDiv.appendChild(div);
@@ -181,32 +157,29 @@
 
   campoBusca.addEventListener('keydown', function (e) {
     const itens = document.querySelectorAll('.resultado-item');
-
     if (!itens.length) return;
+
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      indiceAtivo++;
-      if (indiceAtivo >= itens.length) indiceAtivo = 0;
+      indiceAtivo = (indiceAtivo + 1) % itens.length;
       atualizarSelecao(itens);
     }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      indiceAtivo++;
-      if (indiceAtivo >= itens.length) indiceAtivo = 0;
-      atualizarSelecao(itens);
-    }
+
     if (e.key === 'ArrowUp') {
       e.preventDefault();
-      indiceAtivo--;
-      if (indiceAtivo < 0) indiceAtivo = itens.length - 1;
+      indiceAtivo = (indiceAtivo - 1 + itens.length) % itens.length;
       atualizarSelecao(itens);
     }
 
     if (e.key === 'Enter') {
       e.preventDefault();
       if (indiceAtivo >= 0 && resultadosAtuais[indiceAtivo]) {
-        window.open(resultadosAtuais[indiceAtivo].link, '_blank');
+        window.location.href = resultadosAtuais[indiceAtivo].link;
       }
+    }
+
+    if (e.key === 'Escape') {
+      resultadosDiv.style.display = 'none';
     }
   });
 
@@ -223,4 +196,8 @@
       resultadosDiv.style.display = 'none';
     }
   });
+
+  (async () => {
+    await carregarProdutos();
+  })();
 })();
