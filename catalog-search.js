@@ -1,4 +1,3 @@
-<script>
 (function () {
 
   const produtosCatalogo = [
@@ -108,4 +107,6 @@
   });
 
 })();
+codex/create-catalog-search.js-with-search-functionality-f0boxa
 </script>
+main
