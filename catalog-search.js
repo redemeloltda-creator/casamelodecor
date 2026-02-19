@@ -1,225 +1,17 @@
+<script>
 (function () {
 
-  const PRODUTOS_CATALOGO = [
-    { nome: 'VASO VIDRO 30CM AZUL DOURADO', categoria: 'Vaso Decorativo', material: 'Vidro', marca: 'Royal', tamanho: '30cm', imagem: '186.jpeg', link: 'https://wa.me/p/26366231643027129/553899140400' },
-    { nome: 'VASO CRISTAL 41CM DUBIOS COM PE AMBAR', categoria: 'Vaso Decorativo', material: 'Cristal', marca: 'Fullfit', tamanho: '41cm', imagem: '4096.jpeg', link: 'https://wa.me/p/25828392396817993/553899140400' },
-    { nome: 'VASO VIDRO GRILLO 12,5CM OURO', categoria: 'Vaso Decorativo', material: 'Vidro', marca: 'Grillo', tamanho: '12,5cm', imagem: '5257.jpeg', link: 'https://wa.me/p/26136998852616452/553899140400' },
-    { nome: 'VASO BOJO CERAMICA 28CM G CAFE FOSCO', categoria: 'Vaso Decorativo', material: 'Cerâmica', marca: 'Decorine', tamanho: '28cm', imagem: '5960.jpeg', link: 'https://wa.me/p/25977388951869561/553899140400' },
-    { nome: 'VASO CERAMICA FUNIL MOSTARDA FOSCO', categoria: 'Vaso Decorativo', material: 'Cerâmica', marca: 'Decorine', tamanho: '17,5cm', imagem: '5968.jpeg', link: 'https://wa.me/p/26595200300072948/553899140400' },
-    { nome: 'VASO POTE ESTILO COM TRIPE MADAGAS', categoria: 'Vaso Decorativo', material: 'Cerâmica', marca: 'Decorine', tamanho: '19,5cm', imagem: '5973.jpeg', link: 'https://wa.me/p/26213996851623500/553899140400' },
-    { nome: 'VASO JARRO G TERRACOTA FOSCO TEXTURA', categoria: 'Vaso Decorativo', material: 'Cerâmica', marca: 'Decorine', tamanho: '29cm', imagem: '5979.jpeg', link: 'https://wa.me/p/34239974258949721/553899140400' },
-    { nome: 'VASO VIDRO 36,5CM ADELY COMPE', categoria: 'Vaso Decorativo', material: 'Vidro', marca: 'Adely', tamanho: '36cm', imagem: '6679.jpeg', link: 'https://wa.me/p/26489684963983293/553899140400' },
-    { nome: 'LUMINARIA LED 34CM WOLFF SOMBRIA', categoria: 'Luminária', material: 'Metal', marca: 'Wolff', tamanho: '34cm', imagem: '7895730618297.png', link: 'https://wa.me/p/26467765196161729/553899140400' },
-    { nome: 'LUMINARIA GAIOLA PASSARO LED 22CM', categoria: 'Luminária', material: 'Metal', marca: 'GiftHome', tamanho: '22cm', imagem: '7891100064824.jpeg', link: 'https://wa.me/p/25898652066439804/553899140400' },
-    { nome: 'LUMINARIA LED MESA CHARTI CRISTAL 26CM', categoria: 'Luminária', material: 'Plástico', marca: 'Charti', tamanho: '26cm', imagem: '6991984042756.jpeg', link: 'https://wa.me/p/25601884226179112/553899140400' },
-    { nome: 'LUMINARIA LED PILHA 24CM', categoria: 'Luminária', material: 'Plástico', marca: 'Planeta', tamanho: '24cm', imagem: '7891100060635.png', link: 'https://wa.me/p/26142230972131933/553899140400' },
-    { nome: 'QUADRO DECORATIVO', categoria: 'Quadro Decorativo', material: 'Madeira', marca: 'Casa Melo Decor', tamanho: 'Único', imagem: 'quadro.jpg', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20no%20Quadro%20Decorativo' },
-    { nome: 'PORTA RETRATO 10X15CM ARABESCO DOURADO', categoria: 'Porta-retrato', material: 'Poliresina', marca: 'Adely', tamanho: '15x19,5x5cm', imagem: '7899865438393-1.jpeg', link: 'https://wa.me/p/26458578643765490/553899140400' },
-    { nome: 'PORTA RETRATO 10X15CM ANIMAIS', categoria: 'Porta-retrato', material: 'Poliresina', marca: 'Royal', tamanho: '10x15cm', imagem: '7895730602494.jpeg', link: 'https://wa.me/p/26016942624599737/553899140400' },
-    { nome: 'PORTA RETRATO METAL 10X15 LY C/PALHA PRETO', categoria: 'Porta-retrato', material: 'Metal', marca: 'Lyor', tamanho: '10x15cm', imagem: '7899768056359.jpeg', link: 'https://wa.me/p/25763654979984571/553899140400' },
-    { nome: 'PORTA RETRATO 10X15CM FOLHA GINKGO', categoria: 'Porta-retrato', material: 'Poliresina', marca: 'Adely', tamanho: '10x15cm', imagem: '7899865438355.jpeg', link: 'https://wa.me/p/33889963340647937/553899140400' },
-    { nome: 'PORTO RETRATO MDF 15X20CM LY TEXTURA', categoria: 'Porta-retrato', material: 'MDF', marca: 'Lyor', tamanho: '15x20cm', imagem: '7908323304894.jpeg', link: 'https://wa.me/p/25759645040370999/553899140400' },
-    { nome: 'PORTA RETRATO CERTIFICADO A4', categoria: 'Porta-retrato', material: 'Plástico', marca: 'Livon', tamanho: 'A4', imagem: '7908501007395.png', link: 'https://wa.me/p/25838430742479444/553899140400' },
-    { nome: 'PORTA RETRATO CERTIFICADO A4 MD FWB', categoria: 'Porta-retrato', material: 'Madeira', marca: 'FWB', tamanho: 'A4', imagem: '7908888900838.png', link: 'https://wa.me/p/33842363765411127/553899140400' },
+  const LIMITE_RESULTADOS = 8;
 
-    { nome: 'PORTA RETRATO PLAS 10X15CM NEW DALIA', categoria: 'Porta-retrato', material: 'Plástico', marca: 'Newwey', tamanho: '10x15cm', imagem: '7899865438355.jpeg', link: 'https://wa.me/p/33842363765411127/553899140400' },
-    { nome: 'JOGO DE PANELAS', categoria: 'Cozinha', material: 'Metal', marca: 'Casa Melo Decor', tamanho: 'Kit', imagem: 'https://images.unsplash.com/photo-1586201375761-83865001e31c', link: 'cozinha.html' },
-    { nome: 'CAIXAS ORGANIZADORAS', categoria: 'Organização', material: 'Plástico', marca: 'Casa Melo Decor', tamanho: 'Variado', imagem: 'https://images.unsplash.com/photo-1582582429416-6b3a2bcd1c4d', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20nas%20Caixas%20Organizadoras' },
-    { nome: 'ORGANIZADOR DE GAVETAS', categoria: 'Organização', material: 'Plástico', marca: 'Casa Melo Decor', tamanho: 'Variado', imagem: 'https://images.unsplash.com/photo-1598300053653-1c3c0a1e5a52', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20no%20Organizador%20de%20Gavetas' },
-    { nome: 'CESTOS MULTIUSO', categoria: 'Organização', material: 'Fibra', marca: 'Casa Melo Decor', tamanho: 'Variado', imagem: 'https://images.unsplash.com/photo-1600210492493-0946911123ea', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20nos%20Cestos%20Multiuso' },
-    { nome: 'ORGANIZADOR DE ARMARIO', categoria: 'Organização', material: 'Plástico', marca: 'Casa Melo Decor', tamanho: 'Variado', imagem: 'https://images.unsplash.com/photo-1600607687644-c7f34b3c06e3', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20no%20Organizador%20de%20Arm%C3%A1rio' },
-    { nome: 'CESTA PRESENTEAVEL', categoria: 'Presentes', material: 'Palha', marca: 'Casa Melo Decor', tamanho: 'Variado', imagem: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20na%20Cesta%20Presente%C3%A1vel' },
-    { nome: 'KIT CAFE', categoria: 'Presentes', material: 'Cerâmica', marca: 'Casa Melo Decor', tamanho: 'Kit', imagem: 'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20no%20Kit%20Caf%C3%A9' },
-    { nome: 'KIT AROMATICO', categoria: 'Presentes', material: 'Vidro', marca: 'Casa Melo Decor', tamanho: 'Kit', imagem: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20no%20Kit%20Arom%C3%A1tico' },
-    { nome: 'CANECA PRESENTE', categoria: 'Presentes', material: 'Cerâmica', marca: 'Casa Melo Decor', tamanho: 'Unidade', imagem: 'https://images.unsplash.com/photo-1512909006721-3d6018887383', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20na%20Caneca%20Presente' }
-  ];
-
-    { nome: 'PORTA RETRATO PLAS 10X15CM NEW DALIA', categoria: 'Porta-retrato', material: 'Plástico', marca: 'Newwey', tamanho: '10x15cm', imagem: '7899865438355.jpeg', link: 'https://wa.me/p/33842363765411127/553899140400' }
-  ];
-  const produtosCatalogo = [
-    {
-      nome: 'VASO VIDRO 30CM AZUL DOURADO',
-      categoria: 'Vaso Decorativo',
-      material: 'Vidro',
-      marca: 'Royal',
-      tamanho: '30cm',
-      imagem: '186.jpeg',
-      link: 'https://wa.me/p/26366231643027129/553899140400'
-    },
-    {
-      nome: 'VASO CRISTAL 41CM DUBIOS COM PE AMBAR',
-      categoria: 'Vaso Decorativo',
-      material: 'Cristal',
-      marca: 'Fullfit',
-      tamanho: '41cm',
-      imagem: '4096.jpeg',
-      link: 'https://wa.me/p/25828392396817993/553899140400'
-    },
-    {
-      nome: 'VASO VIDRO GRILLO 12,5CM OURO',
-      categoria: 'Vaso Decorativo',
-      material: 'Vidro',
-      marca: 'Grillo',
-      tamanho: '12,5cm',
-      imagem: '5257.jpeg',
-      link: 'https://wa.me/p/26136998852616452/553899140400'
-    },
-    {
-      nome: 'VASO BOJO CERAMICA 28CM G CAFE FOSCO',
-      categoria: 'Vaso Decorativo',
-      material: 'Cerâmica',
-      marca: 'Decorine',
-      tamanho: '28cm',
-      imagem: '5960.jpeg',
-      link: 'https://wa.me/p/25977388951869561/553899140400'
-    },
-    {
-      nome: 'LUMINARIA LED 34CM WOLFF SOMBRIA',
-      categoria: 'Luminária',
-      material: 'Metal',
-      marca: 'Wolff',
-      tamanho: '34cm',
-      imagem: '7895730618297.png',
-      link: 'https://wa.me/p/26467765196161729/553899140400'
-    },
-    {
-      nome: 'PORTA RETRATO 10X15CM ARABESCO DOURADO',
-      categoria: 'Porta-retrato',
-      material: 'Poliresina',
-      marca: 'Adely',
-      tamanho: '10x15cm',
-      imagem: '7899865438393-1.jpeg',
-      link: 'https://wa.me/p/26458578643765490/553899140400'
-    },
-    {
-      nome: 'PORTA RETRATO 10X15CM ANIMAIS',
-      categoria: 'Porta-retrato',
-      material: 'Poliresina',
-      marca: 'Royal',
-      tamanho: '10x15cm',
-      imagem: '7895730602494.jpeg',
-      link: 'https://wa.me/p/26016942624599737/553899140400'
-    },
-    {
-      nome: 'PORTA RETRATO METAL 10X15 LY C/PALHA PRETO',
-      categoria: 'Porta-retrato',
-      material: 'Metal',
-      marca: 'Lyor',
-      tamanho: '10x15cm',
-      imagem: '7899768056359.jpeg',
-      link: 'https://wa.me/p/25763654979984571/553899140400'
-    },
-    {
-      nome: 'PORTA RETRATO 10X15CM FOLHA GINKGO',
-      categoria: 'Porta-retrato',
-      material: 'Poliresina',
-      marca: 'Adely',
-      tamanho: '10x15cm',
-      imagem: '7899865438355.jpeg',
-      link: 'https://wa.me/p/33889963340647937/553899140400'
-    },
-    {
-      nome: 'QUADRO DECORATIVO',
-      categoria: 'Quadro Decorativo',
-      material: 'Madeira',
-      marca: 'Casa Melo Decor',
-      tamanho: 'Único',
-      imagem: 'quadro.jpg',
-      link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20no%20Quadro%20Decorativo'
-    }
-  ];
-
-  const inputBusca = document.getElementById('busca-produto');
-  const listaCategorias = document.querySelectorAll('.produto');
-  const areaResultados = document.getElementById('resultados-catalogo');
-  const mensagemSemResultados = document.getElementById('sem-resultados');
-
-  if (!inputBusca || !areaResultados || !mensagemSemResultados) {
-    return;
-  }
-main
-
-  const normalizarTexto = (texto) => texto
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const normalizarTexto = (texto) =>
+    texto.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
   const mapaSinonimos = {
-
-    vasos: 'vaso', vidros: 'vidro', retratos: 'retrato', luminarias: 'luminaria',
-    quadros: 'quadro', metalico: 'metal', metalica: 'metal', plastico: 'plastico',
-    dourada: 'dourado', douradas: 'dourado', presentes: 'presente', organizadores: 'organizador'
-  };
-
-  const tokenizar = (texto) => normalizarTexto(texto).split(' ').filter(Boolean).map((token) => mapaSinonimos[token] || token);
-
-  const produtosPreparados = PRODUTOS_CATALOGO.map((produto) => ({
-    ...produto,
-    busca: tokenizar([produto.nome, produto.categoria, `material ${produto.material}`, `marca ${produto.marca}`, `tamanho ${produto.tamanho}`].join(' ')).join(' ')
-  }));
-
-  const filtrarProdutos = (termoBusca) => {
-    const tokens = tokenizar(termoBusca);
-    if (!tokens.length) return [];
-    return produtosPreparados.filter((produto) => tokens.every((token) => produto.busca.includes(token)));
-  };
-
-  const montarCard = (produto) => `
-    <article class="resultado-item">
-      <img class="resultado-thumb" src="${produto.imagem}" alt="${produto.nome}">
-      <div class="resultado-detalhes">
-        <h4>${produto.nome}</h4>
-        <p><strong>Categoria:</strong> ${produto.categoria}</p>
-        <p><strong>Material:</strong> ${produto.material} | <strong>Marca:</strong> ${produto.marca}</p>
-        <p><strong>Tamanho:</strong> ${produto.tamanho}</p>
-        <a class="resultado-cta" href="${produto.link}" target="_blank" rel="noopener noreferrer">Ver produto</a>
-      </div>
-    </article>
-  `;
-
-  const iniciarBusca = ({ inputId, resultadosId, vazioId, cardsSelector }) => {
-    const inputBusca = document.getElementById(inputId);
-    const areaResultados = document.getElementById(resultadosId);
-    const mensagemSemResultados = document.getElementById(vazioId);
-    const cards = cardsSelector ? document.querySelectorAll(cardsSelector) : [];
-
-    if (!inputBusca || !areaResultados || !mensagemSemResultados) return;
-
-    inputBusca.addEventListener('input', (event) => {
-      const termo = event.target.value.trim();
-
-      if (!termo) {
-        areaResultados.innerHTML = '';
-        mensagemSemResultados.hidden = true;
-        cards.forEach((card) => {
-          card.style.display = '';
-        });
-        return;
-      }
-
-      const resultados = filtrarProdutos(termo);
-      cards.forEach((card) => {
-        card.style.display = 'none';
-      });
-
-      if (!resultados.length) {
-        areaResultados.innerHTML = '';
-        mensagemSemResultados.hidden = false;
-        mensagemSemResultados.textContent = 'Nenhum produto encontrado. Tente nome, material, marca ou tamanho.';
-        return;
-      }
-
-      mensagemSemResultados.hidden = true;
-      areaResultados.innerHTML = resultados.map(montarCard).join('');
-    });
-  };
-
-  iniciarBusca({ inputId: 'busca-produto', resultadosId: 'resultados-catalogo', vazioId: 'sem-resultados', cardsSelector: '.produto' });
-  iniciarBusca({ inputId: 'busca-produto-home', resultadosId: 'resultados-home', vazioId: 'sem-resultados-home', cardsSelector: '.produtos .produto' });
-=======
     vasos: 'vaso',
     vidros: 'vidro',
     retratos: 'retrato',
@@ -227,155 +19,127 @@ main
     quadros: 'quadro',
     metalico: 'metal',
     metalica: 'metal',
-
     plastico: 'plastico',
-main
     dourada: 'dourado',
     douradas: 'dourado'
   };
 
-  const tokenizar = (texto) => normalizarTexto(texto)
-    .split(' ')
-    .filter(Boolean)
-    .map((token) => mapaSinonimos[token] || token);
+  const tokenizar = (texto) =>
+    normalizarTexto(texto)
+      .split(' ')
+      .filter(Boolean)
+      .map(token => mapaSinonimos[token] || token);
 
-
-  const produtosPreparados = PRODUTOS_CATALOGO.map((produto) => ({
+  const produtosPreparados = PRODUTOS_CATALOGO.map(produto => ({
     ...produto,
-
-  const produtosPreparados = produtosCatalogo.map((produto, indice) => ({
-    ...produto,
-    id: `produto-${indice + 1}`,
-main
-    busca: tokenizar([
-      produto.nome,
-      produto.categoria,
-      `material ${produto.material}`,
-      `marca ${produto.marca}`,
-      `tamanho ${produto.tamanho}`
-    ].join(' ')).join(' ')
+    busca: tokenizar(
+      `${produto.nome} ${produto.categoria} ${produto.material} ${produto.marca} ${produto.tamanho}`
+    ).join(' ')
   }));
 
-  const filtrarProdutos = (termoBusca) => {
-    const tokens = tokenizar(termoBusca);
-codex/refactor-product-search-functionality-gy9r6u
+  const filtrarProdutos = (termo) => {
+    const tokens = tokenizar(termo);
     if (!tokens.length) return [];
 
-    if (!tokens.length) {
-      return [];
-    }
- main
-
-    return produtosPreparados.filter((produto) =>
-      tokens.every((token) => produto.busca.includes(token))
+    return produtosPreparados.filter(produto =>
+      tokens.every(token => produto.busca.includes(token))
     );
   };
 
- codex/refactor-product-search-functionality-gy9r6u
-  const montarCard = (produto) => `
-    <article class="resultado-item">
-      <img class="resultado-thumb" src="${produto.imagem}" alt="${produto.nome}">
-      <div class="resultado-detalhes">
-        <h4>${produto.nome}</h4>
-        <p><strong>Categoria:</strong> ${produto.categoria}</p>
-        <p><strong>Material:</strong> ${produto.material} | <strong>Marca:</strong> ${produto.marca}</p>
-        <p><strong>Tamanho:</strong> ${produto.tamanho}</p>
-        <a class="resultado-cta" href="${produto.link}" target="_blank" rel="noopener noreferrer">Ver produto</a>
-      </div>
-    </article>
-  `;
+  const campoBusca = document.getElementById('campoBusca');
+  const resultadosDiv = document.getElementById('resultadosBusca');
 
-  const iniciarBusca = ({ inputId, resultadosId, vazioId, cardsSelector }) => {
-    const inputBusca = document.getElementById(inputId);
-    const areaResultados = document.getElementById(resultadosId);
-    const mensagemSemResultados = document.getElementById(vazioId);
-    const cards = cardsSelector ? document.querySelectorAll(cardsSelector) : [];
+  let indiceAtivo = -1;
+  let resultadosAtuais = [];
 
-    if (!inputBusca || !areaResultados || !mensagemSemResultados) return;
+  const destacarTexto = (texto, termo) => {
+    const tokens = tokenizar(termo);
+    let resultado = texto;
 
-    inputBusca.addEventListener('input', (event) => {
-      const termo = event.target.value.trim();
-
-      if (!termo) {
-        areaResultados.innerHTML = '';
-        mensagemSemResultados.hidden = true;
-        cards.forEach((card) => {
-          card.style.display = '';
-        });
-        return;
-      }
-
-      const resultados = filtrarProdutos(termo);
-      cards.forEach((card) => {
-        card.style.display = 'none';
-      });
-
-      if (!resultados.length) {
-        areaResultados.innerHTML = '';
-        mensagemSemResultados.hidden = false;
-        mensagemSemResultados.textContent = 'Nenhum produto encontrado. Tente nome, material, marca ou tamanho.';
-        return;
-      }
-
-      mensagemSemResultados.hidden = true;
-      areaResultados.innerHTML = resultados.map(montarCard).join('');
+    tokens.forEach(token => {
+      const regex = new RegExp(`(${token})`, 'gi');
+      resultado = resultado.replace(regex, '<span class="highlight">$1</span>');
     });
-  };
-  const renderizarResultados = (resultados) => {
-    areaResultados.innerHTML = resultados.map((produto) => `
-      <article class="resultado-item">
-        <img class="resultado-thumb" src="${produto.imagem}" alt="${produto.nome}">
-        <div class="resultado-detalhes">
-          <h4>${produto.nome}</h4>
-          <p><strong>Categoria:</strong> ${produto.categoria}</p>
-          <p><strong>Material:</strong> ${produto.material} | <strong>Marca:</strong> ${produto.marca}</p>
-          <p><strong>Tamanho:</strong> ${produto.tamanho}</p>
-          <a class="resultado-cta" href="${produto.link}" target="_blank" rel="noopener noreferrer">Ver produto</a>
-        </div>
-      </article>
-    `).join('');
+
+    return resultado;
   };
 
-  inputBusca.addEventListener('input', (event) => {
-    const termo = event.target.value.trim();
-
-    if (!termo) {
-      areaResultados.innerHTML = '';
-      mensagemSemResultados.hidden = true;
-      listaCategorias.forEach((categoria) => {
-        categoria.style.display = '';
-      });
-      return;
-    }
-
-    const resultados = filtrarProdutos(termo);
-    listaCategorias.forEach((categoria) => {
-      categoria.style.display = 'none';
-    });
+  const renderizarResultados = (resultados, termo) => {
+    resultadosDiv.innerHTML = '';
+    indiceAtivo = -1;
 
     if (!resultados.length) {
-      areaResultados.innerHTML = '';
-      mensagemSemResultados.hidden = false;
-      mensagemSemResultados.textContent = 'Nenhum produto encontrado. Tente pesquisar por nome, material, marca ou tamanho.';
+      resultadosDiv.innerHTML = '<div class="sem-resultado">Nenhum produto encontrado</div>';
+      resultadosDiv.style.display = 'block';
       return;
     }
- main
 
-  iniciarBusca({
-    inputId: 'busca-produto',
-    resultadosId: 'resultados-catalogo',
-    vazioId: 'sem-resultados',
-    cardsSelector: '.produto'
+    resultados.slice(0, LIMITE_RESULTADOS).forEach((produto, index) => {
+
+      const div = document.createElement('div');
+      div.className = 'resultado-item';
+
+      div.innerHTML = `
+        <img src="${produto.imagem}" alt="${produto.nome}">
+        <div class="resultado-info">
+          <h4>${destacarTexto(produto.nome, termo)}</h4>
+          <p>${produto.categoria} | ${produto.material}</p>
+          <p>Marca: ${produto.marca} | Tam: ${produto.tamanho}</p>
+        </div>
+      `;
+
+      div.addEventListener('click', () => {
+        window.open(produto.link, '_blank');
+      });
+
+      resultadosDiv.appendChild(div);
+    });
+
+    resultadosDiv.style.display = 'block';
+  };
+
+  campoBusca.addEventListener('input', function () {
+    const termo = this.value;
+    resultadosAtuais = filtrarProdutos(termo);
+    renderizarResultados(resultadosAtuais, termo);
   });
 
+  campoBusca.addEventListener('keydown', function (e) {
 
-  iniciarBusca({
-    inputId: 'busca-produto-home',
-    resultadosId: 'resultados-home',
-    vazioId: 'sem-resultados-home',
-    cardsSelector: '.produtos .produto'
+    const itens = document.querySelectorAll('.resultado-item');
+
+    if (e.key === 'ArrowDown') {
+      indiceAtivo++;
+      if (indiceAtivo >= itens.length) indiceAtivo = 0;
+      atualizarSelecao(itens);
+    }
+
+    if (e.key === 'ArrowUp') {
+      indiceAtivo--;
+      if (indiceAtivo < 0) indiceAtivo = itens.length - 1;
+      atualizarSelecao(itens);
+    }
+
+    if (e.key === 'Enter') {
+      if (indiceAtivo >= 0 && resultadosAtuais[indiceAtivo]) {
+        window.open(resultadosAtuais[indiceAtivo].link, '_blank');
+      }
+    }
+
   });
 
-main
+  function atualizarSelecao(itens) {
+    itens.forEach(item => item.classList.remove('ativo'));
+    if (itens[indiceAtivo]) {
+      itens[indiceAtivo].classList.add('ativo');
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    if (!document.querySelector('.busca-container').contains(e.target)) {
+      resultadosDiv.style.display = 'none';
+    }
+  });
 
 })();
+</script>
