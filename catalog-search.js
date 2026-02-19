@@ -1,25 +1,14 @@
+<script>
 (function () {
+
   const produtosCatalogo = [
-    { nome: 'VASO VIDRO 30CM AZUL DOURADO', material: 'Vidro', categoria: 'Vaso Decorativo', pagina: 'catalogo vaso decorativo.html' },
-    { nome: 'VASO CRISTAL 41CM DUBIOS COM PE AMBAR', material: 'Cristal', categoria: 'Vaso Decorativo', pagina: 'catalogo vaso decorativo.html' },
-    { nome: 'VASO VIDRO GRILLO 12,5CM OURO', material: 'Vidro', categoria: 'Vaso Decorativo', pagina: 'catalogo vaso decorativo.html' },
-    { nome: 'VASO BOJO CERAMICA 28CM G CAFE FOSCO', material: 'Ceramica', categoria: 'Vaso Decorativo', pagina: 'catalogo vaso decorativo.html' },
-    { nome: 'VASO CERAMICA FUNIL MOSTARDA FOSCO', material: 'Ceramica', categoria: 'Vaso Decorativo', pagina: 'catalogo vaso decorativo.html' },
-    { nome: 'VASO POTE ESTILO COM TRIPE MADAGAS', material: 'Ceramica', categoria: 'Vaso Decorativo', pagina: 'catalogo vaso decorativo.html' },
-    { nome: 'VASO JARRO G TERRACOTA FOSCO TEXTURA', material: 'Ceramica', categoria: 'Vaso Decorativo', pagina: 'catalogo vaso decorativo.html' },
-    { nome: 'VASO VIDRO 36,5CM ADELY COMPE', material: 'Vidro', categoria: 'Vaso Decorativo', pagina: 'catalogo vaso decorativo.html' },
-    { nome: 'LUMINARIA LED 34CM WOLFF SOMBRIA', material: 'Metal', categoria: 'Luminária', pagina: 'catalogo luminaria.html' },
-    { nome: 'LUMINARIA GAIOLA PASSARO LED 22CM', material: 'Metal', categoria: 'Luminária', pagina: 'catalogo luminaria.html' },
-    { nome: 'LUMINARIA LED MESA CHARTI CRISTAL 26CM', material: 'Plastico', categoria: 'Luminária', pagina: 'catalogo luminaria.html' },
-    { nome: 'LUMINARIA LED PILHA 24CM', material: 'Plastico', categoria: 'Luminária', pagina: 'catalogo luminaria.html' },
-    { nome: 'PORTA RETRATO 10X15CM ARABESCO DOURADO', material: 'Poliresina', categoria: 'Porta-retratos', pagina: 'catalogo porta retrato.html' },
-    { nome: 'PORTA RETRATO 10X15CM ANIMAIS', material: 'Poliresina', categoria: 'Porta-retratos', pagina: 'catalogo porta retrato.html' },
-    { nome: 'PORTA RETRATO METAL 10X15 LY C/PALHA PRETO', material: 'Metal', categoria: 'Porta-retratos', pagina: 'catalogo porta retrato.html' },
-    { nome: 'PORTA RETRATO 10x15CM FOLHA GINKGO', material: 'Poliresina', categoria: 'Porta-retratos', pagina: 'catalogo porta retrato.html' },
-    { nome: 'PORTO RETRATO MDF 15X20CM LY TEXTURA', material: 'MDF', categoria: 'Porta-retratos', pagina: 'catalogo porta retrato.html' },
-    { nome: 'PORTA RETRATO CERTIFICADO A4', material: 'Plastico', categoria: 'Porta-retratos', pagina: 'catalogo porta retrato.html' },
-    { nome: 'PORTA RETRATO CERTIFICADO A4 MD FWB', material: 'Madeira', categoria: 'Porta-retratos', pagina: 'catalogo porta retrato.html' },
-    { nome: 'PORTA RETRATO PLAS 10X15CM NEW DALIA', material: 'Plastico', categoria: 'Porta-retratos', pagina: 'catalogo porta retrato.html' }
+
+    { nome: 'VASO VIDRO 30CM AZUL DOURADO', material: 'Vidro', categoria: 'Vaso Decorativo', imagem: '186.jpeg', pagina: 'catalogo vaso decorativo.html', link: 'https://wa.me/p/26366231643027129/553899140400' },
+    { nome: 'VASO CRISTAL 41CM DUBIOS COM PE AMBAR', material: 'Cristal', categoria: 'Vaso Decorativo', imagem: '4096.jpeg', pagina: 'catalogo vaso decorativo.html', link: 'https://wa.me/p/25828392396817993/553899140400' },
+    { nome: 'LUMINARIA LED 34CM WOLFF SOMBRIA', material: 'Metal', categoria: 'Luminária', imagem: '7895730618297.png', pagina: 'catalogo luminaria.html', link: 'https://wa.me/p/26467765196161729/553899140400' },
+    { nome: 'PORTA RETRATO 10X15CM ARABESCO DOURADO', material: 'Poliresina', categoria: 'Porta-retratos', imagem: '7899865438393-1.jpeg', pagina: 'catalogo porta retrato.html', link: 'https://wa.me/p/26458578643765490/553899140400' },
+    { nome: 'Quadro Decorativo', material: 'Madeira', categoria: 'Quadro Decorativo', imagem: 'quadro.jpg', pagina: 'catalogo quadro decorativo.html', link: 'https://wa.me/5538999140400?text=Tenho%20interesse%20no%20Quadro%20Decorativo' }
+
   ];
 
   const normalizarTexto = (texto) => texto
@@ -34,8 +23,9 @@
     vasos: 'vaso',
     vidros: 'vidro',
     luminarias: 'luminaria',
-    porta: 'porta',
-    retratos: 'retrato'
+    retratos: 'retrato',
+    quadros: 'quadro',
+    porta: 'porta'
   };
 
   const tokenizar = (texto) => normalizarTexto(texto)
@@ -93,13 +83,21 @@
     }
 
     mensagemSemResultados.hidden = true;
+
     resultadosCatalogo.innerHTML = resultados.map((produto) => `
-      <article class="resultado-item">
-        <h4>${produto.nome}</h4>
-        <p><strong>Categoria:</strong> ${produto.categoria}</p>
-        <p><strong>Material:</strong> ${produto.material}</p>
-        <a class="botao" href="${produto.pagina}">Ver no catálogo</a>
-      </article>
+      <a class="resultado-link" href="${produto.link || produto.pagina}" target="_blank">
+        <article class="resultado-item">
+          <img class="resultado-thumb" src="${produto.imagem}" alt="${produto.nome}">
+          <div class="resultado-detalhes">
+            <h4>${produto.nome}</h4>
+            <p><strong>Categoria:</strong> ${produto.categoria}</p>
+            <p><strong>Material:</strong> ${produto.material}</p>
+            <span class="resultado-cta">Comprar agora</span>
+          </div>
+        </article>
+      </a>
     `).join('');
   });
+
 })();
+</script>
