@@ -83,6 +83,30 @@ gap: 18px;
     border-radius:4px;
     font-weight:bold;
 }
+
+.resultados-catalogo{
+    margin: 20px auto 0;
+    display: grid;
+    gap: 12px;
+    max-width: 760px;
+    text-align: left;
+}
+
+.resultado-item{
+    background:#fff;
+    border:1px solid #e9dede;
+    border-radius:8px;
+    padding:14px;
+    box-shadow:0 1px 5px rgba(0,0,0,0.06);
+}
+
+.resultado-item h4{
+    margin:0 0 8px;
+}
+
+.resultado-item p{
+    margin:4px 0;
+}
 </style>
 </head>
 
@@ -101,7 +125,7 @@ gap: 18px;
     <input
         type="search"
         id="busca-produto"
-        placeholder="Ex: armário, espaço, prateleira"
+        placeholder="Ex: vaso vidro, luminária metal, porta retrato"
         aria-label="Pesquisar produtos por característica"
         style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
     >
@@ -154,37 +178,13 @@ gap: 18px;
 
     </div>
 
-    <p id="sem-resultados" hidden>Nenhum produto encontrado com essa característica.</p>
+    <div id="resultados-catalogo" class="resultados-catalogo"></div>
+
+    <p id="sem-resultados" hidden>Nenhum produto encontrado no catálogo para esta busca.</p>
 
 </section>
 
-<script>
-const campoBusca = document.getElementById('busca-produto');
-const listaProdutos = document.querySelectorAll('.produto');
-const mensagemSemResultados = document.getElementById('sem-resultados');
-
-const normalizarTexto = (texto) => texto
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
-
-campoBusca.addEventListener('input', (evento) => {
-    const termo = normalizarTexto(evento.target.value.trim());
-    let produtosVisiveis = 0;
-
-    listaProdutos.forEach((produto) => {
-        const textoProduto = normalizarTexto(produto.textContent);
-        const encontrou = textoProduto.includes(termo);
-        produto.style.display = encontrou ? '' : 'none';
-
-        if (encontrou) {
-            produtosVisiveis += 1;
-        }
-    });
-
-    mensagemSemResultados.hidden = produtosVisiveis !== 0;
-});
-</script>
+<script src="catalog-search.js"></script>
 
 </body>
 </html>
