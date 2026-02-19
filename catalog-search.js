@@ -34,8 +34,19 @@
 
   const campoBusca = document.getElementById('campoBusca');
   const resultadosDiv = document.getElementById('resultadosBusca');
+  const btnBusca = document.getElementById('btnBusca');
+  const barraBusca = document.getElementById('barraBusca');
 
   if (!campoBusca || !resultadosDiv) return;
+
+  if (btnBusca && barraBusca) {
+    btnBusca.addEventListener('click', () => {
+      barraBusca.classList.toggle('aberta');
+      if (barraBusca.classList.contains('aberta')) {
+        campoBusca.focus();
+      }
+    });
+  }
 
   let produtos = [];
 
