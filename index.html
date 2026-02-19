@@ -137,6 +137,57 @@ nav a:hover{
     color:#777;
 }
 
+
+.resultados-catalogo{
+    margin:20px auto 0;
+    display:grid;
+    gap:14px;
+    max-width:760px;
+    text-align:left;
+}
+
+.resultado-item{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    background:#fff;
+    border:1px solid #e9dede;
+    border-radius:12px;
+    padding:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+}
+
+.resultado-thumb{
+    width:92px;
+    height:92px;
+    object-fit:cover;
+    border-radius:10px;
+    flex-shrink:0;
+}
+
+.resultado-detalhes h4{
+    margin:0 0 6px;
+    font-size:16px;
+}
+
+.resultado-detalhes p{
+    margin:4px 0;
+    color:#555;
+    font-size:14px;
+}
+
+.resultado-cta{
+    display:inline-block;
+    margin-top:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#111;
+    color:#fff;
+    font-size:13px;
+    font-weight:bold;
+    text-decoration:none;
+}
+
 /* HERO */
 .hero{
     background:linear-gradient(rgba(227,177,177,0.85), rgba(227,177,177,0.85)),
@@ -257,6 +308,16 @@ footer{
     .hero h2{
         font-size:26px;
     }
+
+    .resultado-item{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .resultado-thumb{
+        width:100%;
+        height:180px;
+    }
 }
 </style>
 </head>
@@ -280,9 +341,9 @@ footer{
             <a href="#local">Localização</a>
             <a href="#contato">Contato</a>
         </div>
-        <button class="busca-toggle" id="abrir-busca" aria-label="Abrir pesquisa" aria-controls="barra-busca" aria-expanded="false">🔍</button>
+        <button class="busca-toggle" id="abrir-busca" aria-label="Abrir pesquisa" aria-controls="barra-busca" aria-expanded="false">⌕</button>
         <div class="barra-busca" id="barra-busca">
-            <input type="search" id="campo-busca" placeholder="Pesquisar categoria de produto..." aria-label="Pesquisar categoria de produto">
+            <input type="search" id="busca-produto-home" placeholder="Pesquisar produto, material, marca..." aria-label="Pesquisar produtos">
         </div>
     </div>
 </nav>
@@ -302,7 +363,8 @@ footer{
 
 <section class="section" id="produtos">
     <h2>Nossos Produtos</h2>
-    <p class="busca-feedback" id="busca-feedback" hidden>Nenhuma categoria encontrada para a sua busca.</p>
+    <div id="resultados-home" class="resultados-catalogo"></div>
+    <p class="busca-feedback" id="sem-resultados-home" hidden>Nenhum produto encontrado para esta busca.</p>
 
     <div class="produtos">
         <div class="produto">
@@ -390,47 +452,26 @@ WhatsApp
     <p>@casamelodecor</p>
 </footer>
 
+<script src="catalog-search.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const botaoBusca = document.getElementById("abrir-busca");
-    const barraBusca = document.getElementById("barra-busca");
-    const campoBusca = document.getElementById("campo-busca");
-    const produtos = Array.from(document.querySelectorAll(".produto"));
-    const feedback = document.getElementById("busca-feedback");
+document.addEventListener('DOMContentLoaded', function () {
+    const botaoBusca = document.getElementById('abrir-busca');
+    const barraBusca = document.getElementById('barra-busca');
+    const campoBusca = document.getElementById('busca-produto-home');
 
-    botaoBusca.addEventListener("click", function () {
-        const aberta = barraBusca.classList.toggle("ativa");
-        botaoBusca.setAttribute("aria-expanded", String(aberta));
+    if (!botaoBusca || !barraBusca || !campoBusca) return;
+
+    botaoBusca.addEventListener('click', function () {
+        const aberta = barraBusca.classList.toggle('ativa');
+        botaoBusca.setAttribute('aria-expanded', String(aberta));
 
         if (aberta) {
             campoBusca.focus();
-        } else {
-            campoBusca.value = "";
-            filtrarProdutos("");
         }
     });
-
-    campoBusca.addEventListener("input", function () {
-        filtrarProdutos(campoBusca.value.toLowerCase().trim());
-    });
-
-    function filtrarProdutos(termo) {
-        let visiveis = 0;
-
-        produtos.forEach(function (item) {
-            const texto = item.textContent.toLowerCase();
-            const mostrar = !termo || texto.includes(termo);
-            item.classList.toggle("oculto", !mostrar);
-
-            if (mostrar) {
-                visiveis += 1;
-            }
-        });
-
-        feedback.hidden = visiveis !== 0;
-    }
 });
 </script>
+
 
 </body>
 </html>
