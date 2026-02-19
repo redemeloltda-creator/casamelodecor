@@ -32,32 +32,6 @@ header a{
     text-align:center;
 }
 
-.barra-pesquisa{
-    max-width:520px;
-    margin:0 auto 24px;
-    text-align:left;
-}
-
-.barra-pesquisa label{
-    display:block;
-    margin-bottom:8px;
-    font-weight:bold;
-}
-
-.barra-pesquisa input{
-    width:100%;
-    padding:12px 14px;
-    border:1px solid #d9b8b8;
-    border-radius:8px;
-    font-size:16px;
-}
-
-.mensagem-sem-resultados{
-    margin-top:20px;
-    color:#666;
-    font-size:16px;
-}
-
 .produtos{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
@@ -104,15 +78,13 @@ header a{
 
 <section class="section">
 
-    <div class="barra-pesquisa">
-        <label for="busca-produto">Busque por características do produto</label>
-        <input
-            type="search"
-            id="busca-produto"
-            placeholder="Ex: prateleiras, praticidade, espaço"
-            aria-label="Pesquisar produtos por características"
-        >
-    </div>
+    <input
+        type="search"
+        id="busca-produto"
+        placeholder="Ex: armário, espaço, prateleira"
+        aria-label="Pesquisar produtos por característica"
+        style="width:100%; max-width:360px; padding:10px; margin-bottom:20px;"
+    >
 
     <div class="produtos">
 
@@ -162,9 +134,7 @@ header a{
 
     </div>
 
-    <p class="mensagem-sem-resultados" id="sem-resultados" hidden>
-        Nenhum produto encontrado com essa característica.
-    </p>
+    <p id="sem-resultados" hidden>Nenhum produto encontrado com essa característica.</p>
 
 </section>
 
@@ -176,7 +146,7 @@ const mensagemSemResultados = document.getElementById('sem-resultados');
 const normalizarTexto = (texto) => texto
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[̀-ͯ]/g, '');
 
 campoBusca.addEventListener('input', (evento) => {
     const termo = normalizarTexto(evento.target.value.trim());
@@ -185,7 +155,6 @@ campoBusca.addEventListener('input', (evento) => {
     listaProdutos.forEach((produto) => {
         const textoProduto = normalizarTexto(produto.textContent);
         const encontrou = textoProduto.includes(termo);
-
         produto.style.display = encontrou ? '' : 'none';
 
         if (encontrou) {
