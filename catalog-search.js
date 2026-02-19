@@ -40,6 +40,8 @@
   const categoriaPagina =
     document.querySelector('header h2')?.textContent?.replace('Catálogo de ', '').trim() || 'Produtos';
 
+
+  const extrairProdutoDoCard = (card, categoria = categoriaPagina) => {
   const produtosPreparados = cards.map((card) => {
     const nome = card.querySelector('h3')?.textContent?.trim() || '';
     const descricao = card.querySelector('p')?.textContent?.trim() || '';
@@ -48,15 +50,57 @@
 
     return {
       nome,
+      categoria,
       categoria: categoriaPagina,
       material: descricao,
       marca: 'Casa Melo Decor',
       tamanho: 'Consulte opções',
       link,
       imagem,
+
+      busca: tokenizar(`${nome} ${categoria} ${descricao}`).join(' ')
       busca: tokenizar(`${nome} ${categoriaPagina} ${descricao}`).join(' ')
     };
-  });
+  };
+
+  let produtosPreparados = cards.map((card) => extrairProdutoDoCard(card));
+
+  const paginaAtual = window.location.pathname.split('/').pop() || 'index.html';
+
+  const carregarProdutosExtrasHome = async () => {
+    if (paginaAtual !== 'index.html' && paginaAtual !== '') return;
+
+    const paginasCatalogo = [
+      { arquivo: 'presentes.html', categoria: 'Presentes' },
+      { arquivo: 'cozinha.html', categoria: 'Cozinha' },
+      { arquivo: 'organizacao.html', categoria: 'Organização' }
+    ];
+
+    const produtosExtras = [];
+
+    for (const pagina of paginasCatalogo) {
+      try {
+        const resposta = await fetch(pagina.arquivo);
+        if (!resposta.ok) continue;
+
+        const html = await resposta.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const cardsCatalogo = doc.querySelectorAll('.produtos .produto');
+
+        cardsCatalogo.forEach((card) => {
+          produtosExtras.push(extrairProdutoDoCard(card, pagina.categoria));
+        });
+      } catch (_erro) {
+        // mantém busca local caso não consiga carregar alguma página
+      }
+    }
+
+    if (produtosExtras.length) {
+      produtosPreparados = [...produtosPreparados, ...produtosExtras];
+    }
+  };
+
+  carregarProdutosExtrasHome();
 
   const filtrarProdutos = (termo) => {
     const tokens = tokenizar(termo);
@@ -66,7 +110,13 @@
       tokens.every((token) => produto.busca.includes(token))
     );
   };
-
+  const filtrarProdutos = (termo) => {
+    const tokens = tokenizar(termo);
+    if (!tokens.length) return [];
+    return produtosPreparados.filter((produto) =>
+      tokens.every((token) => produto.busca.includes(token))
+    );
+  };
   let indiceAtivo = -1;
   let resultadosAtuais = [];
 
@@ -133,14 +183,18 @@
     const itens = document.querySelectorAll('.resultado-item');
 
     if (!itens.length) return;
-
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       indiceAtivo++;
       if (indiceAtivo >= itens.length) indiceAtivo = 0;
       atualizarSelecao(itens);
     }
-
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      indiceAtivo++;
+      if (indiceAtivo >= itens.length) indiceAtivo = 0;
+      atualizarSelecao(itens);
+    }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       indiceAtivo--;
