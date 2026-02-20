@@ -12,7 +12,15 @@
 <header>
     <div class="header-topo"><div class="header-esquerda">
         <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial"><img src="logo.png" alt="Casa Melo Decor"></a>
-        <a class="botao botao-pesquisa" href="#campoBusca">Pesquisar</a>
+        <div class="busca-container">
+                <button id="btnBusca" data-toggle-busca="true">Pesquisar</button>
+
+                <div class="barra-busca" id="barraBusca">
+                    <button type="button" class="btn-fechar-busca" data-close-busca="true" aria-label="Fechar pesquisa">×</button>
+                    <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
+                    <div id="resultadosBusca" class="resultados-busca"></div>
+                </div>
+            </div>
     </div></div>
     <h2>Catálogo de Presentes</h2>
     <p>Opções elegantes para todas as ocasiões.</p>
@@ -21,10 +29,6 @@
 <a href="index.html">Início</a><a href="decoracao.html">Decoração</a><a href="cozinha.html">Cozinha</a><a href="organizacao.html">Organização</a><a href="presentes.html">Presentes</a>
 </div></div></nav>
 <section class="section">
-<div class="busca-container">
-  <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
-  <div id="resultadosBusca" class="resultados"></div>
-</div>
 <div class="produtos">
     <div class="produto"><img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48"><div><h3>Cesta Presenteável</h3><p>Ideal para datas especiais</p><a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse na Cesta Presenteável" target="_blank">Consultar</a></div></div>
     <div class="produto"><img src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb"><div><h3>Kit Café</h3><p>Elegante e funcional</p><a class="botao" href="https://wa.me/5538999140400?text=Tenho interesse no Kit Café" target="_blank">Consultar</a></div></div>
