@@ -182,7 +182,9 @@ nav a:hover { color: #7d6640; }
 .produto p, .card-content p { color: var(--muted); }
 .price { margin-top: 10px; color: #7fd88a; font-weight: 700; }
 
+
 .busca-container { position: relative; width: min(52vw, 760px); margin: 0 auto 26px; z-index: 12000; }
+.busca-container { position: relative; max-width: 980px; margin: 0 auto 26px; z-index: 12000; }
 .barra-busca { display: none; margin-top: 10px; }
 .barra-busca.aberta { display: block; }
 #btnBusca {
