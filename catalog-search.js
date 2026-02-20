@@ -82,8 +82,6 @@
   });
 
 
-  const botoesBusca = document.querySelectorAll('.botao-pesquisa, [data-toggle-busca="true"]');
-
   const abrirBusca = (botao) => {
     const href = botao.getAttribute('href');
     const alvo = href && href.startsWith('#')
