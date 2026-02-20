@@ -34,21 +34,56 @@
 
   const campoBusca = document.getElementById('campoBusca');
   const resultadosDiv = document.getElementById('resultadosBusca');
-  const botoesBusca = document.querySelectorAll('[data-toggle-busca="true"]');
   const barraBusca = document.getElementById('barraBusca');
+  const botoesBusca = document.querySelectorAll('.botao-pesquisa, [data-toggle-busca="true"]');
+
+  const abrirBusca = (botao) => {
+    const href = botao.getAttribute('href');
+    const alvo = href && href.startsWith('#')
+      ? document.querySelector(href)
+      : null;
+
+    const containerBusca = alvo && alvo.closest('.busca-container')
+      ? alvo.closest('.busca-container')
+      : document.querySelector('.busca-container');
+
+    if (containerBusca) {
+      containerBusca.classList.add('busca-ativa');
+    }
+
+    if (barraBusca && botao.matches('[data-toggle-busca="true"]')) {
+      barraBusca.classList.add('aberta');
+    }
+
+    botao.classList.add('oculto');
+
+    const inputBusca = alvo || campoBusca || document.getElementById('busca-produto');
+    if (inputBusca) {
+      inputBusca.focus();
+    }
+  };
+
+  botoesBusca.forEach((botao) => {
+    const href = botao.getAttribute('href');
+    const alvo = href && href.startsWith('#')
+      ? document.querySelector(href)
+      : campoBusca || document.getElementById('busca-produto');
+
+    const containerBusca = alvo && alvo.closest('.busca-container')
+      ? alvo.closest('.busca-container')
+      : document.querySelector('.busca-container');
+
+    if (containerBusca) {
+      containerBusca.classList.add('busca-colapsavel');
+    }
+
+    botao.addEventListener('click', (evento) => {
+      evento.preventDefault();
+      abrirBusca(botao);
+    });
+  });
 
   if (!campoBusca || !resultadosDiv) return;
-
-  if (botoesBusca.length && barraBusca) {
-    botoesBusca.forEach((botao) => {
-      botao.addEventListener('click', () => {
-        barraBusca.classList.toggle('aberta');
-        if (barraBusca.classList.contains('aberta')) {
-          campoBusca.focus();
-        }
-      });
-    });
-  }
 
   let produtos = [];
 
