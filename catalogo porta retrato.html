@@ -12,15 +12,31 @@
 <body>
 
 <header>
-    <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
-        <img src="logo.png" alt="Casa Melo Decor">
-    </a>
-    <h1>PORTA RETRATOS</h1>
-    <a href="decoracao.html">← Voltar para o site</a>
-    <p>Confira nossa seleção</p>
+    <div class="header-topo">
+        <div class="header-esquerda">
+            <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+                <img src="logo.png" alt="Casa Melo Decor">
+            </a>
+            <a class="botao botao-pesquisa" href="#campoBusca">Pesquisar</a>
+        </div>
+    </div>
+    <h2>Catálogo de Porta-retratos</h2>
+    <p>Modelos para destacar os melhores momentos da sua casa.</p>
 </header>
 
-<div class="container">
+<nav>
+    <div class="nav-conteudo">
+        <div class="menu-links">
+            <a href="index.html">Início</a>
+            <a href="decoracao.html">Decoração</a>
+            <a href="cozinha.html">Cozinha</a>
+            <a href="organizacao.html">Organização</a>
+            <a href="presentes.html">Presentes</a>
+        </div>
+    </div>
+</nav>
+
+<section class="section">
 
 <div class="busca-container">
   <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
@@ -146,7 +162,7 @@
 
 
 </div>
-</div>
+</section>
 
 <!-- MODAL -->
 <div id="imageModal" class="modal">
@@ -328,6 +344,9 @@ modal.onclick = function(e) {
   });
 })();
 </script>
+
+<a class="whatsapp" href="https://wa.me/5538999140400" target="_blank">WhatsApp</a>
+<footer><p>© 2026 Casa Melo Decor</p><p>@casamelodecor</p></footer>
 
 </body>
 </html>
