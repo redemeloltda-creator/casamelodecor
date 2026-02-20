@@ -34,21 +34,53 @@
 
   const campoBusca = document.getElementById('campoBusca');
   const resultadosDiv = document.getElementById('resultadosBusca');
-  const botoesBusca = document.querySelectorAll('[data-toggle-busca="true"]');
   const barraBusca = document.getElementById('barraBusca');
+  const botoesBusca = document.querySelectorAll('[data-toggle-busca="true"], .botao-pesquisa');
+  const botoesFecharBusca = document.querySelectorAll('[data-close-busca="true"]');
+
+  botoesBusca.forEach((botao) => {
+    botao.addEventListener('click', (evento) => {
+      evento.preventDefault();
+
+      if (barraBusca) {
+        barraBusca.classList.add('aberta');
+      }
+
+      botao.classList.add('oculto');
+
+      if (campoBusca) {
+        campoBusca.focus();
+      }
+    });
+  });
+
+
+  botoesFecharBusca.forEach((botaoFechar) => {
+    botaoFechar.addEventListener('click', (evento) => {
+      evento.preventDefault();
+      evento.stopPropagation();
+
+      if (barraBusca) {
+        barraBusca.classList.remove('aberta');
+      }
+
+      const botaoAbrir = document.querySelector('[data-toggle-busca="true"], .botao-pesquisa');
+      if (botaoAbrir) {
+        botaoAbrir.classList.remove('oculto');
+      }
+
+      if (resultadosDiv) {
+        resultadosDiv.style.display = 'none';
+        resultadosDiv.innerHTML = '';
+      }
+
+      if (campoBusca) {
+        campoBusca.value = '';
+      }
+    });
+  });
 
   if (!campoBusca || !resultadosDiv) return;
-
-  if (botoesBusca.length && barraBusca) {
-    botoesBusca.forEach((botao) => {
-      botao.addEventListener('click', () => {
-        barraBusca.classList.toggle('aberta');
-        if (barraBusca.classList.contains('aberta')) {
-          campoBusca.focus();
-        }
-      });
-    });
-  }
 
   let produtos = [];
 
