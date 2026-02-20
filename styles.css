@@ -181,11 +181,13 @@ nav a:hover { color: #7d6640; }
 .produto div, .card-content { padding: 16px; }
 .produto p, .card-content p { color: var(--muted); }
 .price { margin-top: 10px; color: #7fd88a; font-weight: 700; }
-
 .busca-container { position: relative; width: min(50vw, 760px); margin: 0 auto 26px; z-index: 12000; }
 .header-esquerda .busca-container { margin: 0; }
 
 .barra-busca { display: none; position: relative; margin-top: 10px; }
+.busca-container { position: relative; width: min(52vw, 760px); margin: 0 auto 26px; z-index: 12000; }
+.busca-container { position: relative; max-width: 980px; margin: 0 auto 26px; z-index: 12000; }
+.barra-busca { display: none; margin-top: 10px; }
 .barra-busca.aberta { display: block; }
 #btnBusca {
   padding: 10px 14px;
@@ -199,6 +201,8 @@ nav a:hover { color: #7d6640; }
   width: 100%;
   min-height: 58px;
   padding: 16px 52px 16px 20px;
+  padding: 16px 20px;
+
   border-radius: 12px;
   border: 1px solid var(--line-strong);
   background: #333;
@@ -207,6 +211,7 @@ nav a:hover { color: #7d6640; }
   font-size: 18px;
 }
 #campoBusca::placeholder, #busca-produto::placeholder { color: #bdbdbd; }
+
 
 .btn-fechar-busca {
   position: absolute;
@@ -223,6 +228,14 @@ nav a:hover { color: #7d6640; }
   z-index: 2;
 }
 .btn-fechar-busca:hover { color: #ffffff; }
+.busca-container.busca-colapsavel #campoBusca,
+.busca-container.busca-colapsavel #busca-produto {
+  display: none;
+}
+.busca-container.busca-colapsavel.busca-ativa #campoBusca,
+.busca-container.busca-colapsavel.busca-ativa #busca-produto {
+  display: block;
+}
 .botao-pesquisa.oculto,
 #btnBusca.oculto {
   display: none;

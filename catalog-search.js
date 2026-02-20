@@ -35,6 +35,7 @@
   const campoBusca = document.getElementById('campoBusca');
   const resultadosDiv = document.getElementById('resultadosBusca');
   const barraBusca = document.getElementById('barraBusca');
+
   const botoesBusca = document.querySelectorAll('[data-toggle-busca="true"], .botao-pesquisa');
   const botoesFecharBusca = document.querySelectorAll('[data-close-busca="true"]');
 
@@ -79,6 +80,56 @@
       }
     });
   });
+
+
+  const botoesBusca = document.querySelectorAll('.botao-pesquisa, [data-toggle-busca="true"]');
+
+  const abrirBusca = (botao) => {
+    const href = botao.getAttribute('href');
+    const alvo = href && href.startsWith('#')
+      ? document.querySelector(href)
+      : null;
+
+    const containerBusca = alvo && alvo.closest('.busca-container')
+      ? alvo.closest('.busca-container')
+      : document.querySelector('.busca-container');
+
+    if (containerBusca) {
+      containerBusca.classList.add('busca-ativa');
+    }
+
+    if (barraBusca && botao.matches('[data-toggle-busca="true"]')) {
+      barraBusca.classList.add('aberta');
+    }
+
+    botao.classList.add('oculto');
+
+    const inputBusca = alvo || campoBusca || document.getElementById('busca-produto');
+    if (inputBusca) {
+      inputBusca.focus();
+    }
+  };
+
+  botoesBusca.forEach((botao) => {
+    const href = botao.getAttribute('href');
+    const alvo = href && href.startsWith('#')
+      ? document.querySelector(href)
+      : campoBusca || document.getElementById('busca-produto');
+
+    const containerBusca = alvo && alvo.closest('.busca-container')
+      ? alvo.closest('.busca-container')
+      : document.querySelector('.busca-container');
+
+    if (containerBusca) {
+      containerBusca.classList.add('busca-colapsavel');
+    }
+
+    botao.addEventListener('click', (evento) => {
+      evento.preventDefault();
+      abrirBusca(botao);
+    });
+  });
+
 
   if (!campoBusca || !resultadosDiv) return;
 
