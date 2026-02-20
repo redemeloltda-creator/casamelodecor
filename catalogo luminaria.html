@@ -5,6 +5,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Luminarias</title>
+<meta name="description" content="Catálogo de luminárias da Casa Melo Decor com opções modernas para iluminar e decorar sua casa.">
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -17,18 +18,26 @@
             <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
                 <img src="logo.png" alt="Casa Melo Decor">
             </a>
-            <a class="botao botao-pesquisa" href="#campoBusca">Pesquisar</a>
+            <div class="busca-container">
+                <button id="btnBusca" data-toggle-busca="true">Pesquisar</button>
+
+                <div class="barra-busca" id="barraBusca">
+                    <button type="button" class="btn-fechar-busca" data-close-busca="true" aria-label="Fechar pesquisa">×</button>
+                    <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
+                    <div id="resultadosBusca" class="resultados"></div>
+                </div>
+            </div>
         </div>
     </div>
-    <h2>Catálogo de Luminárias</h2>
-    <p>Iluminação decorativa para ambientes acolhedores.</p>
+    <h1>CASA MELO DECOR</h1>
+    <p>Decoração, utilidades e presentes em Coração de Jesus</p>
 </header>
 
 <nav>
     <div class="nav-conteudo">
         <div class="menu-links">
             <a href="index.html">Início</a>
-            <a href="decoracao.html">Decoração</a>
+            <a class="link-ativo" href="decoracao.html">Decoração</a>
             <a href="cozinha.html">Cozinha</a>
             <a href="organizacao.html">Organização</a>
             <a href="presentes.html">Presentes</a>
@@ -36,12 +45,17 @@
     </div>
 </nav>
 
-<section class="section">
+<section class="hero hero-catalogo" aria-label="Destaque do catálogo">
+    <div>
+        <p class="hero-tag">Catálogo Casa Melo Decor</p>
+        <h2>Luminárias que unem iluminação e design</h2>
+        <p>Modelos ideais para criar atmosferas aconchegantes com estilo e personalidade.</p>
+        <a class="botao" href="#itens-catalogo">Ver itens do catálogo</a>
+        <a class="botao" href="https://wa.me/5538999140400?text=Olá,%20quero%20saber%20mais%20sobre%20as%20luminárias" target="_blank">Falar sobre luminárias no WhatsApp</a>
+    </div>
+</section>
 
-<div class="busca-container">
-  <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
-  <div id="resultadosBusca" class="resultados"></div>
-</div>
+<section class="section" id="itens-catalogo">
 
 <div class="grid">
 
@@ -105,6 +119,33 @@
 </div>
 </div>
 </div>
+
+<script>
+(function () {
+  const btnBusca = document.querySelector('[data-toggle-busca="true"]');
+  const barraBusca = document.getElementById('barraBusca');
+  const btnFechar = document.querySelector('[data-close-busca="true"]');
+
+  if (!btnBusca || !barraBusca) return;
+
+  btnBusca.addEventListener('click', function (e) {
+    e.preventDefault();
+    barraBusca.classList.add('aberta');
+    btnBusca.classList.add('oculto');
+
+    const campoBusca = document.getElementById('campoBusca');
+    if (campoBusca) campoBusca.focus();
+  });
+
+  if (btnFechar) {
+    btnFechar.addEventListener('click', function (e) {
+      e.preventDefault();
+      barraBusca.classList.remove('aberta');
+      btnBusca.classList.remove('oculto');
+    });
+  }
+})();
+</script>
 
 <!-- MODAL -->
 <div id="imageModal" class="modal">

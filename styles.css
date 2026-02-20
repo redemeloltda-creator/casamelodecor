@@ -91,6 +91,7 @@ nav {
 }
 nav a { color: #1f1f1f; text-decoration: none; font-size: 13px; letter-spacing: 0.8px; text-transform: uppercase; }
 nav a:hover { color: #7d6640; }
+nav a.link-ativo { color: #7d6640; font-weight: 700; }
 
 .botao-pesquisa-nav {
   border: 1px solid #c8c8c8;
@@ -127,6 +128,26 @@ nav a:hover { color: #7d6640; }
 }
 .hero h2 { font-size: clamp(2rem, 4vw, 3.4rem); max-width: 580px; margin-bottom: 12px; }
 .hero p { max-width: 500px; color: #2f2f2f; margin-bottom: 18px; }
+
+.hero-catalogo {
+  min-height: 360px;
+  margin-bottom: 10px;
+  background: linear-gradient(100deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 48%, rgba(255,255,255,0.45) 100%), url("bunner.jpg") center/cover;
+}
+
+.hero-catalogo h2 {
+  font-size: clamp(1.8rem, 3.4vw, 2.9rem);
+  max-width: 700px;
+}
+
+.hero-tag {
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  font-size: 0.78rem;
+  color: #6a5638;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
 
 .section, .container {
   max-width: 1180px;
