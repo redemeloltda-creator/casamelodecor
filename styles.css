@@ -169,6 +169,25 @@ nav a:hover { color: #7d6640; }
   max-width: 520px;
 }
 
+.banner-produto-especifico {
+  margin-top: 30px;
+  border-radius: 20px;
+  padding: 36px;
+  background: linear-gradient(100deg, rgba(209, 176, 123, 0.2) 0%, rgba(38, 38, 38, 0.92) 45%, rgba(26, 26, 26, 0.95) 100%);
+  border: 1px solid rgba(209, 176, 123, 0.4);
+  box-shadow: var(--shadow);
+}
+
+.banner-produto-especifico h2 {
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+.banner-produto-especifico p {
+  max-width: 560px;
+  color: var(--muted);
+}
+
 .botao, .btn-whatsapp {
   display: inline-block;
   padding: 11px 20px;
