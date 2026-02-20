@@ -139,6 +139,36 @@ nav a:hover { color: #7d6640; }
   margin-bottom: 28px;
 }
 
+.banner-localizacao {
+  margin-top: 8px;
+}
+
+.banner-localizacao-conteudo {
+  min-height: 320px;
+  border-radius: 20px;
+  padding: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  background: linear-gradient(100deg, rgba(20, 20, 20, 0.78) 0%, rgba(20, 20, 20, 0.35) 55%, rgba(20, 20, 20, 0.2) 100%), url("bunner.jpg") center/cover;
+  box-shadow: var(--shadow);
+}
+
+.banner-localizacao-destaque {
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  font-size: 0.78rem;
+  color: #efe2ca;
+  margin-bottom: 8px;
+}
+
+.banner-localizacao h2 {
+  text-align: left;
+  margin-bottom: 10px;
+  max-width: 520px;
+}
+
 .botao, .btn-whatsapp {
   display: inline-block;
   padding: 11px 20px;
