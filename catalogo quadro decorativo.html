@@ -147,6 +147,7 @@
 </div>
 
 </div>
+</section>
 
 <script>
 (function () {
@@ -173,6 +174,33 @@
     });
   }
 })();
+</script>
+
+<!-- MODAL -->
+<div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImg">
+</div>
+
+<script>
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("modalImg");
+const closeBtn = document.querySelector(".close");
+
+document.querySelectorAll(".product-img").forEach(img => {
+    img.addEventListener("click", function(){
+        modal.style.display = "block";
+        modalImg.src = this.src;
+    });
+});
+
+closeBtn.onclick = () => modal.style.display = "none";
+
+modal.onclick = function(e) {
+    if (e.target !== modalImg) {
+        modal.style.display = "none";
+    }
+}
 </script>
 
 <script>
