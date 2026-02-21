@@ -194,6 +194,32 @@ header a:hover { color: #111; }
   font-size: 12px;
 }
 
+.carrinho-item-acoes {
+  margin-top: 6px;
+}
+
+.carrinho-item-comprar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: #fff;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+}
+
+.carrinho-item-comprar:hover {
+  background: #000;
+}
+
+.carrinho-item-comprar.desabilitado {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
 .carrinho-item-remover {
   border: none;
   background: transparent;
@@ -213,26 +239,6 @@ header a:hover { color: #111; }
   font-size: 13px;
 }
 
-
-.carrinho-comprar {
-  display: inline-flex;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-  margin-top: 12px;
-  border-radius: 8px;
-  border: none;
-  background: #1f1f1f;
-  color: #fff;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 10px 12px;
-}
-
-.carrinho-comprar:hover {
-  background: #000;
-}
 
 .perfil-botao {
   width: 42px;
