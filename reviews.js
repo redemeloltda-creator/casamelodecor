@@ -10,6 +10,7 @@
   if (!form || !heartsInput || !comentarioInput || !feedback || !lista || !btnEnviar || !btnLogin) return;
 
   const chaveSessao = 'casamelo_usuario_logado';
+  const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   let notaSelecionada = 0;
 
@@ -27,6 +28,27 @@
     } catch (erro) {
       return [];
     }
+  };
+
+  const carregarUsuarios = () => {
+    try {
+      return JSON.parse(localStorage.getItem(chaveUsuarios) || '[]');
+    } catch (erro) {
+      return [];
+    }
+  };
+
+  const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
+
+  const buscarFotoUsuario = (avaliacao, usuarios) => {
+    const fotoAvaliacao = String(avaliacao?.foto || '').trim();
+    if (fotoAvaliacao) return fotoAvaliacao;
+
+    const celular = normalizarCelular(avaliacao?.celular);
+    if (!celular) return '';
+
+    const usuario = usuarios.find((item) => normalizarCelular(item?.celular) === celular);
+    return String(usuario?.foto || '').trim();
   };
 
   const salvarAvaliacoes = (avaliacoes) => {
@@ -62,6 +84,7 @@
 
   const renderizarAvaliacoes = () => {
     const avaliacoes = carregarAvaliacoes();
+    const usuarios = carregarUsuarios();
 
     if (!avaliacoes.length) {
       lista.innerHTML = '<p class="avaliacao-vazia">Ainda não há avaliações. Seja a primeira pessoa a comentar.</p>';
@@ -75,7 +98,7 @@
         const nome = avaliacao.nome || 'Cliente';
         const texto = avaliacao.comentario || '';
         const nota = Number(avaliacao.nota) || 0;
-        const foto = String(avaliacao.foto || '').trim();
+        const foto = buscarFotoUsuario(avaliacao, usuarios);
         const inicial = nome.trim().charAt(0).toUpperCase() || 'C';
         const avatar = foto
           ? `<img class="avaliacao-avatar" src="${escaparHtml(foto)}" alt="Foto de ${escaparHtml(nome)}" loading="lazy">`
@@ -137,6 +160,7 @@
     const avaliacoes = carregarAvaliacoes();
     avaliacoes.push({
       nome: usuario.nome || 'Cliente',
+      celular: usuario.celular || '',
       foto: usuario.foto || '',
       nota: notaSelecionada,
       comentario
