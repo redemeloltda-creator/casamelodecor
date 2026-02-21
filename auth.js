@@ -19,6 +19,11 @@
 
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveSessao = 'casamelo_usuario_logado';
+  const totalDigitosCelular = 11;
+
+  const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
+
+  const celularValido = (valor) => normalizarCelular(valor).length === totalDigitosCelular;
 
   const carregarUsuarios = () => {
     try {
@@ -119,11 +124,11 @@
 
     const dados = new FormData(formCadastro);
     const nome = String(dados.get('nome') || '').trim();
-    const celular = String(dados.get('celular') || '').trim();
+    const celular = normalizarCelular(dados.get('celular'));
     const senha = String(dados.get('senha') || '');
 
-    if (!nome || !celular || senha.length < 6) {
-      feedback.textContent = 'Preencha os dados corretamente para cadastrar.';
+    if (!nome || !celularValido(celular) || senha.length < 6) {
+      feedback.textContent = 'Use um celular com DDD + 9 números e senha de no mínimo 6 caracteres.';
       return;
     }
 
@@ -146,13 +151,17 @@
     evento.preventDefault();
 
     const dados = new FormData(formLogin);
-    const login = String(dados.get('login') || '').trim().toLowerCase();
+    const login = String(dados.get('login') || '').trim();
     const senha = String(dados.get('senha') || '');
+    const celularLogin = normalizarCelular(login);
+
+    if (!celularValido(celularLogin)) {
+      feedback.textContent = 'Informe seu celular com DDD + 9 números.';
+      return;
+    }
 
     const usuarios = carregarUsuarios();
-    const usuario = usuarios.find(
-      (item) => (item.email === login || String(item.celular || '').toLowerCase() === login) && item.senha === senha
-    );
+    const usuario = usuarios.find((item) => normalizarCelular(item.celular) === celularLogin && item.senha === senha);
 
     if (!usuario) {
       feedback.textContent = 'Login inválido. Confira os dados e senha.';
