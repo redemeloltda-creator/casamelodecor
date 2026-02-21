@@ -62,19 +62,20 @@
       botao.hidden = Boolean(usuario);
     });
 
-    if (!perfilMenu || !perfilNome || !perfilEmail) return;
-
-    if (usuario) {
-      perfilMenu.hidden = false;
-      perfilNome.textContent = usuario.nome;
-      perfilEmail.textContent = usuario.contato;
-      return;
+    if (perfilMenu && perfilNome && perfilEmail) {
+      if (usuario) {
+        perfilMenu.hidden = false;
+        perfilNome.textContent = usuario.nome;
+        perfilEmail.textContent = usuario.contato;
+      } else {
+        perfilMenu.hidden = true;
+        perfilNome.textContent = '';
+        perfilEmail.textContent = '';
+        fecharPainelPerfil();
+      }
     }
 
-    perfilMenu.hidden = true;
-    perfilNome.textContent = '';
-    perfilEmail.textContent = '';
-    fecharPainelPerfil();
+    document.dispatchEvent(new Event('casamelo-auth-change'));
   };
 
   const trocarAba = (aba) => {

@@ -570,6 +570,103 @@ footer {
   cursor: pointer;
 }
 
+
+.avaliacoes-info {
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.avaliacao-form {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+}
+
+.avaliacao-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.hearts {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.heart-btn {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: #8a8a8a;
+  font-size: 30px;
+  line-height: 1;
+  border-radius: 10px;
+  width: 48px;
+  height: 46px;
+  cursor: pointer;
+}
+
+.heart-btn.ativo,
+.heart-btn:hover {
+  color: #ff5f87;
+  border-color: #ff5f87;
+}
+
+#comentarioAvaliacao {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  padding: 12px;
+  resize: vertical;
+  margin-bottom: 10px;
+  background: #252525;
+  color: var(--text);
+}
+
+.botao-secundario {
+  background: transparent;
+  color: #fff;
+}
+
+.lista-avaliacoes {
+  margin: 24px auto 0;
+  max-width: 700px;
+  display: grid;
+  gap: 12px;
+}
+
+.avaliacao-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  padding: 14px;
+}
+
+.avaliacao-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 10px;
+}
+
+.avaliacao-nome {
+  font-weight: 700;
+}
+
+.avaliacao-nota {
+  color: #ff5f87;
+}
+
+.avaliacao-vazia {
+  color: var(--muted);
+  text-align: center;
+}
+
 @media (max-width: 760px) {
   .hero { margin: 0; border-radius: 0; padding: 82px 18px; min-height: 380px; }
   .hero h2, .hero p { max-width: 100%; }
