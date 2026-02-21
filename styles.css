@@ -859,6 +859,28 @@ footer {
   color: #ff5f87;
 }
 
+.avaliacao-acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avaliacao-excluir {
+  border: 1px solid #a53d3d;
+  background: transparent;
+  color: #ff9d9d;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.avaliacao-excluir:hover {
+  background: rgba(255, 89, 89, 0.15);
+}
+
 .avaliacao-vazia {
   color: var(--muted);
   text-align: center;
