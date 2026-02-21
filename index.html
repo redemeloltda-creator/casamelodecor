@@ -32,9 +32,21 @@
             </div>
         </div>
 
-        <div class="header-direita">
+        <div class="header-direita" id="authArea">
             <button type="button" class="auth-btn" data-auth-open="login">Login</button>
             <button type="button" class="auth-btn auth-btn-outline" data-auth-open="cadastro">Cadastro</button>
+
+            <div class="perfil-menu" id="perfilMenu" hidden>
+                <button type="button" class="perfil-botao" id="perfilBotao" aria-label="Abrir perfil" aria-expanded="false">
+                    <span aria-hidden="true">👤</span>
+                </button>
+                <div class="perfil-painel" id="perfilPainel" hidden>
+                    <p class="perfil-titulo">Seu perfil</p>
+                    <p class="perfil-nome" id="perfilNome"></p>
+                    <p class="perfil-email" id="perfilEmail"></p>
+                    <button type="button" class="perfil-sair" id="perfilSair">Sair</button>
+                </div>
+            </div>
         </div>
     </div>
     <h1>CASA MELO DECOR</h1>
