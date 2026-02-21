@@ -134,6 +134,7 @@
     fotoPendente = foto;
     if (perfilSalvarFoto) perfilSalvarFoto.hidden = false;
     if (perfilFotoPendente) perfilFotoPendente.hidden = false;
+    atualizarAvatar({ foto });
   };
 
   const limparSessao = () => {
@@ -581,12 +582,14 @@
       if (!arquivo.type.startsWith('image/')) {
         feedback.textContent = 'Escolha um arquivo de imagem válido (PNG, JPG ou WEBP).';
         limparAlteracaoFotoPendente();
+        atualizarAvatar(carregarSessao());
         return;
       }
 
       if (arquivo.size > tamanhoMaximoFoto) {
         feedback.textContent = 'A foto deve ter até 2MB para manter o site rápido.';
         limparAlteracaoFotoPendente();
+        atualizarAvatar(carregarSessao());
         return;
       }
 
@@ -596,6 +599,7 @@
 
         if (!foto) {
           limparAlteracaoFotoPendente();
+          atualizarAvatar(carregarSessao());
           return;
         }
 
