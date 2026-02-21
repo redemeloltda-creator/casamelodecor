@@ -173,6 +173,13 @@ header a:hover { color: #111; }
   gap: 2px;
 }
 
+.carrinho-item-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .carrinho-item:last-child {
   border-bottom: none;
 }
@@ -185,6 +192,20 @@ header a:hover { color: #111; }
 .carrinho-item-preco {
   color: #5a5a5a;
   font-size: 12px;
+}
+
+.carrinho-item-remover {
+  border: none;
+  background: transparent;
+  color: #8a8a8a;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.carrinho-item-remover:hover {
+  color: #1f1f1f;
 }
 
 .carrinho-vazio {
