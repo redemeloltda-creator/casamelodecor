@@ -12,7 +12,10 @@
   const chaveSessao = 'casamelo_usuario_logado';
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
+  const endpointAvaliacoesOnline = 'https://jsonblob.com/api/jsonBlob/1342888989686272000';
+
   let notaSelecionada = 0;
+  let avaliacoesCache = [];
 
   const carregarSessao = () => {
     try {
@@ -22,9 +25,10 @@
     }
   };
 
-  const carregarAvaliacoes = () => {
+  const carregarAvaliacoesLocais = () => {
     try {
-      return JSON.parse(localStorage.getItem(chaveAvaliacoes) || '[]');
+      const dados = JSON.parse(localStorage.getItem(chaveAvaliacoes) || '[]');
+      return Array.isArray(dados) ? dados : [];
     } catch (erro) {
       return [];
     }
@@ -51,8 +55,48 @@
     return String(usuario?.foto || '').trim();
   };
 
-  const salvarAvaliacoes = (avaliacoes) => {
+  const salvarAvaliacoesLocais = (avaliacoes) => {
     localStorage.setItem(chaveAvaliacoes, JSON.stringify(avaliacoes));
+  };
+
+  const salvarAvaliacoesOnline = async (avaliacoes) => {
+    const resposta = await fetch(endpointAvaliacoesOnline, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(avaliacoes)
+    });
+
+    if (!resposta.ok) {
+      throw new Error('Falha ao salvar avaliações online.');
+    }
+  };
+
+  const carregarAvaliacoesOnline = async () => {
+    const resposta = await fetch(endpointAvaliacoesOnline, {
+      cache: 'no-store'
+    });
+
+    if (!resposta.ok) {
+      throw new Error('Falha ao carregar avaliações online.');
+    }
+
+    const dados = await resposta.json();
+    return Array.isArray(dados) ? dados : [];
+  };
+
+  const salvarComFallback = async (avaliacoes) => {
+    avaliacoesCache = avaliacoes;
+    salvarAvaliacoesLocais(avaliacoes);
+
+    try {
+      await salvarAvaliacoesOnline(avaliacoes);
+      return true;
+    } catch (erro) {
+      feedback.textContent = 'Comentário salvo apenas neste dispositivo. Verifique sua conexão para publicar online.';
+      return false;
+    }
   };
 
   const coracoes = (nota) => '❤'.repeat(nota);
@@ -83,18 +127,16 @@
   };
 
   const renderizarAvaliacoes = () => {
-    const avaliacoes = carregarAvaliacoes();
     const usuarios = carregarUsuarios();
     const usuarioLogado = carregarSessao();
     const celularLogado = normalizarCelular(usuarioLogado?.celular);
 
-    if (!avaliacoes.length) {
+    if (!avaliacoesCache.length) {
       lista.innerHTML = '<p class="avaliacao-vazia">Ainda não há avaliações. Seja a primeira pessoa a comentar.</p>';
       return;
     }
 
-    lista.innerHTML = avaliacoes
-      .map((avaliacao, indice) => ({ ...avaliacao, indice }))
+    lista.innerHTML = [...avaliacoesCache]
       .reverse()
       .map((avaliacao) => {
         const nome = avaliacao.nome || 'Cliente';
@@ -108,7 +150,7 @@
           ? `<img class="avaliacao-avatar" src="${escaparHtml(foto)}" alt="Foto de ${escaparHtml(nome)}" loading="lazy">`
           : `<span class="avaliacao-avatar-fallback" aria-hidden="true">${escaparHtml(inicial)}</span>`;
         const acaoExcluir = podeExcluir
-          ? `<button type="button" class="avaliacao-excluir" data-avaliacao-indice="${avaliacao.indice}" aria-label="Excluir comentário de ${escaparHtml(nome)}">Excluir</button>`
+          ? `<button type="button" class="avaliacao-excluir" data-avaliacao-id="${escaparHtml(avaliacao.id)}" aria-label="Excluir comentário de ${escaparHtml(nome)}">Excluir</button>`
           : '';
 
         return `
@@ -130,14 +172,13 @@
       .join('');
   };
 
-  lista.addEventListener('click', (evento) => {
-    const botaoExcluir = evento.target.closest('[data-avaliacao-indice]');
+  lista.addEventListener('click', async (evento) => {
+    const botaoExcluir = evento.target.closest('[data-avaliacao-id]');
     if (!botaoExcluir) return;
 
     const usuario = carregarSessao();
-    const indice = Number(botaoExcluir.dataset.avaliacaoIndice);
-    const avaliacoes = carregarAvaliacoes();
-    const avaliacao = avaliacoes[indice];
+    const idAvaliacao = String(botaoExcluir.dataset.avaliacaoId);
+    const avaliacao = avaliacoesCache.find((item) => String(item.id) === idAvaliacao);
 
     if (!usuario || !avaliacao) return;
 
@@ -149,10 +190,13 @@
       return;
     }
 
-    avaliacoes.splice(indice, 1);
-    salvarAvaliacoes(avaliacoes);
+    const proximaLista = avaliacoesCache.filter((item) => String(item.id) !== idAvaliacao);
+    const publicouOnline = await salvarComFallback(proximaLista);
     renderizarAvaliacoes();
-    feedback.textContent = 'Comentário excluído com sucesso.';
+
+    if (publicouOnline) {
+      feedback.textContent = 'Comentário excluído com sucesso.';
+    }
   });
 
   const atualizarEstadoFormulario = () => {
@@ -170,7 +214,7 @@
     }
   };
 
-  form.addEventListener('submit', (evento) => {
+  form.addEventListener('submit', async (evento) => {
     evento.preventDefault();
 
     const usuario = carregarSessao();
@@ -192,27 +236,48 @@
       return;
     }
 
-    const avaliacoes = carregarAvaliacoes();
-    avaliacoes.push({
+    const novaAvaliacao = {
       id: Date.now(),
       nome: usuario.nome || 'Cliente',
       celular: usuario.celular || '',
       foto: usuario.foto || '',
       nota: notaSelecionada,
       comentario
-    });
+    };
 
-    salvarAvaliacoes(avaliacoes);
+    const proximaLista = [...avaliacoesCache, novaAvaliacao];
+    const publicouOnline = await salvarComFallback(proximaLista);
+
     comentarioInput.value = '';
     notaSelecionada = 0;
     renderizarHearts();
     renderizarAvaliacoes();
-    feedback.textContent = 'Avaliação enviada com sucesso. Obrigado!';
+
+    if (publicouOnline) {
+      feedback.textContent = 'Avaliação enviada e publicada online com sucesso. Obrigado!';
+    }
   });
 
   document.addEventListener('casamelo-auth-change', atualizarEstadoFormulario);
 
-  renderizarHearts();
-  renderizarAvaliacoes();
-  atualizarEstadoFormulario();
+  const iniciarAvaliacoes = async () => {
+    renderizarHearts();
+    atualizarEstadoFormulario();
+
+    const avaliacoesLocais = carregarAvaliacoesLocais();
+    avaliacoesCache = avaliacoesLocais;
+    renderizarAvaliacoes();
+
+    try {
+      const avaliacoesOnline = await carregarAvaliacoesOnline();
+      avaliacoesCache = avaliacoesOnline;
+      salvarAvaliacoesLocais(avaliacoesOnline);
+      renderizarAvaliacoes();
+      feedback.textContent = '';
+    } catch (erro) {
+      feedback.textContent = 'Não foi possível sincronizar avaliações online agora. Exibindo comentários deste dispositivo.';
+    }
+  };
+
+  iniciarAvaliacoes();
 })();
