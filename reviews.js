@@ -210,7 +210,10 @@
     feedback.textContent = 'Avaliação enviada com sucesso. Obrigado!';
   });
 
-  document.addEventListener('casamelo-auth-change', atualizarEstadoFormulario);
+  document.addEventListener('casamelo-auth-change', () => {
+    atualizarEstadoFormulario();
+    renderizarAvaliacoes();
+  });
 
   renderizarHearts();
   renderizarAvaliacoes();
