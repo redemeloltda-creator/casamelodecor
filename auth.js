@@ -19,6 +19,7 @@
   const perfilAvatarFallbackPainel = document.getElementById('perfilAvatarFallbackPainel');
   const perfilFotoInput = document.getElementById('perfilFotoInput');
   const perfilEditarFoto = document.getElementById('perfilEditarFoto');
+  const perfilExcluirConta = document.getElementById('perfilExcluirConta');
   const perfilSair = document.getElementById('perfilSair');
   const carrinhoMenu = document.getElementById('carrinhoMenu');
   const carrinhoBotao = document.getElementById('carrinhoBotao');
@@ -98,6 +99,14 @@
 
   const limparSessao = () => {
     localStorage.removeItem(chaveSessao);
+  };
+
+  const excluirConta = (celular) => {
+    const usuarios = carregarUsuarios();
+    const usuariosAtualizados = usuarios.filter((item) => normalizarCelular(item.celular) !== normalizarCelular(celular));
+
+    salvarUsuarios(usuariosAtualizados);
+    limparSessao();
   };
 
   const carregarCarrinho = () => {
@@ -362,6 +371,23 @@
     });
 
     document.addEventListener('casamelo-cart-change', atualizarCarrinho);
+  }
+
+  if (perfilExcluirConta) {
+    perfilExcluirConta.addEventListener('click', () => {
+      const usuario = carregarSessao();
+
+      if (!usuario?.celular) return;
+
+      const confirmou = window.confirm('Tem certeza que deseja excluir sua conta deste dispositivo? Esta ação não pode ser desfeita.');
+
+      if (!confirmou) return;
+
+      excluirConta(usuario.celular);
+      atualizarAreaPerfil();
+      fecharPainelPerfil();
+      feedback.textContent = 'Conta excluída com sucesso.';
+    });
   }
 
   if (perfilSair) {
