@@ -12,6 +12,7 @@
   const chaveSessao = 'casamelo_usuario_logado';
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
+  const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
   const endpointAvaliacoesOnline = 'https://jsonblob.com/api/jsonBlob/1342888989686272000';
   const intervaloSincronizacaoMs = 60000;
 
@@ -26,10 +27,34 @@
     }
   };
 
+  const normalizarListaAvaliacoes = (valor) => {
+    if (!Array.isArray(valor)) return [];
+
+    return valor.filter((item) => item && typeof item === 'object' && item.comentario);
+  };
+
   const carregarAvaliacoesLocais = () => {
     try {
-      const dados = JSON.parse(localStorage.getItem(chaveAvaliacoes) || '[]');
-      return Array.isArray(dados) ? dados : [];
+      const avaliacoesSalvas = [
+        localStorage.getItem(chaveAvaliacoes),
+        ...chavesAvaliacoesLegadas.map((chave) => localStorage.getItem(chave))
+      ]
+        .map((item) => {
+          try {
+            return JSON.parse(item || '[]');
+          } catch (erro) {
+            return [];
+          }
+        })
+        .flatMap((item) => normalizarListaAvaliacoes(item));
+
+      const ids = new Set();
+      return avaliacoesSalvas.filter((avaliacao) => {
+        const id = String(avaliacao.id || `${avaliacao.celular || ''}-${avaliacao.comentario || ''}`);
+        if (ids.has(id)) return false;
+        ids.add(id);
+        return true;
+      });
     } catch (erro) {
       return [];
     }
@@ -58,6 +83,10 @@
 
   const salvarAvaliacoesLocais = (avaliacoes) => {
     localStorage.setItem(chaveAvaliacoes, JSON.stringify(avaliacoes));
+
+    chavesAvaliacoesLegadas.forEach((chave) => {
+      localStorage.setItem(chave, JSON.stringify(avaliacoes));
+    });
   };
 
   const salvarAvaliacoesOnline = async (avaliacoes) => {
