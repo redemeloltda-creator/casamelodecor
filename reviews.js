@@ -35,6 +35,13 @@
 
   const coracoes = (nota) => '❤'.repeat(nota);
 
+  const escaparHtml = (texto) => String(texto || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
   const renderizarHearts = () => {
     heartsInput.innerHTML = '';
 
@@ -68,13 +75,22 @@
         const nome = avaliacao.nome || 'Cliente';
         const texto = avaliacao.comentario || '';
         const nota = Number(avaliacao.nota) || 0;
+        const foto = String(avaliacao.foto || '').trim();
+        const inicial = nome.trim().charAt(0).toUpperCase() || 'C';
+        const avatar = foto
+          ? `<img class="avaliacao-avatar" src="${escaparHtml(foto)}" alt="Foto de ${escaparHtml(nome)}" loading="lazy">`
+          : `<span class="avaliacao-avatar-fallback" aria-hidden="true">${escaparHtml(inicial)}</span>`;
+
         return `
           <article class="avaliacao-card">
             <div class="avaliacao-topo">
-              <span class="avaliacao-nome">${nome}</span>
+              <div class="avaliacao-autor">
+                ${avatar}
+                <span class="avaliacao-nome">${escaparHtml(nome)}</span>
+              </div>
               <span class="avaliacao-nota" aria-label="Nota ${nota} de 5">${coracoes(nota)}</span>
             </div>
-            <p>${texto}</p>
+            <p>${escaparHtml(texto)}</p>
           </article>
         `;
       })
@@ -121,6 +137,7 @@
     const avaliacoes = carregarAvaliacoes();
     avaliacoes.push({
       nome: usuario.nome || 'Cliente',
+      foto: usuario.foto || '',
       nota: notaSelecionada,
       comentario
     });
