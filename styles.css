@@ -298,6 +298,29 @@ header a:hover { color: #111; }
   align-items: center;
 }
 
+.perfil-profissional {
+  margin-top: 12px;
+  border: 1px solid #e3dac8;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fffdf6, #f7f1e5);
+  padding: 10px;
+}
+
+.perfil-profissional-selo {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #7d6640;
+  letter-spacing: 0.7px;
+}
+
+.perfil-profissional-detalhe {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #5d5342;
+  line-height: 1.35;
+}
+
 .perfil-titulo {
   font-size: 12px;
   text-transform: uppercase;
@@ -329,6 +352,66 @@ header a:hover { color: #111; }
 
 .perfil-acao {
   background: #ffffff;
+}
+
+.perfil-foto-pendente {
+  margin-top: 10px;
+  border-radius: 8px;
+  background: #f7f5ef;
+  border: 1px solid #e6dfcf;
+  color: #5d5342;
+  font-size: 12px;
+  padding: 8px;
+}
+
+.perfil-historico {
+  margin-top: 12px;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fcfcfc;
+}
+
+.perfil-historico-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b4b4b;
+  text-transform: uppercase;
+}
+
+.perfil-historico-vazio {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #7a7a7a;
+}
+
+.perfil-historico-lista {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.perfil-historico-item {
+  border: 1px solid #ededed;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+
+.perfil-historico-data {
+  font-size: 11px;
+  color: #777;
+}
+
+.perfil-historico-resumo {
+  font-size: 12px;
+  color: #333;
+  margin-top: 4px;
 }
 
 .perfil-acao-perigo {
