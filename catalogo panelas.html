@@ -1,1 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panelas</title>
+<meta name="description" content="Catálogo de panelas da Casa Melo Decor com opções modernas para sua casa.">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<header>
+    <div class="header-topo">
+        <div class="header-esquerda">
+            <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+                <img src="logo.png" alt="Casa Melo Decor">
+            </a>
+            <div class="busca-container">
+                <button id="btnBusca" data-toggle-busca="true">Pesquisar</button>
+
+                <div class="barra-busca" id="barraBusca">
+                    <button type="button" class="btn-fechar-busca" data-close-busca="true" aria-label="Fechar pesquisa">×</button>
+                    <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
+                    <div id="resultadosBusca" class="resultados"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h1>CASA MELO DECOR</h1>
+    <p>Decoração, utilidades e presentes em Coração de Jesus</p>
+</header>
+
+<nav>
+    <div class="nav-conteudo">
+        <div class="menu-links">
+            <a href="index.html">Início</a>
+            <a class="link-ativo" href="decoracao.html">Decoração</a>
+            <a href="cozinha.html">Cozinha</a>
+            <a href="organizacao.html">Organização</a>
+            <a href="presentes.html">Presentes</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero hero-catalogo" aria-label="Destaque do catálogo">
+    <div>
+        <p class="hero-tag">Catálogo Casa Melo Decor</p>
+        <h2>transformando ingredientes simples em momentos inesquecíveis ao redor da mesa</h2>
+        <p>Modelos ideais para criar atmosferas aconchegantes com estilo e personalidade.</p>
+        <a class="botao" href="#itens-catalogo">Ver itens do catálogo</a>
+        <a class="botao" href="https://wa.me/5538999140400?text=Olá,%20quero%20saber%20mais%20sobre%20as%20luminárias" target="_blank">Falar sobre luminárias no WhatsApp</a>
+    </div>
+</section>
+
+<section class="section" id="itens-catalogo">
+
+<div class="grid">
+
+        <div class="card">
+<img src="7895730618297.png" class="product-img">
+            <div class="card-content">
+                <h3>LUMINARIA LED 34CM WOLFF SOMBRIA</h3>
+                <p>Material:Metal.</p>
+                <p>Marca:Wolff.</p>
+                <p>Tamanho:30cm.</p>
+                <div class="price">R$ 179,99</div>
+              <a href="https://wa.me/p/26467765196161729/553899140400">
+            <button class="btn-whatsapp">Comprar no WhatsApp</button>
+        </a>
+    </div>
+</div>
+
+     <div class="card">
+<img src="7908323304894.jpeg" class="product-img">
+            <div class="card-content">
+                <h3>LUMINARIA GAIOLA PASSARO LED 22CM</h3>
+                <p>Material:Metal.</p>
+                <p>Marca:GiftHome.</p>
+                <p>Tamanho:22cm.</p>
+                <div class="price">R$ 189,99</div>
+              <a href="https://wa.me/p/25898652066439804/553899140400">
+            <button class="btn-whatsapp">Comprar no WhatsApp</button>
+        </a>
+    </div>
+</div>
+
+     <div class="card">
+<img src="7891100064824.jpeg" class="product-img">
+            <div class="card-content">
+                <h3>LUMINARIA LED MESA CHARTI CRISTAL 26CM</h3>
+                <p>Material:Plastico.</p>
+                <p>Marca:Charti.</p>
+                <p>Tamanho:26cm.</p>
+                <div class="price">R$ 99,99</div>
+              <a href="https://wa.me/p/25601884226179112/553899140400">
+            <button class="btn-whatsapp">Comprar no WhatsApp</button>
+        </a>
+    </div>
+</div>
+     <div class="card">
+<img src="6991984042756.jpeg" class="product-img">
+            <div class="card-content">
+                <h3>LUMINARIA LED PILHA 24CM</h3>
+                <p>Material:Plastico.</p>
+                <p>Marca:planeta.</p>
+                <p>Tamanho:24cm.</p>
+                <div class="price">R$ 79,99</div>
+              <a href="https://wa.me/p/26142230972131933/553899140400">
+            <button class="btn-whatsapp">Comprar no WhatsApp</button>
+        </a>
+    </div>
+</div>
+</div>
+</section>
+
+<script>
+(function () {
+  const btnBusca = document.querySelector('[data-toggle-busca="true"]');
+  const barraBusca = document.getElementById('barraBusca');
+  const btnFechar = document.querySelector('[data-close-busca="true"]');
+
+  if (!btnBusca || !barraBusca) return;
+
+  btnBusca.addEventListener('click', function (e) {
+    e.preventDefault();
+    barraBusca.classList.add('aberta');
+    btnBusca.classList.add('oculto');
+
+    const campoBusca = document.getElementById('campoBusca');
+    if (campoBusca) campoBusca.focus();
+  });
+
+  if (btnFechar) {
+    btnFechar.addEventListener('click', function (e) {
+      e.preventDefault();
+      barraBusca.classList.remove('aberta');
+      btnBusca.classList.remove('oculto');
+    });
+  }
+})();
+</script>
+
+<!-- MODAL -->
+<div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImg">
+</div>
+
+<script>
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("modalImg");
+const closeBtn = document.querySelector(".close");
+
+document.querySelectorAll(".product-img").forEach(img => {
+    img.addEventListener("click", function(){
+        modal.style.display = "block";
+        modalImg.src = this.src;
+    });
+});
+
+closeBtn.onclick = () => modal.style.display = "none";
+
+modal.onclick = function(e) {
+    if (e.target !== modalImg) {
+        modal.style.display = "none";
+    }
+}
+</script>
+
+
+<script>
+(function () {
+  const LIMITE_RESULTADOS = 8;
+
+  const normalizarTexto = (texto) =>
+    (texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const mapaSinonimos = {
+    vasos: 'vaso',
+    vidros: 'vidro',
+    retratos: 'retrato',
+    luminarias: 'luminaria',
+    quadros: 'quadro',
+    metalico: 'metal',
+    metalica: 'metal',
+    plastico: 'plastico',
+    dourada: 'dourado',
+    douradas: 'dourado'
+  };
+
+  const tokenizar = (texto) =>
+    normalizarTexto(texto)
+      .split(' ')
+      .filter(Boolean)
+      .map((token) => mapaSinonimos[token] || token);
+
+  const campoBusca = document.getElementById('campoBusca');
+  const resultadosDiv = document.getElementById('resultadosBusca');
+
+  if (!campoBusca || !resultadosDiv) return;
+
+  const PRODUTOS_CATALOGO = Array.from(document.querySelectorAll('.grid .card')).map((card) => {
+    const nome = card.querySelector('h3')?.textContent.trim() || '';
+    const imagem = card.querySelector('img')?.getAttribute('src') || '';
+    const material = (card.querySelector('p:nth-of-type(1)')?.textContent || '').replace(/^Material:\s*/i, '').trim();
+    const marca = (card.querySelector('p:nth-of-type(2)')?.textContent || '').replace(/^Marca:\s*/i, '').trim();
+    const tamanho = (card.querySelector('p:nth-of-type(3)')?.textContent || '').replace(/^Tamanho:\s*/i, '').trim();
+    const link = card.querySelector('a')?.getAttribute('href') || '#';
+
+    return { nome, categoria: document.title, material, marca, tamanho, imagem, link };
+  });
+
+  const produtosPreparados = PRODUTOS_CATALOGO.map((produto) => ({
+    ...produto,
+    busca: tokenizar(`${produto.nome} ${produto.categoria} ${produto.material} ${produto.marca} ${produto.tamanho}`).join(' ')
+  }));
+
+  const filtrarProdutos = (termo) => {
+    const tokens = tokenizar(termo);
+    if (!tokens.length) return [];
+
+    return produtosPreparados.filter((produto) => tokens.every((token) => produto.busca.includes(token)));
+  };
+
+  let indiceAtivo = -1;
+  let resultadosAtuais = [];
+
+  const destacarTexto = (texto, termo) => {
+    const tokens = tokenizar(termo);
+    let resultado = texto;
+
+    tokens.forEach((token) => {
+      const regex = new RegExp(`(${token})`, 'gi');
+      resultado = resultado.replace(regex, '<span class="highlight">$1</span>');
+    });
+
+    return resultado;
+  };
+
+  const renderizarResultados = (resultados, termo) => {
+    resultadosDiv.innerHTML = '';
+    indiceAtivo = -1;
+
+    if (!resultados.length) {
+      resultadosDiv.innerHTML = '<div class="sem-resultado">Nenhum produto encontrado</div>';
+      resultadosDiv.style.display = 'block';
+      return;
+    }
+
+    resultados.slice(0, LIMITE_RESULTADOS).forEach((produto) => {
+      const div = document.createElement('div');
+      div.className = 'resultado-item';
+
+      div.innerHTML = `
+        <img src="${produto.imagem}" alt="${produto.nome}">
+        <div class="resultado-info">
+          <h4>${destacarTexto(produto.nome, termo)}</h4>
+          <p>${produto.categoria} | ${produto.material}</p>
+          <p>Marca: ${produto.marca} | Tam: ${produto.tamanho}</p>
+        </div>
+      `;
+
+      div.addEventListener('click', () => {
+        window.open(produto.link, '_blank');
+      });
+
+      resultadosDiv.appendChild(div);
+    });
+
+    resultadosDiv.style.display = 'block';
+  };
+
+  campoBusca.addEventListener('input', function () {
+    const termo = this.value;
+    resultadosAtuais = filtrarProdutos(termo);
+    renderizarResultados(resultadosAtuais, termo);
+  });
+
+  campoBusca.addEventListener('keydown', function (e) {
+    const itens = resultadosDiv.querySelectorAll('.resultado-item');
+
+    if (e.key === 'ArrowDown' && itens.length) {
+      e.preventDefault();
+      indiceAtivo = (indiceAtivo + 1) % itens.length;
+      atualizarSelecao(itens);
+    }
+
+    if (e.key === 'ArrowUp' && itens.length) {
+      e.preventDefault();
+      indiceAtivo = indiceAtivo <= 0 ? itens.length - 1 : indiceAtivo - 1;
+      atualizarSelecao(itens);
+    }
+
+    if (e.key === 'Enter') {
+      if (indiceAtivo >= 0 && resultadosAtuais[indiceAtivo]) {
+        window.open(resultadosAtuais[indiceAtivo].link, '_blank');
+      }
+    }
+  });
+
+  function atualizarSelecao(itens) {
+    itens.forEach((item) => item.classList.remove('ativo'));
+    if (itens[indiceAtivo]) {
+      itens[indiceAtivo].classList.add('ativo');
+      itens[indiceAtivo].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    const container = document.querySelector('.busca-container');
+    if (container && !container.contains(e.target)) {
+      resultadosDiv.style.display = 'none';
+    }
+  });
+})();
+</script>
+
+<a class="whatsapp" href="https://wa.me/5538999140400" target="_blank">WhatsApp</a>
+<footer><p>© 2026 Casa Melo Decor</p><p>@casamelodecor</p></footer>
+
+</body>
+</html>
+
+
+
+
+
 
