@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Potes | Casa Melo Decor</title>
+<meta name="description" content="Catálogo de potes da Casa Melo Decor com opções especiais para sua casa.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+    <div class="header-topo">
+        <div class="header-esquerda">
+            <a class="logo-link" href="index.html" aria-label="Voltar para a página inicial">
+                <img src="logo.png" alt="Casa Melo Decor">
+            </a>
+            <div class="busca-container">
+                <button id="btnBusca" data-toggle-busca="true">Pesquisar</button>
+                <div class="barra-busca" id="barraBusca">
+                    <button type="button" class="btn-fechar-busca" data-close-busca="true" aria-label="Fechar pesquisa">×</button>
+                    <input type="text" id="campoBusca" placeholder="Buscar produtos..." autocomplete="off">
+                    <div id="resultadosBusca" class="resultados"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h1>CASA MELO DECOR</h1>
+    <p>Decoração, utilidades e presentes em Coração de Jesus</p>
+</header>
+
+<nav>
+    <div class="nav-conteudo">
+        <div class="menu-links">
+            <a href="index.html">Início</a>
+            <a  href="decoracao.html">Decoração</a>
+            <a class="link-ativo" href="cozinha.html">Cozinha</a>
+            <a  href="organizacao.html">Organização</a>
+            <a  href="presentes.html">Presentes</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero hero-catalogo" aria-label="Destaque do catálogo de potes">
+    <div>
+        <p class="hero-tag">Catálogo Casa Melo Decor</p>
+        <h2>Organização e conservação para manter sua cozinha sempre em ordem.</h2>
+        <p>Modelos práticos para armazenar alimentos com segurança e estilo.</p>
+        <a class="botao" href="#itens-catalogo">Ver itens do catálogo</a>
+        <a class="botao" href="https://wa.me/5538999140400?text=Olá,%20quero%20saber%20mais%20sobre%20os%20potes" target="_blank">Falar sobre potes no WhatsApp</a>
+    </div>
+</section>
+
+<section class="section" id="itens-catalogo">
+<div class="grid">
+    <div class="card">
+        <img src="potes.jpg" class="product-img" alt="Potes">
+        <div class="card-content">
+            <h3>Conheça nossa seleção de potes</h3>
+            <p>Material: A consultar.</p>
+            <p>Marca: A consultar.</p>
+            <p>Tamanho: A consultar.</p>
+            <div class="price">Consulte valor</div>
+            <a href="https://wa.me/5538999140400?text=Olá,%20quero%20saber%20mais%20sobre%20os%20potes">
+                <button class="btn-whatsapp">Comprar no WhatsApp</button>
+            </a>
+        </div>
+    </div>
+</div>
+</section>
+
+<div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImg" alt="Visualização ampliada do produto">
+</div>
+
+<script>
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("modalImg");
+const closeBtn = document.querySelector(".close");
+
+document.querySelectorAll(".product-img").forEach((img) => {
+  img.addEventListener("click", function () {
+    modal.style.display = "block";
+    modalImg.src = this.src;
+  });
+});
+
+closeBtn.onclick = () => (modal.style.display = "none");
+modal.onclick = function (e) {
+  if (e.target !== modalImg) modal.style.display = "none";
+};
+</script>
+
+<script src="catalog-search.js"></script>
+</body>
+</html>
