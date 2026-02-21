@@ -26,6 +26,7 @@
   const carrinhoContador = document.getElementById('carrinhoContador');
   const carrinhoLista = document.getElementById('carrinhoLista');
   const carrinhoVazio = document.getElementById('carrinhoVazio');
+  const carrinhoComprarTudo = document.getElementById('carrinhoComprarTudo');
 
   if (!modal || !formLogin || !formCadastro) return;
 
@@ -114,6 +115,52 @@
     carrinhoBotao.setAttribute('aria-expanded', 'false');
   };
 
+  const montarMensagemCompra = (itens, links) => {
+    const nomesProdutos = itens
+      .map((item) => String(item?.nome || '').trim())
+      .filter(Boolean)
+      .map((nome, indice) => `${indice + 1}. ${nome}`)
+      .join('\n');
+
+    const linksCompra = links
+      .map((link, indice) => `${indice + 1}. ${link}`)
+      .join('\n');
+
+    return [
+      'Olá! Quero finalizar os produtos que coloquei no carrinho.',
+      nomesProdutos ? `\nProdutos:\n${nomesProdutos}` : '',
+      `\nLinks para compra:\n${linksCompra}`
+    ].join('\n');
+  };
+
+  const atualizarBotaoCompra = (itens) => {
+    if (!carrinhoPainel) return;
+
+    let botaoCompra = carrinhoComprarTudo;
+
+    if (!botaoCompra) {
+      botaoCompra = document.createElement('a');
+      botaoCompra.id = 'carrinhoComprarTudo';
+      botaoCompra.className = 'carrinho-comprar';
+      botaoCompra.textContent = 'Comprar itens do carrinho';
+      botaoCompra.target = '_blank';
+      botaoCompra.rel = 'noopener noreferrer';
+      carrinhoPainel.appendChild(botaoCompra);
+    }
+
+    const links = [...new Set(itens.map((item) => String(item?.linkCompra || '').trim()).filter(Boolean))];
+
+    if (!links.length) {
+      botaoCompra.hidden = true;
+      botaoCompra.removeAttribute('href');
+      return;
+    }
+
+    botaoCompra.hidden = false;
+    const mensagem = montarMensagemCompra(itens, links);
+    botaoCompra.href = `https://wa.me/5538999140400?text=${encodeURIComponent(mensagem)}`;
+  };
+
   const atualizarCarrinho = () => {
     if (!carrinhoContador || !carrinhoLista || !carrinhoVazio || !carrinhoMenu) return;
 
@@ -124,6 +171,7 @@
 
     if (!itens.length) {
       carrinhoVazio.hidden = false;
+      atualizarBotaoCompra(itens);
       return;
     }
 
@@ -145,6 +193,8 @@
       linha.appendChild(preco);
       carrinhoLista.appendChild(linha);
     });
+
+    atualizarBotaoCompra(itens);
   };
 
   const fecharPainelPerfil = () => {
