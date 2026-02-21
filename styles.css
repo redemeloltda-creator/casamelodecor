@@ -680,6 +680,9 @@ footer {
   max-width: 700px;
   display: grid;
   gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .avaliacao-card {
