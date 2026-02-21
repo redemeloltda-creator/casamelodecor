@@ -27,7 +27,6 @@
   const carrinhoContador = document.getElementById('carrinhoContador');
   const carrinhoLista = document.getElementById('carrinhoLista');
   const carrinhoVazio = document.getElementById('carrinhoVazio');
-  const carrinhoComprarTudo = document.getElementById('carrinhoComprarTudo');
 
   if (!modal || !formLogin || !formCadastro) return;
 
@@ -160,53 +159,6 @@
     carrinhoBotao.setAttribute('aria-expanded', 'false');
   };
 
-  const montarMensagemCompra = (itens) => {
-    const produtosCarrinho = itens
-      .map((item, indice) => {
-        const nome = String(item?.nome || '').trim() || 'Produto sem nome';
-        const preco = String(item?.preco || '').trim();
-
-        return `${indice + 1}. ${nome}${preco ? ` — ${preco}` : ''}`;
-      })
-      .join('\n');
-
-    return [
-      'Olá! Quero fazer um pedido com os itens do meu carrinho:',
-      `\n${produtosCarrinho}`
-    ].join('\n');
-  };
-
-  const atualizarBotaoCompra = (itens) => {
-    if (!carrinhoPainel) return;
-
-    let botaoCompra = carrinhoComprarTudo;
-
-    if (!botaoCompra) {
-      botaoCompra = document.createElement('a');
-      botaoCompra.id = 'carrinhoComprarTudo';
-      botaoCompra.className = 'carrinho-comprar';
-      botaoCompra.textContent = 'Comprar itens do carrinho';
-      botaoCompra.target = '_blank';
-      botaoCompra.rel = 'noopener noreferrer';
-      carrinhoPainel.appendChild(botaoCompra);
-    }
-
-    if (!itens.length) {
-      botaoCompra.hidden = true;
-      botaoCompra.removeAttribute('href');
-      return;
-    }
-
-    botaoCompra.hidden = false;
-    const mensagem = montarMensagemCompra(itens);
-    botaoCompra.href = `https://wa.me/5538999140400?text=${encodeURIComponent(mensagem)}`;
-
-    botaoCompra.onclick = () => {
-      salvarCarrinho([]);
-      fecharCarrinho();
-    };
-  };
-
   const atualizarCarrinho = () => {
     if (!carrinhoContador || !carrinhoLista || !carrinhoVazio || !carrinhoMenu) return;
 
@@ -217,7 +169,6 @@
 
     if (!itens.length) {
       carrinhoVazio.hidden = false;
-      atualizarBotaoCompra(itens);
       return;
     }
 
@@ -247,14 +198,32 @@
       preco.className = 'carrinho-item-preco';
       preco.textContent = item.preco || 'Preço indisponível';
 
+      const acoes = document.createElement('div');
+      acoes.className = 'carrinho-item-acoes';
+
+      const botaoComprar = document.createElement('a');
+      botaoComprar.className = 'carrinho-item-comprar';
+      botaoComprar.textContent = 'Comprar item';
+
+      const linkCompra = String(item?.linkCompra || '').trim();
+
+      if (linkCompra) {
+        botaoComprar.href = linkCompra;
+        botaoComprar.target = '_blank';
+        botaoComprar.rel = 'noopener noreferrer';
+      } else {
+        botaoComprar.setAttribute('aria-disabled', 'true');
+        botaoComprar.classList.add('desabilitado');
+      }
+
       topo.appendChild(nome);
       topo.appendChild(botaoRemover);
+      acoes.appendChild(botaoComprar);
       linha.appendChild(topo);
       linha.appendChild(preco);
+      linha.appendChild(acoes);
       carrinhoLista.appendChild(linha);
     });
-
-    atualizarBotaoCompra(itens);
   };
 
   const fecharPainelPerfil = () => {
