@@ -13,6 +13,12 @@
   const perfilPainel = document.getElementById('perfilPainel');
   const perfilNome = document.getElementById('perfilNome');
   const perfilEmail = document.getElementById('perfilEmail');
+  const perfilAvatarBotao = document.getElementById('perfilAvatarBotao');
+  const perfilAvatarPainel = document.getElementById('perfilAvatarPainel');
+  const perfilAvatarFallback = document.getElementById('perfilAvatarFallback');
+  const perfilAvatarFallbackPainel = document.getElementById('perfilAvatarFallbackPainel');
+  const perfilFotoInput = document.getElementById('perfilFotoInput');
+  const perfilEditarFoto = document.getElementById('perfilEditarFoto');
   const perfilSair = document.getElementById('perfilSair');
 
   if (!modal || !formLogin || !formCadastro) return;
@@ -20,6 +26,7 @@
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveSessao = 'casamelo_usuario_logado';
   const totalDigitosCelular = 11;
+  const tamanhoMaximoFoto = 2 * 1024 * 1024;
 
   const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
 
@@ -49,6 +56,38 @@
     localStorage.setItem(chaveSessao, JSON.stringify(usuario));
   };
 
+  const atualizarFotoUsuario = (celular, foto) => {
+    const usuarios = carregarUsuarios();
+    const indiceUsuario = usuarios.findIndex((item) => normalizarCelular(item.celular) === normalizarCelular(celular));
+
+    if (indiceUsuario === -1) return;
+
+    usuarios[indiceUsuario].foto = foto;
+    salvarUsuarios(usuarios);
+  };
+
+  const atualizarAvatar = (usuario) => {
+    const foto = String(usuario?.foto || '').trim();
+    const temFoto = Boolean(foto);
+
+    [perfilAvatarBotao, perfilAvatarPainel].forEach((avatar) => {
+      if (!avatar) return;
+
+      if (temFoto) {
+        avatar.src = foto;
+      } else {
+        avatar.removeAttribute('src');
+      }
+
+      avatar.hidden = !temFoto;
+    });
+
+    [perfilAvatarFallback, perfilAvatarFallbackPainel].forEach((fallback) => {
+      if (!fallback) return;
+      fallback.hidden = temFoto;
+    });
+  };
+
   const limparSessao = () => {
     localStorage.removeItem(chaveSessao);
   };
@@ -72,10 +111,12 @@
         perfilMenu.hidden = false;
         perfilNome.textContent = usuario.nome;
         perfilEmail.textContent = usuario.contato;
+        atualizarAvatar(usuario);
       } else {
         perfilMenu.hidden = true;
         perfilNome.textContent = '';
         perfilEmail.textContent = '';
+        atualizarAvatar(null);
         fecharPainelPerfil();
       }
     }
@@ -141,7 +182,7 @@
       return;
     }
 
-    usuarios.push({ nome, celular, senha });
+    usuarios.push({ nome, celular, senha, foto: '' });
     salvarUsuarios(usuarios);
     feedback.textContent = 'Cadastro realizado com sucesso. Agora faça seu login.';
     formCadastro.reset();
@@ -169,7 +210,12 @@
       return;
     }
 
-    salvarSessao({ nome: usuario.nome, contato: usuario.celular || usuario.email || '' });
+    salvarSessao({
+      nome: usuario.nome,
+      contato: usuario.celular || usuario.email || '',
+      celular: usuario.celular,
+      foto: usuario.foto || ''
+    });
     atualizarAreaPerfil();
 
     feedback.textContent = `Olá, ${usuario.nome}. Login realizado!`;
@@ -196,6 +242,43 @@
       limparSessao();
       atualizarAreaPerfil();
       fecharPainelPerfil();
+    });
+  }
+
+  if (perfilEditarFoto && perfilFotoInput) {
+    perfilEditarFoto.addEventListener('click', () => {
+      perfilFotoInput.click();
+    });
+
+    perfilFotoInput.addEventListener('change', () => {
+      const usuario = carregarSessao();
+      const [arquivo] = Array.from(perfilFotoInput.files || []);
+
+      if (!usuario || !arquivo) return;
+
+      if (!arquivo.type.startsWith('image/')) {
+        feedback.textContent = 'Escolha um arquivo de imagem válido (PNG, JPG ou WEBP).';
+        perfilFotoInput.value = '';
+        return;
+      }
+
+      if (arquivo.size > tamanhoMaximoFoto) {
+        feedback.textContent = 'A foto deve ter até 2MB para manter o site rápido.';
+        perfilFotoInput.value = '';
+        return;
+      }
+
+      const leitor = new FileReader();
+      leitor.onload = () => {
+        const foto = String(leitor.result || '');
+        const novaSessao = { ...usuario, foto };
+        salvarSessao(novaSessao);
+        atualizarFotoUsuario(usuario.celular, foto);
+        atualizarAreaPerfil();
+        feedback.textContent = 'Foto de perfil atualizada com sucesso.';
+        perfilFotoInput.value = '';
+      };
+      leitor.readAsDataURL(arquivo);
     });
   }
 

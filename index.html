@@ -38,12 +38,21 @@
 
             <div class="perfil-menu" id="perfilMenu" hidden>
                 <button type="button" class="perfil-botao" id="perfilBotao" aria-label="Abrir perfil" aria-expanded="false">
-                    <span aria-hidden="true">👤</span>
+                    <img id="perfilAvatarBotao" class="perfil-avatar" alt="Foto do cliente" hidden>
+                    <span id="perfilAvatarFallback" class="perfil-avatar-fallback" aria-hidden="true">👤</span>
                 </button>
                 <div class="perfil-painel" id="perfilPainel" hidden>
-                    <p class="perfil-titulo">Seu perfil</p>
-                    <p class="perfil-nome" id="perfilNome"></p>
-                    <p class="perfil-email" id="perfilEmail"></p>
+                    <div class="perfil-resumo">
+                        <img id="perfilAvatarPainel" class="perfil-avatar perfil-avatar-grande" alt="Foto do cliente" hidden>
+                        <span id="perfilAvatarFallbackPainel" class="perfil-avatar-fallback perfil-avatar-fallback-grande" aria-hidden="true">👤</span>
+                        <div>
+                            <p class="perfil-titulo">Seu perfil</p>
+                            <p class="perfil-nome" id="perfilNome"></p>
+                            <p class="perfil-email" id="perfilEmail"></p>
+                        </div>
+                    </div>
+                    <input type="file" id="perfilFotoInput" accept="image/png,image/jpeg,image/webp" hidden>
+                    <button type="button" class="perfil-acao" id="perfilEditarFoto">Alterar foto</button>
                     <button type="button" class="perfil-sair" id="perfilSair">Sair</button>
                 </div>
             </div>
