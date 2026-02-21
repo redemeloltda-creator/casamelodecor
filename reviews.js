@@ -85,6 +85,8 @@
   const renderizarAvaliacoes = () => {
     const avaliacoes = carregarAvaliacoes();
     const usuarios = carregarUsuarios();
+    const usuarioLogado = carregarSessao();
+    const celularLogado = normalizarCelular(usuarioLogado?.celular);
 
     if (!avaliacoes.length) {
       lista.innerHTML = '<p class="avaliacao-vazia">Ainda não há avaliações. Seja a primeira pessoa a comentar.</p>';
@@ -92,17 +94,22 @@
     }
 
     lista.innerHTML = avaliacoes
-      .slice()
+      .map((avaliacao, indice) => ({ ...avaliacao, indice }))
       .reverse()
       .map((avaliacao) => {
         const nome = avaliacao.nome || 'Cliente';
         const texto = avaliacao.comentario || '';
         const nota = Number(avaliacao.nota) || 0;
         const foto = buscarFotoUsuario(avaliacao, usuarios);
+        const celularAutor = normalizarCelular(avaliacao.celular);
+        const podeExcluir = Boolean(celularLogado) && celularLogado === celularAutor;
         const inicial = nome.trim().charAt(0).toUpperCase() || 'C';
         const avatar = foto
           ? `<img class="avaliacao-avatar" src="${escaparHtml(foto)}" alt="Foto de ${escaparHtml(nome)}" loading="lazy">`
           : `<span class="avaliacao-avatar-fallback" aria-hidden="true">${escaparHtml(inicial)}</span>`;
+        const acaoExcluir = podeExcluir
+          ? `<button type="button" class="avaliacao-excluir" data-avaliacao-indice="${avaliacao.indice}" aria-label="Excluir comentário de ${escaparHtml(nome)}">Excluir</button>`
+          : '';
 
         return `
           <article class="avaliacao-card">
@@ -111,7 +118,10 @@
                 ${avatar}
                 <span class="avaliacao-nome">${escaparHtml(nome)}</span>
               </div>
-              <span class="avaliacao-nota" aria-label="Nota ${nota} de 5">${coracoes(nota)}</span>
+              <div class="avaliacao-acoes">
+                <span class="avaliacao-nota" aria-label="Nota ${nota} de 5">${coracoes(nota)}</span>
+                ${acaoExcluir}
+              </div>
             </div>
             <p>${escaparHtml(texto)}</p>
           </article>
@@ -119,6 +129,31 @@
       })
       .join('');
   };
+
+  lista.addEventListener('click', (evento) => {
+    const botaoExcluir = evento.target.closest('[data-avaliacao-indice]');
+    if (!botaoExcluir) return;
+
+    const usuario = carregarSessao();
+    const indice = Number(botaoExcluir.dataset.avaliacaoIndice);
+    const avaliacoes = carregarAvaliacoes();
+    const avaliacao = avaliacoes[indice];
+
+    if (!usuario || !avaliacao) return;
+
+    const celularUsuario = normalizarCelular(usuario.celular);
+    const celularAutor = normalizarCelular(avaliacao.celular);
+
+    if (!celularUsuario || celularUsuario !== celularAutor) {
+      feedback.textContent = 'Você só pode excluir comentários criados por você.';
+      return;
+    }
+
+    avaliacoes.splice(indice, 1);
+    salvarAvaliacoes(avaliacoes);
+    renderizarAvaliacoes();
+    feedback.textContent = 'Comentário excluído com sucesso.';
+  });
 
   const atualizarEstadoFormulario = () => {
     const usuario = carregarSessao();
@@ -159,6 +194,7 @@
 
     const avaliacoes = carregarAvaliacoes();
     avaliacoes.push({
+      id: Date.now(),
       nome: usuario.nome || 'Cliente',
       celular: usuario.celular || '',
       foto: usuario.foto || '',
@@ -174,7 +210,10 @@
     feedback.textContent = 'Avaliação enviada com sucesso. Obrigado!';
   });
 
-  document.addEventListener('casamelo-auth-change', atualizarEstadoFormulario);
+  document.addEventListener('casamelo-auth-change', () => {
+    atualizarEstadoFormulario();
+    renderizarAvaliacoes();
+  });
 
   renderizarHearts();
   renderizarAvaliacoes();
