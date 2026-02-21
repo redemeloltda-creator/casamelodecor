@@ -997,22 +997,232 @@ footer {
 }
 
 @media (max-width: 760px) {
-  .hero { margin: 0; border-radius: 0; padding: 82px 18px; min-height: 380px; }
-  .hero h2, .hero p { max-width: 100%; }
-  .menu-links { gap: 12px; }
-  .header-esquerda { flex-wrap: wrap; }
-  .header-topo { align-items: center; }
-  .header-direita { flex-shrink: 0; }
-  .logo-link { margin-bottom: 0; }
-  .busca-container { width: 100%; }
-  .header-esquerda .busca-container {
+  html {
+    scroll-padding-top: 110px;
+  }
+  header {
+    padding: 16px 12px;
+  }
+  .header-topo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .header-esquerda {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-direita {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .auth-btn {
+    width: 100%;
+    min-height: 42px;
+    font-size: 11px;
+  }
+  .logo-link {
+    padding: 4px 8px;
+    margin-bottom: 0;
+  }
+  .logo-link img {
+    width: 74px;
+  }
+  .header-esquerda .busca-container,
+  .busca-container {
     position: static;
     width: 100%;
     max-width: 100%;
+    margin: 0;
   }
-  .resultado-item { flex-direction: column; align-items: flex-start; }
-  .resultado-item img, .resultado-thumb { width: 100%; height: 180px; }
+  #btnBusca,
+  .botao-pesquisa-nav {
+    min-height: 42px;
+  }
+  .carrinho-botao,
+  .perfil-botao {
+    min-height: 42px;
+  }
+  .carrinho-painel,
+  .perfil-painel {
+    width: min(94vw, 330px);
+    right: 0;
+    top: 46px;
+  }
+
+  .nav-conteudo {
+    padding: 8px 12px;
+  }
+  .menu-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .menu-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 8px;
+    border: 1px solid #d0d0d0;
+    border-radius: 0;
+    background: #fff;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+
+  .hero {
+    margin: 0;
+    border-radius: 0;
+    padding: 54px 12px;
+    min-height: 320px;
+  }
+  .hero h2,
+  .hero p {
+    max-width: 100%;
+  }
+  .hero .botao,
+  .banner-localizacao .botao,
+  .banner-produto-especifico .botao,
+  .acoes-produto .botao,
+  .acoes-produto .btn-carrinho {
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
+  }
+  .hero-catalogo,
+  .banner-localizacao-conteudo,
+  .banner-produto-especifico {
+    border-radius: 0;
+    padding: 18px 12px;
+    min-height: auto;
+  }
+  .banner-localizacao,
+  .banner-produto-especifico {
+    margin-top: 0;
+  }
+
+  #campoBusca,
+  #busca-produto {
+    min-height: 48px;
+    font-size: 16px;
+    padding: 12px 42px 12px 12px;
+  }
+  .resultado-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .resultado-item img,
+  .resultado-thumb {
+    width: 100%;
+    height: 170px;
+  }
+
+  .section,
+  .container {
+    max-width: 100%;
+    padding: 28px 0;
+  }
+  .section h2 {
+    margin-bottom: 18px;
+    padding: 0 12px;
+  }
+  .section > p,
+  .section .lista,
+  .section .avaliacoes-info,
+  .section .avaliacao-form,
+  .section .lista-avaliacoes {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+  .produtos,
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .produto,
+  .card {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+  .produto div,
+  .card-content {
+    padding: 14px 12px;
+  }
+  .mapa iframe {
+    height: 270px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .modal {
+    padding-top: 28px;
+  }
+  .close {
+    right: 16px;
+    top: 8px;
+  }
+  .whatsapp {
+    right: 10px;
+    bottom: 10px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
 }
+
+@media (max-width: 420px) {
+  html {
+    scroll-padding-top: 126px;
+  }
+  header h1 {
+    font-size: 1.2rem;
+  }
+  header p {
+    font-size: 0.88rem;
+  }
+  .header-direita {
+    grid-template-columns: 1fr 1fr;
+  }
+  .auth-btn {
+    min-height: 40px;
+  }
+  .carrinho-menu,
+  .perfil-menu {
+    justify-self: end;
+  }
+  .carrinho-botao,
+  .perfil-botao {
+    width: 40px;
+    height: 40px;
+  }
+  .menu-links {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    padding: 48px 10px;
+  }
+  .section h2,
+  .section > p,
+  .section .lista,
+  .section .avaliacoes-info,
+  .section .avaliacao-form,
+  .section .lista-avaliacoes,
+  .produto div,
+  .card-content {
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 
 .acoes-produto {
   display: flex;
