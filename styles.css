@@ -55,7 +55,8 @@ header a:hover { color: #111; }
   max-width: 1180px;
   margin: 0 auto 10px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .header-esquerda {
@@ -66,6 +67,32 @@ header a:hover { color: #111; }
 
 .botao-pesquisa {
   margin: 0;
+}
+
+.header-direita {
+  display: flex;
+  gap: 10px;
+}
+
+.auth-btn {
+  border: 1px solid #bdbdbd;
+  border-radius: 999px;
+  background: #1f1f1f;
+  color: #f3f3f3;
+  padding: 8px 14px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  cursor: pointer;
+}
+
+.auth-btn:hover {
+  background: #111;
+}
+
+.auth-btn-outline {
+  background: #fff;
+  color: #1f1f1f;
 }
 
 
@@ -372,6 +399,93 @@ footer {
   border-top: 1px solid #d6d6d6;
 }
 
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 15, 0.45);
+  z-index: 20000;
+  padding: 20px;
+}
+
+.auth-modal.aberto {
+  display: flex;
+}
+
+.auth-box {
+  width: min(380px, 100%);
+  background: #ffffff;
+  color: #1c1c1c;
+  border-radius: 14px;
+  padding: 22px;
+  position: relative;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+}
+
+.auth-close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  border: 0;
+  background: transparent;
+  font-size: 28px;
+  color: #666;
+  cursor: pointer;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.auth-tab {
+  border: 1px solid #d5d5d5;
+  border-radius: 999px;
+  background: #f7f7f7;
+  color: #444;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.auth-tab.ativo {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-form input {
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 14px;
+}
+
+.auth-submit {
+  margin-top: 4px;
+  border: 0;
+  border-radius: 10px;
+  padding: 11px;
+  background: #1f1f1f;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-feedback {
+  min-height: 20px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #3e3e3e;
+}
+
 .modal {
   display: none;
   position: fixed;
@@ -402,6 +516,8 @@ footer {
   .hero h2, .hero p { max-width: 100%; }
   .menu-links { gap: 12px; }
   .header-esquerda { flex-wrap: wrap; }
+  .header-topo { align-items: center; }
+  .header-direita { flex-shrink: 0; }
   .logo-link { margin-bottom: 0; }
   .busca-container { width: 100%; }
   .header-esquerda .busca-container {
