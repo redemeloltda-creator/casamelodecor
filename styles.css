@@ -100,6 +100,98 @@ header a:hover { color: #111; }
   position: relative;
 }
 
+
+.carrinho-menu {
+  position: relative;
+}
+
+.carrinho-botao {
+  min-width: 46px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid #c9c9c9;
+  background: #ffffff;
+  color: #1f1f1f;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 18px;
+  padding: 0 10px;
+}
+
+.carrinho-contador {
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #1f1f1f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+.carrinho-painel {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  width: 280px;
+  border-radius: 12px;
+  border: 1px solid #d9d9d9;
+  background: #ffffff;
+  color: #1f1f1f;
+  padding: 12px;
+  text-align: left;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+}
+
+.carrinho-titulo {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #707070;
+  margin-bottom: 8px;
+}
+
+.carrinho-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.carrinho-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #efefef;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.carrinho-item:last-child {
+  border-bottom: none;
+}
+
+.carrinho-item-nome {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.carrinho-item-preco {
+  color: #5a5a5a;
+  font-size: 12px;
+}
+
+.carrinho-vazio {
+  color: #6e6e6e;
+  font-size: 13px;
+}
+
 .perfil-botao {
   width: 42px;
   height: 42px;

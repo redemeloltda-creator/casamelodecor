@@ -12,6 +12,7 @@
 
   const salvarCarrinho = (itens) => {
     localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(itens));
+    document.dispatchEvent(new Event('casamelo-cart-change'));
   };
 
   const adicionarItem = (produto) => {

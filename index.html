@@ -36,6 +36,18 @@
             <button type="button" class="auth-btn" data-auth-open="login">Login</button>
             <button type="button" class="auth-btn auth-btn-outline" data-auth-open="cadastro">Cadastro</button>
 
+            <div class="carrinho-menu" id="carrinhoMenu">
+                <button type="button" class="carrinho-botao" id="carrinhoBotao" aria-label="Abrir carrinho" aria-expanded="false">
+                    <span aria-hidden="true">🛒</span>
+                    <span class="carrinho-contador" id="carrinhoContador">0</span>
+                </button>
+                <div class="carrinho-painel" id="carrinhoPainel" hidden>
+                    <p class="carrinho-titulo">Produtos no carrinho</p>
+                    <ul class="carrinho-lista" id="carrinhoLista"></ul>
+                    <p class="carrinho-vazio" id="carrinhoVazio">Seu carrinho está vazio.</p>
+                </div>
+            </div>
+
             <div class="perfil-menu" id="perfilMenu" hidden>
                 <button type="button" class="perfil-botao" id="perfilBotao" aria-label="Abrir perfil" aria-expanded="false">
                     <img id="perfilAvatarBotao" class="perfil-avatar" alt="Foto do cliente" hidden>
