@@ -67,7 +67,7 @@
     if (usuario) {
       perfilMenu.hidden = false;
       perfilNome.textContent = usuario.nome;
-      perfilEmail.textContent = usuario.email;
+      perfilEmail.textContent = usuario.contato;
       return;
     }
 
@@ -119,23 +119,23 @@
 
     const dados = new FormData(formCadastro);
     const nome = String(dados.get('nome') || '').trim();
-    const email = String(dados.get('email') || '').trim().toLowerCase();
+    const celular = String(dados.get('celular') || '').trim();
     const senha = String(dados.get('senha') || '');
 
-    if (!nome || !email || senha.length < 6) {
+    if (!nome || !celular || senha.length < 6) {
       feedback.textContent = 'Preencha os dados corretamente para cadastrar.';
       return;
     }
 
     const usuarios = carregarUsuarios();
-    const existe = usuarios.some((usuario) => usuario.email === email);
+    const existe = usuarios.some((usuario) => usuario.celular === celular);
 
     if (existe) {
-      feedback.textContent = 'Este e-mail já possui cadastro.';
+      feedback.textContent = 'Este número de celular já possui cadastro.';
       return;
     }
 
-    usuarios.push({ nome, email, senha });
+    usuarios.push({ nome, celular, senha });
     salvarUsuarios(usuarios);
     feedback.textContent = 'Cadastro realizado com sucesso. Agora faça seu login.';
     formCadastro.reset();
@@ -146,18 +146,20 @@
     evento.preventDefault();
 
     const dados = new FormData(formLogin);
-    const email = String(dados.get('email') || '').trim().toLowerCase();
+    const login = String(dados.get('login') || '').trim().toLowerCase();
     const senha = String(dados.get('senha') || '');
 
     const usuarios = carregarUsuarios();
-    const usuario = usuarios.find((item) => item.email === email && item.senha === senha);
+    const usuario = usuarios.find(
+      (item) => (item.email === login || String(item.celular || '').toLowerCase() === login) && item.senha === senha
+    );
 
     if (!usuario) {
-      feedback.textContent = 'Login inválido. Confira e-mail e senha.';
+      feedback.textContent = 'Login inválido. Confira os dados e senha.';
       return;
     }
 
-    salvarSessao({ nome: usuario.nome, email: usuario.email });
+    salvarSessao({ nome: usuario.nome, contato: usuario.celular || usuario.email || '' });
     atualizarAreaPerfil();
 
     feedback.textContent = `Olá, ${usuario.nome}. Login realizado!`;
