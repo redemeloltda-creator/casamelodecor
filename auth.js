@@ -139,6 +139,21 @@
     }
   };
 
+  const salvarCarrinho = (itens) => {
+    localStorage.setItem(chaveCarrinho, JSON.stringify(itens));
+    document.dispatchEvent(new Event('casamelo-cart-change'));
+  };
+
+  const removerItemCarrinho = (adicionadoEm) => {
+    const carrinho = carregarCarrinho();
+    const indice = carrinho.findIndex((item) => item.adicionadoEm === adicionadoEm);
+
+    if (indice === -1) return;
+
+    carrinho.splice(indice, 1);
+    salvarCarrinho(carrinho);
+  };
+
   const fecharCarrinho = () => {
     if (!carrinhoBotao || !carrinhoPainel) return;
     carrinhoPainel.hidden = true;
@@ -185,6 +200,11 @@
     botaoCompra.hidden = false;
     const mensagem = montarMensagemCompra(itens);
     botaoCompra.href = `https://wa.me/5538999140400?text=${encodeURIComponent(mensagem)}`;
+
+    botaoCompra.onclick = () => {
+      salvarCarrinho([]);
+      fecharCarrinho();
+    };
   };
 
   const atualizarCarrinho = () => {
@@ -207,15 +227,29 @@
       const linha = document.createElement('li');
       linha.className = 'carrinho-item';
 
+      const topo = document.createElement('div');
+      topo.className = 'carrinho-item-topo';
+
       const nome = document.createElement('span');
       nome.className = 'carrinho-item-nome';
       nome.textContent = item.nome || 'Produto sem nome';
+
+      const botaoRemover = document.createElement('button');
+      botaoRemover.type = 'button';
+      botaoRemover.className = 'carrinho-item-remover';
+      botaoRemover.setAttribute('aria-label', `Remover ${nome.textContent} do carrinho`);
+      botaoRemover.textContent = '×';
+      botaoRemover.addEventListener('click', () => {
+        removerItemCarrinho(item.adicionadoEm);
+      });
 
       const preco = document.createElement('span');
       preco.className = 'carrinho-item-preco';
       preco.textContent = item.preco || 'Preço indisponível';
 
-      linha.appendChild(nome);
+      topo.appendChild(nome);
+      topo.appendChild(botaoRemover);
+      linha.appendChild(topo);
       linha.appendChild(preco);
       carrinhoLista.appendChild(linha);
     });
