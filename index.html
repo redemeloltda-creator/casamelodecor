@@ -58,13 +58,24 @@
                         <img id="perfilAvatarPainel" class="perfil-avatar perfil-avatar-grande" alt="Foto do cliente" hidden>
                         <span id="perfilAvatarFallbackPainel" class="perfil-avatar-fallback perfil-avatar-fallback-grande" aria-hidden="true">👤</span>
                         <div>
-                            <p class="perfil-titulo">Seu perfil</p>
+                            <p class="perfil-titulo">Cliente profissional</p>
                             <p class="perfil-nome" id="perfilNome"></p>
                             <p class="perfil-email" id="perfilEmail"></p>
                         </div>
                     </div>
+                    <div class="perfil-profissional" aria-label="Resumo do cliente profissional">
+                        <p class="perfil-profissional-selo">Conta profissional ativa</p>
+                        <p class="perfil-profissional-detalhe">Atendimento prioritário e catálogo completo liberado.</p>
+                    </div>
+                    <div class="perfil-historico" aria-live="polite">
+                        <p class="perfil-historico-titulo">Histórico de compras</p>
+                        <p class="perfil-historico-vazio" id="perfilHistoricoVazio">Nenhuma compra registrada ainda.</p>
+                        <ul class="perfil-historico-lista" id="perfilHistoricoLista"></ul>
+                    </div>
                     <input type="file" id="perfilFotoInput" accept="image/png,image/jpeg,image/webp" hidden>
                     <button type="button" class="perfil-acao" id="perfilEditarFoto">Alterar foto</button>
+                    <p class="perfil-foto-pendente" id="perfilFotoPendente" hidden>Foto selecionada. Clique em <strong>Salvar foto</strong> para concluir.</p>
+                    <button type="button" class="perfil-acao" id="perfilSalvarFoto" hidden>Salvar foto</button>
                     <button type="button" class="perfil-acao perfil-acao-perigo" id="perfilExcluirConta">Excluir conta</button>
                     <button type="button" class="perfil-sair" id="perfilSair">Sair</button>
                 </div>

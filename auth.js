@@ -19,6 +19,10 @@
   const perfilAvatarFallbackPainel = document.getElementById('perfilAvatarFallbackPainel');
   const perfilFotoInput = document.getElementById('perfilFotoInput');
   const perfilEditarFoto = document.getElementById('perfilEditarFoto');
+  const perfilSalvarFoto = document.getElementById('perfilSalvarFoto');
+  const perfilFotoPendente = document.getElementById('perfilFotoPendente');
+  const perfilHistoricoLista = document.getElementById('perfilHistoricoLista');
+  const perfilHistoricoVazio = document.getElementById('perfilHistoricoVazio');
   const perfilExcluirConta = document.getElementById('perfilExcluirConta');
   const perfilSair = document.getElementById('perfilSair');
   const carrinhoMenu = document.getElementById('carrinhoMenu');
@@ -33,8 +37,10 @@
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveSessao = 'casamelo_usuario_logado';
   const chaveCarrinho = 'casaMeloCarrinho';
+  const chaveHistoricoCompras = 'casamelo_historico_compras';
   const totalDigitosCelular = 11;
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
+  let fotoPendente = '';
 
   const criarUsuarioNormalizado = (usuario = {}) => ({
     nome: String(usuario.nome || '').trim(),
@@ -117,6 +123,19 @@
     });
   };
 
+  const limparAlteracaoFotoPendente = () => {
+    fotoPendente = '';
+    if (perfilSalvarFoto) perfilSalvarFoto.hidden = true;
+    if (perfilFotoPendente) perfilFotoPendente.hidden = true;
+    if (perfilFotoInput) perfilFotoInput.value = '';
+  };
+
+  const exibirAlteracaoFotoPendente = (foto) => {
+    fotoPendente = foto;
+    if (perfilSalvarFoto) perfilSalvarFoto.hidden = false;
+    if (perfilFotoPendente) perfilFotoPendente.hidden = false;
+  };
+
   const limparSessao = () => {
     localStorage.removeItem(chaveSessao);
   };
@@ -158,6 +177,137 @@
     carrinhoPainel.hidden = true;
     carrinhoBotao.setAttribute('aria-expanded', 'false');
   };
+
+
+  const carregarHistoricoCompras = () => {
+    try {
+      const historico = JSON.parse(localStorage.getItem(chaveHistoricoCompras) || '[]');
+      return Array.isArray(historico) ? historico : [];
+    } catch (erro) {
+      return [];
+    }
+  };
+
+  const salvarHistoricoCompras = (historico) => {
+    localStorage.setItem(chaveHistoricoCompras, JSON.stringify(historico));
+  };
+
+  const formatarDataHora = (valor) => {
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return 'Data indisponível';
+    return data.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const atualizarHistoricoPerfil = () => {
+    if (!perfilHistoricoLista || !perfilHistoricoVazio) return;
+
+    const usuario = carregarSessao();
+    const celular = normalizarCelular(usuario?.celular);
+    const historico = carregarHistoricoCompras()
+      .filter((compra) => normalizarCelular(compra?.celular) === celular)
+      .slice()
+      .reverse();
+
+    perfilHistoricoLista.innerHTML = '';
+
+    if (!historico.length) {
+      perfilHistoricoVazio.hidden = false;
+      return;
+    }
+
+    perfilHistoricoVazio.hidden = true;
+
+    historico.forEach((compra) => {
+      const item = document.createElement('li');
+      item.className = 'perfil-historico-item';
+
+      const data = document.createElement('p');
+      data.className = 'perfil-historico-data';
+      data.textContent = formatarDataHora(compra?.data);
+
+      const resumo = document.createElement('p');
+      resumo.className = 'perfil-historico-resumo';
+      resumo.textContent = `${compra?.itens?.length || 0} item(ns): ${(compra?.itens || []).map((produto) => produto.nome || 'Produto').join(', ')}`;
+
+      item.appendChild(data);
+      item.appendChild(resumo);
+      perfilHistoricoLista.appendChild(item);
+    });
+  };
+
+  const registrarCompraHistorico = (itens) => {
+    const usuario = carregarSessao();
+    const celular = normalizarCelular(usuario?.celular);
+
+    if (!celular || !Array.isArray(itens) || !itens.length) return;
+
+    const historico = carregarHistoricoCompras();
+    historico.push({
+      celular,
+      data: new Date().toISOString(),
+      itens: itens.map((item) => ({
+        nome: item?.nome || 'Produto sem nome',
+        preco: item?.preco || ''
+      }))
+    });
+    salvarHistoricoCompras(historico);
+    atualizarHistoricoPerfil();
+  };
+
+  const montarMensagemCompra = (itens) => {
+    const produtosCarrinho = itens
+      .map((item, indice) => {
+        const nome = String(item?.nome || '').trim() || 'Produto sem nome';
+        const preco = String(item?.preco || '').trim();
+
+        return `${indice + 1}. ${nome}${preco ? ` — ${preco}` : ''}`;
+      })
+      .join('\n');
+
+    return [
+      'Olá! Quero fazer um pedido com os itens do meu carrinho:',
+      `\n${produtosCarrinho}`
+    ].join('\n');
+  };
+
+  const atualizarBotaoCompra = (itens) => {
+    if (!carrinhoPainel) return;
+
+    let botaoCompra = document.getElementById('carrinhoComprarTudo');
+
+    if (!botaoCompra) {
+      botaoCompra = document.createElement('a');
+      botaoCompra.id = 'carrinhoComprarTudo';
+      botaoCompra.className = 'carrinho-comprar';
+      botaoCompra.textContent = 'Comprar itens do carrinho';
+      botaoCompra.target = '_blank';
+      botaoCompra.rel = 'noopener noreferrer';
+      carrinhoPainel.appendChild(botaoCompra);
+    }
+
+    if (!itens.length) {
+      botaoCompra.hidden = true;
+      botaoCompra.removeAttribute('href');
+      return;
+    }
+
+    botaoCompra.hidden = false;
+    const mensagem = montarMensagemCompra(itens);
+    botaoCompra.href = `https://wa.me/5538999140400?text=${encodeURIComponent(mensagem)}`;
+
+    botaoCompra.onclick = () => {
+      registrarCompraHistorico(itens);
+      salvarCarrinho([]);
+      fecharCarrinho();
+    };
+  };
+
 
   const atualizarCarrinho = () => {
     if (!carrinhoContador || !carrinhoLista || !carrinhoVazio || !carrinhoMenu) return;
@@ -246,12 +396,16 @@
         perfilNome.textContent = usuario.nome;
         perfilEmail.textContent = usuario.contato;
         atualizarAvatar(usuario);
+        limparAlteracaoFotoPendente();
+        atualizarHistoricoPerfil();
       } else {
         perfilMenu.hidden = true;
         perfilNome.textContent = '';
         perfilEmail.textContent = '';
         atualizarAvatar(null);
         fecharPainelPerfil();
+        limparAlteracaoFotoPendente();
+        atualizarHistoricoPerfil();
       }
     }
 
@@ -426,27 +580,44 @@
 
       if (!arquivo.type.startsWith('image/')) {
         feedback.textContent = 'Escolha um arquivo de imagem válido (PNG, JPG ou WEBP).';
-        perfilFotoInput.value = '';
+        limparAlteracaoFotoPendente();
         return;
       }
 
       if (arquivo.size > tamanhoMaximoFoto) {
         feedback.textContent = 'A foto deve ter até 2MB para manter o site rápido.';
-        perfilFotoInput.value = '';
+        limparAlteracaoFotoPendente();
         return;
       }
 
       const leitor = new FileReader();
       leitor.onload = () => {
         const foto = String(leitor.result || '');
-        const novaSessao = montarSessaoUsuario({ ...usuario.dadosCliente, ...usuario, foto });
-        salvarSessao(novaSessao);
-        atualizarFotoUsuario(usuario.celular, foto);
-        atualizarAreaPerfil();
-        feedback.textContent = 'Foto de perfil atualizada com sucesso.';
-        perfilFotoInput.value = '';
+
+        if (!foto) {
+          limparAlteracaoFotoPendente();
+          return;
+        }
+
+        exibirAlteracaoFotoPendente(foto);
+        feedback.textContent = 'Foto pronta para salvar. Clique no botão Salvar foto.';
       };
       leitor.readAsDataURL(arquivo);
+    });
+  }
+
+  if (perfilSalvarFoto) {
+    perfilSalvarFoto.addEventListener('click', () => {
+      const usuario = carregarSessao();
+
+      if (!usuario || !fotoPendente) return;
+
+      const novaSessao = montarSessaoUsuario({ ...usuario.dadosCliente, ...usuario, foto: fotoPendente });
+      salvarSessao(novaSessao);
+      atualizarFotoUsuario(usuario.celular, fotoPendente);
+      atualizarAreaPerfil();
+      feedback.textContent = 'Foto de perfil atualizada com sucesso.';
+      limparAlteracaoFotoPendente();
     });
   }
 
