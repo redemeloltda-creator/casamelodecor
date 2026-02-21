@@ -8,9 +8,17 @@
   const tabs = document.querySelectorAll('[data-auth-tab]');
   const botoesAbrir = document.querySelectorAll('[data-auth-open]');
 
+  const perfilMenu = document.getElementById('perfilMenu');
+  const perfilBotao = document.getElementById('perfilBotao');
+  const perfilPainel = document.getElementById('perfilPainel');
+  const perfilNome = document.getElementById('perfilNome');
+  const perfilEmail = document.getElementById('perfilEmail');
+  const perfilSair = document.getElementById('perfilSair');
+
   if (!modal || !formLogin || !formCadastro) return;
 
   const chaveUsuarios = 'casamelo_usuarios';
+  const chaveSessao = 'casamelo_usuario_logado';
 
   const carregarUsuarios = () => {
     try {
@@ -22,6 +30,51 @@
 
   const salvarUsuarios = (usuarios) => {
     localStorage.setItem(chaveUsuarios, JSON.stringify(usuarios));
+  };
+
+  const carregarSessao = () => {
+    try {
+      return JSON.parse(localStorage.getItem(chaveSessao) || 'null');
+    } catch (erro) {
+      return null;
+    }
+  };
+
+  const salvarSessao = (usuario) => {
+    localStorage.setItem(chaveSessao, JSON.stringify(usuario));
+  };
+
+  const limparSessao = () => {
+    localStorage.removeItem(chaveSessao);
+  };
+
+  const fecharPainelPerfil = () => {
+    if (!perfilBotao || !perfilPainel) return;
+
+    perfilPainel.hidden = true;
+    perfilBotao.setAttribute('aria-expanded', 'false');
+  };
+
+  const atualizarAreaPerfil = () => {
+    const usuario = carregarSessao();
+
+    botoesAbrir.forEach((botao) => {
+      botao.hidden = Boolean(usuario);
+    });
+
+    if (!perfilMenu || !perfilNome || !perfilEmail) return;
+
+    if (usuario) {
+      perfilMenu.hidden = false;
+      perfilNome.textContent = usuario.nome;
+      perfilEmail.textContent = usuario.email;
+      return;
+    }
+
+    perfilMenu.hidden = true;
+    perfilNome.textContent = '';
+    perfilEmail.textContent = '';
+    fecharPainelPerfil();
   };
 
   const trocarAba = (aba) => {
@@ -104,8 +157,35 @@
       return;
     }
 
+    salvarSessao({ nome: usuario.nome, email: usuario.email });
+    atualizarAreaPerfil();
+
     feedback.textContent = `Olá, ${usuario.nome}. Login realizado!`;
     formLogin.reset();
     setTimeout(fecharModal, 800);
   });
+
+  if (perfilBotao && perfilPainel) {
+    perfilBotao.addEventListener('click', () => {
+      const aberto = perfilPainel.hidden;
+      perfilPainel.hidden = !aberto;
+      perfilBotao.setAttribute('aria-expanded', String(aberto));
+    });
+
+    document.addEventListener('click', (evento) => {
+      if (!perfilMenu || perfilMenu.hidden) return;
+      if (perfilMenu.contains(evento.target)) return;
+      fecharPainelPerfil();
+    });
+  }
+
+  if (perfilSair) {
+    perfilSair.addEventListener('click', () => {
+      limparSessao();
+      atualizarAreaPerfil();
+      fecharPainelPerfil();
+    });
+  }
+
+  atualizarAreaPerfil();
 })();

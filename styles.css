@@ -96,6 +96,65 @@ header a:hover { color: #111; }
 }
 
 
+.perfil-menu {
+  position: relative;
+}
+
+.perfil-botao {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid #c9c9c9;
+  background: #1f1f1f;
+  color: #fff;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.perfil-painel {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  width: 220px;
+  border-radius: 12px;
+  border: 1px solid #d9d9d9;
+  background: #ffffff;
+  color: #1f1f1f;
+  padding: 12px;
+  text-align: left;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+}
+
+.perfil-titulo {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #707070;
+  margin-bottom: 6px;
+}
+
+.perfil-nome {
+  font-weight: 700;
+  color: #222;
+}
+
+.perfil-email {
+  font-size: 13px;
+  color: #595959;
+  margin-top: 2px;
+}
+
+.perfil-sair {
+  margin-top: 12px;
+  border: 1px solid #d3d3d3;
+  border-radius: 8px;
+  background: #f3f3f3;
+  padding: 8px 10px;
+  width: 100%;
+  cursor: pointer;
+}
+
+
 nav {
   position: sticky;
   top: 0;
