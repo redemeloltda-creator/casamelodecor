@@ -37,13 +37,26 @@
   const totalDigitosCelular = 11;
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
 
+  const criarUsuarioNormalizado = (usuario = {}) => ({
+    nome: String(usuario.nome || '').trim(),
+    celular: normalizarCelular(usuario.celular),
+    senha: String(usuario.senha || ''),
+    foto: String(usuario.foto || '').trim()
+  });
+
   const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
 
   const celularValido = (valor) => normalizarCelular(valor).length === totalDigitosCelular;
 
   const carregarUsuarios = () => {
     try {
-      return JSON.parse(localStorage.getItem(chaveUsuarios) || '[]');
+      const usuarios = JSON.parse(localStorage.getItem(chaveUsuarios) || '[]');
+
+      if (!Array.isArray(usuarios)) return [];
+
+      return usuarios
+        .map(criarUsuarioNormalizado)
+        .filter((usuario) => usuario.nome && celularValido(usuario.celular) && usuario.senha);
     } catch (erro) {
       return [];
     }
@@ -64,6 +77,14 @@
   const salvarSessao = (usuario) => {
     localStorage.setItem(chaveSessao, JSON.stringify(usuario));
   };
+
+  const montarSessaoUsuario = (usuario = {}) => ({
+    nome: usuario.nome || '',
+    contato: usuario.celular || usuario.email || '',
+    celular: usuario.celular || '',
+    foto: usuario.foto || '',
+    dadosCliente: criarUsuarioNormalizado(usuario)
+  });
 
   const atualizarFotoUsuario = (celular, foto) => {
     const usuarios = carregarUsuarios();
@@ -296,7 +317,7 @@
       return;
     }
 
-    usuarios.push({ nome, celular, senha, foto: '' });
+    usuarios.push(criarUsuarioNormalizado({ nome, celular, senha, foto: '' }));
     salvarUsuarios(usuarios);
     feedback.textContent = 'Cadastro realizado com sucesso. Agora faça seu login.';
     formCadastro.reset();
@@ -324,12 +345,7 @@
       return;
     }
 
-    salvarSessao({
-      nome: usuario.nome,
-      contato: usuario.celular || usuario.email || '',
-      celular: usuario.celular,
-      foto: usuario.foto || ''
-    });
+    salvarSessao(montarSessaoUsuario(usuario));
     atualizarAreaPerfil();
 
     feedback.textContent = `Olá, ${usuario.nome}. Login realizado!`;
@@ -424,7 +440,7 @@
       const leitor = new FileReader();
       leitor.onload = () => {
         const foto = String(leitor.result || '');
-        const novaSessao = { ...usuario, foto };
+        const novaSessao = montarSessaoUsuario({ ...usuario.dadosCliente, ...usuario, foto });
         salvarSessao(novaSessao);
         atualizarFotoUsuario(usuario.celular, foto);
         atualizarAreaPerfil();
