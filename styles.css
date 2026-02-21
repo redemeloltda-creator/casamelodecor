@@ -310,6 +310,12 @@ header a:hover { color: #111; }
   background: #ffffff;
 }
 
+.perfil-acao-perigo {
+  border-color: #e3b6b6;
+  color: #9f1e1e;
+  background: #fff7f7;
+}
+
 
 nav {
   position: sticky;
