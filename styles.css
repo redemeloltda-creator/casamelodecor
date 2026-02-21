@@ -487,6 +487,16 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
 .hero h2 { font-size: clamp(2rem, 4vw, 3.4rem); max-width: 580px; margin-bottom: 12px; }
 .hero p { max-width: 500px; color: #2f2f2f; margin-bottom: 18px; }
 
+.hero-acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-acoes .botao {
+  margin-right: 0;
+}
+
 .hero-catalogo {
   min-height: 360px;
   margin-bottom: 10px;
