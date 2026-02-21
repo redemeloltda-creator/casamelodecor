@@ -13,6 +13,7 @@
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const endpointAvaliacoesOnline = 'https://jsonblob.com/api/jsonBlob/1342888989686272000';
+  const intervaloSincronizacaoMs = 60000;
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
@@ -96,6 +97,17 @@
     } catch (erro) {
       feedback.textContent = 'Comentário salvo apenas neste dispositivo. Verifique sua conexão para publicar online.';
       return false;
+    }
+  };
+
+  const sincronizarAvaliacoesOnline = async ({ silencioso = false } = {}) => {
+    const avaliacoesOnline = await carregarAvaliacoesOnline();
+    avaliacoesCache = avaliacoesOnline;
+    salvarAvaliacoesLocais(avaliacoesOnline);
+    renderizarAvaliacoes();
+
+    if (!silencioso) {
+      feedback.textContent = '';
     }
   };
 
@@ -272,14 +284,18 @@
     renderizarAvaliacoes();
 
     try {
-      const avaliacoesOnline = await carregarAvaliacoesOnline();
-      avaliacoesCache = avaliacoesOnline;
-      salvarAvaliacoesLocais(avaliacoesOnline);
-      renderizarAvaliacoes();
-      feedback.textContent = '';
+      await sincronizarAvaliacoesOnline();
     } catch (erro) {
       feedback.textContent = 'Não foi possível sincronizar avaliações online agora. Exibindo comentários deste dispositivo.';
     }
+
+    setInterval(async () => {
+      try {
+        await sincronizarAvaliacoesOnline({ silencioso: true });
+      } catch (erro) {
+        // Mantém a última lista disponível para garantir que visitantes continuem vendo comentários.
+      }
+    }, intervaloSincronizacaoMs);
   };
 
   iniciarAvaliacoes();
