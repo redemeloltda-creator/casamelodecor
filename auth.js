@@ -178,6 +178,7 @@
     carrinhoBotao.setAttribute('aria-expanded', 'false');
   };
 
+
   const carregarHistoricoCompras = () => {
     try {
       const historico = JSON.parse(localStorage.getItem(chaveHistoricoCompras) || '[]');
@@ -307,6 +308,7 @@
     };
   };
 
+
   const atualizarCarrinho = () => {
     if (!carrinhoContador || !carrinhoLista || !carrinhoVazio || !carrinhoMenu) return;
 
@@ -317,7 +319,6 @@
 
     if (!itens.length) {
       carrinhoVazio.hidden = false;
-      atualizarBotaoCompra(itens);
       return;
     }
 
@@ -347,14 +348,32 @@
       preco.className = 'carrinho-item-preco';
       preco.textContent = item.preco || 'Preço indisponível';
 
+      const acoes = document.createElement('div');
+      acoes.className = 'carrinho-item-acoes';
+
+      const botaoComprar = document.createElement('a');
+      botaoComprar.className = 'carrinho-item-comprar';
+      botaoComprar.textContent = 'Comprar item';
+
+      const linkCompra = String(item?.linkCompra || '').trim();
+
+      if (linkCompra) {
+        botaoComprar.href = linkCompra;
+        botaoComprar.target = '_blank';
+        botaoComprar.rel = 'noopener noreferrer';
+      } else {
+        botaoComprar.setAttribute('aria-disabled', 'true');
+        botaoComprar.classList.add('desabilitado');
+      }
+
       topo.appendChild(nome);
       topo.appendChild(botaoRemover);
+      acoes.appendChild(botaoComprar);
       linha.appendChild(topo);
       linha.appendChild(preco);
+      linha.appendChild(acoes);
       carrinhoLista.appendChild(linha);
     });
-
-    atualizarBotaoCompra(itens);
   };
 
   const fecharPainelPerfil = () => {
