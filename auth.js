@@ -20,11 +20,18 @@
   const perfilFotoInput = document.getElementById('perfilFotoInput');
   const perfilEditarFoto = document.getElementById('perfilEditarFoto');
   const perfilSair = document.getElementById('perfilSair');
+  const carrinhoMenu = document.getElementById('carrinhoMenu');
+  const carrinhoBotao = document.getElementById('carrinhoBotao');
+  const carrinhoPainel = document.getElementById('carrinhoPainel');
+  const carrinhoContador = document.getElementById('carrinhoContador');
+  const carrinhoLista = document.getElementById('carrinhoLista');
+  const carrinhoVazio = document.getElementById('carrinhoVazio');
 
   if (!modal || !formLogin || !formCadastro) return;
 
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveSessao = 'casamelo_usuario_logado';
+  const chaveCarrinho = 'casaMeloCarrinho';
   const totalDigitosCelular = 11;
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
 
@@ -90,6 +97,54 @@
 
   const limparSessao = () => {
     localStorage.removeItem(chaveSessao);
+  };
+
+  const carregarCarrinho = () => {
+    try {
+      const dados = JSON.parse(localStorage.getItem(chaveCarrinho) || '[]');
+      return Array.isArray(dados) ? dados : [];
+    } catch (erro) {
+      return [];
+    }
+  };
+
+  const fecharCarrinho = () => {
+    if (!carrinhoBotao || !carrinhoPainel) return;
+    carrinhoPainel.hidden = true;
+    carrinhoBotao.setAttribute('aria-expanded', 'false');
+  };
+
+  const atualizarCarrinho = () => {
+    if (!carrinhoContador || !carrinhoLista || !carrinhoVazio || !carrinhoMenu) return;
+
+    const itens = carregarCarrinho();
+    carrinhoContador.textContent = String(itens.length);
+    carrinhoMenu.hidden = false;
+    carrinhoLista.innerHTML = '';
+
+    if (!itens.length) {
+      carrinhoVazio.hidden = false;
+      return;
+    }
+
+    carrinhoVazio.hidden = true;
+
+    itens.slice().reverse().forEach((item) => {
+      const linha = document.createElement('li');
+      linha.className = 'carrinho-item';
+
+      const nome = document.createElement('span');
+      nome.className = 'carrinho-item-nome';
+      nome.textContent = item.nome || 'Produto sem nome';
+
+      const preco = document.createElement('span');
+      preco.className = 'carrinho-item-preco';
+      preco.textContent = item.preco || 'Preço indisponível';
+
+      linha.appendChild(nome);
+      linha.appendChild(preco);
+      carrinhoLista.appendChild(linha);
+    });
   };
 
   const fecharPainelPerfil = () => {
@@ -223,11 +278,12 @@
     setTimeout(fecharModal, 800);
   });
 
-  if (perfilBotao && perfilPainel) {
-    perfilBotao.addEventListener('click', () => {
+    if (perfilBotao && perfilPainel) {
+      perfilBotao.addEventListener('click', () => {
       const aberto = perfilPainel.hidden;
       perfilPainel.hidden = !aberto;
       perfilBotao.setAttribute('aria-expanded', String(aberto));
+      if (aberto) fecharCarrinho();
     });
 
     document.addEventListener('click', (evento) => {
@@ -235,6 +291,27 @@
       if (perfilMenu.contains(evento.target)) return;
       fecharPainelPerfil();
     });
+  }
+
+  if (carrinhoBotao && carrinhoPainel) {
+    carrinhoBotao.addEventListener('click', () => {
+      const aberto = carrinhoPainel.hidden;
+      carrinhoPainel.hidden = !aberto;
+      carrinhoBotao.setAttribute('aria-expanded', String(aberto));
+      if (aberto) fecharPainelPerfil();
+    });
+
+    document.addEventListener('click', (evento) => {
+      if (!carrinhoMenu || carrinhoMenu.hidden) return;
+      if (carrinhoMenu.contains(evento.target)) return;
+      fecharCarrinho();
+    });
+
+    window.addEventListener('storage', (evento) => {
+      if (evento.key === chaveCarrinho) atualizarCarrinho();
+    });
+
+    document.addEventListener('casamelo-cart-change', atualizarCarrinho);
   }
 
   if (perfilSair) {
@@ -283,4 +360,5 @@
   }
 
   atualizarAreaPerfil();
+  atualizarCarrinho();
 })();
