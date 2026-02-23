@@ -177,31 +177,19 @@
     dataAvaliacao: linha.data_avaliacao || ''
   });
 
-  const salvarAvaliacoesOnline = async (avaliacoes) => {
+  const salvarAvaliacoesOnline = async (avaliacoes, idsRemovidos = []) => {
     if (!supabaseClient) {
       throw new Error('Cliente Supabase não disponível.');
     }
 
     const linhas = normalizarListaAvaliacoes(avaliacoes).map(mapearAvaliacaoParaLinha);
-    const idsLocais = linhas.map((linha) => linha.id);
+    const idsNormalizadosRemover = [...new Set(idsRemovidos.map((id) => String(id).trim()).filter(Boolean))];
 
-    const { data: idsOnline, error: erroConsulta } = await supabaseClient
-      .from(tabelaAvaliacoes)
-      .select('id');
-
-    if (erroConsulta) {
-      throw erroConsulta;
-    }
-
-    const idsExcluir = (idsOnline || [])
-      .map((item) => String(item.id))
-      .filter((id) => !idsLocais.includes(id));
-
-    if (idsExcluir.length) {
+    if (idsNormalizadosRemover.length) {
       const { error: erroExclusao } = await supabaseClient
         .from(tabelaAvaliacoes)
         .delete()
-        .in('id', idsExcluir);
+        .in('id', idsNormalizadosRemover);
 
       if (erroExclusao) {
         throw erroExclusao;
@@ -254,14 +242,34 @@
 
     try {
       const avaliacoesOnline = await carregarAvaliacoesOnline();
-      const listaMesclada = mesclarAvaliacoes(avaliacoesOnline, avaliacoesCache, listaAtual);
-      await salvarAvaliacoesOnline(listaMesclada);
-      avaliacoesCache = listaMesclada;
-      salvarAvaliacoesLocais(listaMesclada);
-      return { publicouOnline: true, listaFinal: listaMesclada };
+      const idsDesejados = new Set(listaAtual.map((avaliacao) => obterIdAvaliacao(avaliacao)));
+      const listaMesclada = mesclarAvaliacoes(avaliacoesOnline, avaliacoesCache, listaAtual)
+        .filter((avaliacao) => idsDesejados.has(obterIdAvaliacao(avaliacao)));
+      const idsRemovidos = avaliacoesCache
+        .map((avaliacao) => obterIdAvaliacao(avaliacao))
+        .filter((id) => !idsDesejados.has(id));
+
+      await salvarAvaliacoesOnline(listaMesclada, idsRemovidos);
+
+      const listaFinal = mesclarAvaliacoes(avaliacoesOnline, listaMesclada);
+      avaliacoesCache = listaFinal;
+      salvarAvaliacoesLocais(listaFinal);
+      return { publicouOnline: true, listaFinal };
     } catch (erro) {
-      await salvarComFallback(listaAtual);
-      return { publicouOnline: false, listaFinal: listaAtual };
+      try {
+        const idsDesejados = new Set(listaAtual.map((avaliacao) => obterIdAvaliacao(avaliacao)));
+        const idsRemovidos = avaliacoesCache
+          .map((avaliacao) => obterIdAvaliacao(avaliacao))
+          .filter((id) => !idsDesejados.has(id));
+
+        await salvarAvaliacoesOnline(listaAtual, idsRemovidos);
+        avaliacoesCache = listaAtual;
+        salvarAvaliacoesLocais(listaAtual);
+        return { publicouOnline: true, listaFinal: listaAtual };
+      } catch (erroFallbackOnline) {
+        await salvarComFallback(listaAtual);
+        return { publicouOnline: false, listaFinal: listaAtual };
+      }
     }
   };
 
