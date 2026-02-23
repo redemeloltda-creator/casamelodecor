@@ -1,6 +1,13 @@
 -- Esquema PostgreSQL/Supabase para comentários e notas de clientes
 -- Execute conectado ao banco desejado (ex.: psql -d casamelodecor -f database/schema.sql)
 
+<
+-- Projeto Supabase: fulymepfkdenmtickfwk
+-- Host do banco (Supabase): db.fulymepfkdenmtickfwk.supabase.co
+-- Exemplo de conexão direta:
+-- psql "postgresql://postgres:<SUA_SENHA>@db.fulymepfkdenmtickfwk.supabase.co:5432/postgres?sslmode=require" -f database/schema.sql
+
+
 -- Tabela de usuários vinculada ao auth.users do Supabase.
 CREATE TABLE IF NOT EXISTS usuarios (
   id UUID PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
