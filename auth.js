@@ -15,8 +15,6 @@
   const perfilEmail = document.getElementById('perfilEmail');
   const perfilAvatarBotao = document.getElementById('perfilAvatarBotao');
   const perfilAvatarPainel = document.getElementById('perfilAvatarPainel');
-  const perfilAvatarFallback = document.getElementById('perfilAvatarFallback');
-  const perfilAvatarFallbackPainel = document.getElementById('perfilAvatarFallbackPainel');
   const perfilFotoInput = document.getElementById('perfilFotoInput');
   const perfilEditarFoto = document.getElementById('perfilEditarFoto');
   const perfilSalvarFoto = document.getElementById('perfilSalvarFoto');
@@ -109,7 +107,7 @@
   };
 
   const atualizarAvatar = (usuario) => {
-    const foto = String(usuario?.foto || '').trim();
+    const foto = String(usuario?.foto || usuario?.dadosCliente?.foto || '').trim();
     const temFoto = Boolean(foto);
 
     [perfilAvatarBotao, perfilAvatarPainel].forEach((avatar) => {
@@ -122,11 +120,6 @@
       }
 
       avatar.hidden = !temFoto;
-    });
-
-    [perfilAvatarFallback, perfilAvatarFallbackPainel].forEach((fallback) => {
-      if (!fallback) return;
-      fallback.hidden = temFoto;
     });
   };
 
