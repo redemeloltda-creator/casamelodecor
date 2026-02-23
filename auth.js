@@ -15,6 +15,7 @@
   const perfilEmail = document.getElementById('perfilEmail');
   const perfilAvatarBotao = document.getElementById('perfilAvatarBotao');
   const perfilAvatarPainel = document.getElementById('perfilAvatarPainel');
+  const perfilAvatarFallback = document.getElementById('perfilAvatarFallback');
   const perfilFotoInput = document.getElementById('perfilFotoInput');
   const perfilEditarFoto = document.getElementById('perfilEditarFoto');
   const perfilSalvarFoto = document.getElementById('perfilSalvarFoto');
@@ -120,7 +121,9 @@
       }
 
       avatar.hidden = !temFoto;
-    });
+    if (perfilAvatarFallback) {
+      perfilAvatarFallback.hidden = temFoto;
+    }
   };
 
   const limparAlteracaoFotoPendente = () => {
