@@ -58,6 +58,35 @@
     return [...mapa.values()];
   };
 
+  const normalizarStringComparacao = (valor) => String(valor || '').trim();
+
+  const obterChaveComparacaoAvaliacao = (avaliacao) => {
+    const dataComparacao = normalizarStringComparacao(avaliacao?.dataAvaliacao);
+
+    return [
+      obterIdAvaliacao(avaliacao),
+      normalizarStringComparacao(avaliacao?.nome),
+      normalizarCelular(avaliacao?.celular),
+      normalizarStringComparacao(avaliacao?.foto),
+      Number(avaliacao?.nota) || 0,
+      normalizarStringComparacao(avaliacao?.comentario),
+      dataComparacao
+    ].join('|');
+  };
+
+  const listasSaoIguais = (listaA = [], listaB = []) => {
+    if (listaA.length !== listaB.length) return false;
+
+    const mapaA = new Map(
+      listaA.map((avaliacao) => [obterIdAvaliacao(avaliacao), obterChaveComparacaoAvaliacao(avaliacao)])
+    );
+
+    return listaB.every((avaliacao) => {
+      const id = obterIdAvaliacao(avaliacao);
+      return mapaA.get(id) === obterChaveComparacaoAvaliacao(avaliacao);
+    });
+  };
+
   const carregarSessao = () => {
     try {
       return JSON.parse(localStorage.getItem(chaveSessao) || 'null');
@@ -182,6 +211,10 @@
     const avaliacoesOnline = await carregarAvaliacoesOnline();
     const avaliacoesLocais = carregarAvaliacoesLocais();
     const listaPublica = mesclarAvaliacoes(avaliacoesOnline, avaliacoesLocais);
+
+    if (!listasSaoIguais(avaliacoesOnline, listaPublica)) {
+      await salvarAvaliacoesOnline(listaPublica);
+    }
 
     avaliacoesCache = listaPublica;
     salvarAvaliacoesLocais(listaPublica);
