@@ -14,12 +14,13 @@
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
   const intervaloSincronizacaoMs = 60000;
-  const SUPABASE_URL = 'https://fulymepfkdenmtickfwk.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_-EkQe8BgbDCAFQJ1j_1omg_J6Eu_fbc';
+  const supabaseConfig = window.casameloSupabaseConfig || {};
+  const SUPABASE_URL = supabaseConfig.url || '';
+  const SUPABASE_ANON_KEY = supabaseConfig.anonKey || '';
   const tabelaAvaliacoes = 'comentarios';
   const { createClient } = window.supabase || {};
 
-  const supabaseClient = createClient
+  const supabaseClient = createClient && supabaseConfig.configValida
     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
@@ -180,7 +181,7 @@
 
   const salvarAvaliacoesOnline = async (avaliacoes, idsRemovidos = []) => {
     if (!supabaseClient) {
-      throw new Error('Cliente Supabase não disponível.');
+      throw new Error(supabaseConfig.mensagemErro || 'Cliente Supabase não disponível.');
     }
 
     const linhas = normalizarListaAvaliacoes(avaliacoes).map(mapearAvaliacaoParaLinha);
@@ -210,7 +211,7 @@
 
   const carregarAvaliacoesOnline = async () => {
     if (!supabaseClient) {
-      throw new Error('Cliente Supabase não disponível.');
+      throw new Error(supabaseConfig.mensagemErro || 'Cliente Supabase não disponível.');
     }
 
     const { data, error } = await supabaseClient
@@ -233,7 +234,8 @@
       await salvarAvaliacoesOnline(avaliacoes);
       return true;
     } catch (erro) {
-      feedback.textContent = 'Comentário salvo apenas neste dispositivo. Verifique sua conexão para publicar online.';
+      console.error('Falha ao salvar avaliações no Supabase:', erro);
+      feedback.textContent = 'Comentário salvo apenas neste dispositivo. Verifique a configuração/chave do Supabase para publicar online.';
       return false;
     }
   };
@@ -268,6 +270,7 @@
         salvarAvaliacoesLocais(listaAtual);
         return { publicouOnline: true, listaFinal: listaAtual };
       } catch (erroFallbackOnline) {
+        console.error('Falha ao publicar avaliações no Supabase:', erroFallbackOnline);
         await salvarComFallback(listaAtual);
         return { publicouOnline: false, listaFinal: listaAtual };
       }
