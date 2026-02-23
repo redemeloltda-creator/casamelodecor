@@ -16,7 +16,7 @@
   const intervaloSincronizacaoMs = 60000;
   const supabaseUrl = 'https://fulymepfkdenmtickfwk.supabase.co';
   const supabasePublishableKey = 'sb_publishable_-EkQe8BgbDCAFQJ1j_1omg_J6Eu_fbc';
-  const tabelaAvaliacoes = 'comentarios_publicos';
+  const tabelaAvaliacoes = 'comentarios';
 
   const supabaseClient = window.supabase?.createClient
     ? window.supabase.createClient(supabaseUrl, supabasePublishableKey)
