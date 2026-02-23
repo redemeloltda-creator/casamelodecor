@@ -1159,10 +1159,11 @@ footer {
   }
   .header-direita {
     width: 100%;
-    display: grid;
-    grid-template-columns: auto auto auto;
-    gap: 8px;
+    display: flex;
+    justify-content: flex-end;
     align-items: center;
+    gap: 10px;
+    padding-top: 2px;
   }
   .auth-btn {
     width: 100%;
@@ -1170,9 +1171,9 @@ footer {
     font-size: 11px;
   }
   .auth-btn-icon {
-    width: 42px;
-    min-width: 42px;
-    justify-self: end;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
   }
   .logo-link {
     padding: 4px 8px;
@@ -1194,7 +1195,8 @@ footer {
   }
   .carrinho-botao,
   .perfil-botao {
-    min-height: 42px;
+    min-width: 44px;
+    min-height: 44px;
   }
   .carrinho-painel,
   .perfil-painel {
@@ -1258,6 +1260,23 @@ footer {
     width: 100%;
     text-align: center;
     margin-right: 0;
+  }
+  .hero-acoes {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-items: stretch;
+    max-width: 460px;
+  }
+  .hero-acoes .botao {
+    margin-top: 0;
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 14px;
+    line-height: 1.25;
   }
   .hero-catalogo,
   .banner-localizacao-conteudo,
@@ -1352,24 +1371,22 @@ footer {
     font-size: 0.88rem;
   }
   .header-direita {
-    grid-template-columns: auto auto auto;
+    gap: 8px;
   }
   .auth-btn {
     min-height: 40px;
   }
   .auth-btn-icon {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-  }
-  .carrinho-menu,
-  .perfil-menu {
-    justify-self: end;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
   }
   .carrinho-botao,
   .perfil-botao {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
   }
   .menu-links {
     padding: 0 10px 2px;
@@ -1377,6 +1394,9 @@ footer {
   .hero {
     padding: 34px 10px;
     min-height: 280px;
+  }
+  .hero-acoes {
+    grid-template-columns: 1fr;
   }
   .section h2,
   .section > p,
