@@ -14,12 +14,13 @@
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
   const intervaloSincronizacaoMs = 60000;
-  const supabaseUrl = 'https://fulymepfkdenmtickfwk.supabase.co';
-  const supabasePublishableKey = 'sb_publishable_-EkQe8BgbDCAFQJ1j_1omg_J6Eu_fbc';
+  const SUPABASE_URL = 'https://fulymepfkdenmtickfwk.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_-EkQe8BgbDCAFQJ1j_1omg_J6Eu_fbc';
   const tabelaAvaliacoes = 'comentarios';
+  const { createClient } = window.supabase || {};
 
-  const supabaseClient = window.supabase?.createClient
-    ? window.supabase.createClient(supabaseUrl, supabasePublishableKey)
+  const supabaseClient = createClient
+    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
   let notaSelecionada = 0;

@@ -1,15 +1,16 @@
 (function () {
-  const supabaseUrl = 'https://fulymepfkdenmtickfwk.supabase.co';
-  const supabaseKey = 'sb_publishable_-EkQe8BgbDCAFQJ1j_1omg_J6Eu_fbc';
+  const SUPABASE_URL = 'https://fulymepfkdenmtickfwk.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_-EkQe8BgbDCAFQJ1j_1omg_J6Eu_fbc';
+  const { createClient } = window.supabase || {};
 
   const formCadastroClientes = document.getElementById('formCadastroClientes');
   const nomeInput = document.getElementById('nome');
   const emailInput = document.getElementById('email');
   const cadastroFeedback = document.getElementById('cadastroFeedback');
 
-  if (!formCadastroClientes || !nomeInput || !emailInput || !window.supabase?.createClient) return;
+  if (!formCadastroClientes || !nomeInput || !emailInput || !createClient) return;
 
-  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const salvar = async () => {
     const nome = nomeInput.value.trim();
