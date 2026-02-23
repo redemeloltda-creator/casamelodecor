@@ -314,6 +314,10 @@
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+  const limitarTamanhoComentario = (texto, tamanhoMaximo = 500) => String(texto || '')
+    .trim()
+    .slice(0, tamanhoMaximo);
+
   const renderizarHearts = () => {
     heartsInput.innerHTML = '';
 
@@ -426,6 +430,8 @@
   form.addEventListener('submit', async (evento) => {
     evento.preventDefault();
 
+    if (btnEnviar.disabled) return;
+
     const usuario = carregarSessao();
     if (!usuario) {
       feedback.textContent = 'Você precisa estar logado para avaliar.';
@@ -433,7 +439,7 @@
       return;
     }
 
-    const comentario = comentarioInput.value.trim();
+    const comentario = limitarTamanhoComentario(comentarioInput.value);
 
     if (!notaSelecionada) {
       feedback.textContent = 'Selecione de 1 a 5 corações para avaliar.';
@@ -456,16 +462,22 @@
     };
 
     const proximaLista = [...avaliacoesCache, novaAvaliacao];
-    const { publicouOnline, listaFinal } = await publicarAvaliacoes(proximaLista);
-    avaliacoesCache = listaFinal;
+    btnEnviar.disabled = true;
 
-    comentarioInput.value = '';
-    notaSelecionada = 0;
-    renderizarHearts();
-    renderizarAvaliacoes();
+    try {
+      const { publicouOnline, listaFinal } = await publicarAvaliacoes(proximaLista);
+      avaliacoesCache = listaFinal;
 
-    if (publicouOnline) {
-      feedback.textContent = 'Avaliação enviada e publicada online com sucesso. Obrigado!';
+      comentarioInput.value = '';
+      notaSelecionada = 0;
+      renderizarHearts();
+      renderizarAvaliacoes();
+
+      if (publicouOnline) {
+        feedback.textContent = 'Avaliação enviada e publicada online com sucesso. Obrigado!';
+      }
+    } finally {
+      btnEnviar.disabled = false;
     }
   });
 
