@@ -46,9 +46,12 @@
   const chaveHistoricoCompras = 'casamelo_historico_compras';
   const chavePreferencias = 'casamelo_preferencias_perfil';
   const chaveCodigosVerificacao = 'casamelo_codigos_verificacao';
+  const chaveUltimoEnvioCodigo = 'casamelo_ultimo_envio_codigo';
   const totalDigitosCelular = 11;
   const tamanhoCodigoVerificacao = 6;
   const validadeCodigoEmMs = 5 * 60 * 1000;
+  const intervaloMinimoEnvioCodigoEmMs = 60 * 1000;
+  const numeroWhatsappVerificacao = '5538999140400';
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
   let fotoPendente = '';
 
@@ -92,6 +95,43 @@
 
   const gerarCodigoVerificacao = () => String(Math.floor(100000 + Math.random() * 900000));
 
+  const carregarControleEnvioCodigo = () => {
+    try {
+      const dados = JSON.parse(localStorage.getItem(chaveUltimoEnvioCodigo) || '{}');
+      return dados && typeof dados === 'object' ? dados : {};
+    } catch (erro) {
+      return {};
+    }
+  };
+
+  const salvarControleEnvioCodigo = (dados) => {
+    localStorage.setItem(chaveUltimoEnvioCodigo, JSON.stringify(dados));
+  };
+
+  const montarChaveEnvioCodigo = (celular, contexto) => `${normalizarCelular(celular)}_${contexto}`;
+
+  const validarIntervaloEnvioCodigo = (celular, contexto) => {
+    const controleEnvio = carregarControleEnvioCodigo();
+    const chaveEnvio = montarChaveEnvioCodigo(celular, contexto);
+    const ultimoEnvio = Number(controleEnvio[chaveEnvio] || 0);
+    const restanteEmMs = intervaloMinimoEnvioCodigoEmMs - (Date.now() - ultimoEnvio);
+
+    if (restanteEmMs > 0) {
+      return {
+        permitido: false,
+        restanteSegundos: Math.ceil(restanteEmMs / 1000)
+      };
+    }
+
+    controleEnvio[chaveEnvio] = Date.now();
+    salvarControleEnvioCodigo(controleEnvio);
+
+    return {
+      permitido: true,
+      restanteSegundos: 0
+    };
+  };
+
   const registrarCodigoVerificacao = (celular, contexto) => {
     const codigosAtivos = limparCodigosExpirados(carregarCodigosVerificacao()).filter((item) => !(normalizarCelular(item?.celular) === normalizarCelular(celular) && item?.contexto === contexto));
     const codigo = gerarCodigoVerificacao();
@@ -125,11 +165,41 @@
     return true;
   };
 
+  const montarMensagemWhatsappCodigo = (celular, contexto, codigo) => {
+    const contextoNormalizado = contexto === 'cadastro' ? 'cadastro' : 'login';
+    const celularFormatado = normalizarCelular(celular).replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+
+    return [
+      'Olá, equipe Casa Melo Decor!',
+      '',
+      `Solicitação automática de código para ${contextoNormalizado}:`,
+      `• Destino: ${celularFormatado}`,
+      `• Código: ${codigo}`,
+      '',
+      'Por favor, enviar este código ao cliente via WhatsApp.'
+    ].join('\n');
+  };
+
+  const montarLinkWhatsappCodigo = (celular, contexto, codigo) => `https://wa.me/${numeroWhatsappVerificacao}?text=${encodeURIComponent(montarMensagemWhatsappCodigo(celular, contexto, codigo))}`;
+
   const solicitarCodigoVerificacao = (celular, contexto) => {
+    const validacaoIntervalo = validarIntervaloEnvioCodigo(celular, contexto);
+
+    if (!validacaoIntervalo.permitido) {
+      feedback.textContent = `Aguarde ${validacaoIntervalo.restanteSegundos}s para solicitar um novo código.`;
+      return;
+    }
+
     const codigo = registrarCodigoVerificacao(celular, contexto);
     const celularMascarado = normalizarCelular(celular).replace(/(\d{2})\d{5}(\d{4})/, '$1*****$2');
+    const linkEnvioCodigo = montarLinkWhatsappCodigo(celular, contexto, codigo);
+    const janelaWhatsapp = window.open(linkEnvioCodigo, '_blank', 'noopener,noreferrer');
 
-    feedback.textContent = `Código enviado para ${celularMascarado}. Confira o SMS e digite os ${tamanhoCodigoVerificacao} números para continuar. (Demo: ${codigo})`;
+    if (janelaWhatsapp) {
+      janelaWhatsapp.opener = null;
+    }
+
+    feedback.textContent = `Código solicitado para ${celularMascarado}. Finalize o envio no WhatsApp (${numeroWhatsappVerificacao}) e digite os ${tamanhoCodigoVerificacao} números para continuar.`;
   };
 
   const carregarUsuarios = () => {
