@@ -469,8 +469,17 @@
     document.dispatchEvent(new Event('casamelo-auth-change'));
   };
 
+  const normalizarAbaAutenticacao = (aba) => {
+    const abaNormalizada = String(aba || '').trim().toLowerCase();
+
+    if (['cadastro', 'registrar', 'register'].includes(abaNormalizada)) return 'cadastro';
+    if (['login', 'entrar', 'logan'].includes(abaNormalizada)) return 'login';
+
+    return 'login';
+  };
+
   const trocarAba = (aba) => {
-    const loginAtivo = aba !== 'cadastro';
+    const loginAtivo = normalizarAbaAutenticacao(aba) !== 'cadastro';
 
     titulo.textContent = loginAtivo ? 'Login' : 'Cadastro';
     formLogin.hidden = !loginAtivo;
@@ -485,7 +494,7 @@
   const abrirModal = (abaInicial) => {
     modal.classList.add('aberto');
     modal.setAttribute('aria-hidden', 'false');
-    trocarAba(abaInicial);
+    trocarAba(normalizarAbaAutenticacao(abaInicial));
   };
 
   const fecharModal = () => {
@@ -495,6 +504,15 @@
 
   botoesAbrir.forEach((botao) => {
     botao.addEventListener('click', () => abrirModal(botao.dataset.authOpen));
+  });
+
+  document.addEventListener('click', (evento) => {
+    const botaoAbrir = evento.target.closest('[data-auth-open]');
+
+    if (!botaoAbrir) return;
+
+    evento.preventDefault();
+    abrirModal(botaoAbrir.dataset.authOpen);
   });
 
   tabs.forEach((tab) => {
