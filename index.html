@@ -33,8 +33,12 @@
         </div>
 
         <div class="header-direita" id="authArea">
-            <button type="button" class="auth-btn" data-auth-open="login">Login</button>
-            <button type="button" class="auth-btn auth-btn-outline" data-auth-open="cadastro">Cadastro</button>
+            <button type="button" class="auth-btn auth-btn-icon" data-auth-open="login" aria-label="Entrar ou cadastrar">
+                <svg class="auth-btn-icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="8" r="3.5"></circle>
+                    <path d="M5.5 18c1.6-2.8 4-4.2 6.5-4.2s4.9 1.4 6.5 4.2"></path>
+                </svg>
+            </button>
 
             <div class="carrinho-menu" id="carrinhoMenu">
                 <button type="button" class="carrinho-botao" id="carrinhoBotao" aria-label="Abrir carrinho" aria-expanded="false">

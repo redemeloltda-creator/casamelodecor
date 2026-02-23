@@ -95,6 +95,34 @@ header a:hover { color: #111; }
   color: #1f1f1f;
 }
 
+.auth-btn-icon {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #1f1f1f;
+  border: 1px solid #cfcfcf;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-btn-icon:hover {
+  background: #f5f5f5;
+}
+
+.auth-btn-icon-svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 
 .perfil-menu {
   position: relative;
@@ -349,7 +377,7 @@ header a:hover { color: #111; }
 .perfil-resumo-conta {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: auto auto auto;
   gap: 8px;
 }
 
@@ -1121,7 +1149,7 @@ footer {
   .header-direita {
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 1fr auto auto;
+    grid-template-columns: auto auto auto;
     gap: 8px;
     align-items: center;
   }
@@ -1129,6 +1157,11 @@ footer {
     width: 100%;
     min-height: 42px;
     font-size: 11px;
+  }
+  .auth-btn-icon {
+    width: 42px;
+    min-width: 42px;
+    justify-self: end;
   }
   .logo-link {
     padding: 4px 8px;
@@ -1308,10 +1341,15 @@ footer {
     font-size: 0.88rem;
   }
   .header-direita {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto auto auto;
   }
   .auth-btn {
     min-height: 40px;
+  }
+  .auth-btn-icon {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
   }
   .carrinho-menu,
   .perfil-menu {
