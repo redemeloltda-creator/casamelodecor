@@ -1,6 +1,5 @@
 (function () {
-  const SUPABASE_URL = 'https://fulymepfkdenmtickfwk.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bHltZXBma2Rlbm10aWNrZndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NTY4MTMsImV4cCI6MjA4NzQzMjgxM30.6BRJj59Amct0VLW8EdwRhZhHQVtmkIZtRkXPiXIzOpY';
+  const supabaseConfig = window.casameloSupabaseConfig || {};
 
   const { createClient } = window.supabase || {};
   const formCadastroClientes = document.getElementById('formCadastroClientes');
@@ -8,9 +7,17 @@
   const emailInput = document.getElementById('email');
   const cadastroFeedback = document.getElementById('cadastroFeedback');
 
-  if (!formCadastroClientes || !nomeInput || !emailInput || !createClient) return;
+  if (!formCadastroClientes || !nomeInput || !emailInput || !createClient || !supabaseConfig.configValida) return;
 
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+
+  if (typeof supabaseConfig.testarConexao === 'function') {
+    supabaseConfig.testarConexao().then((resultado) => {
+      if (!resultado.ok) {
+        cadastroFeedback.textContent = `Aviso de conexão: ${resultado.erro}`;
+      }
+    });
+  }
 
   formCadastroClientes.addEventListener('submit', async (event) => {
     event.preventDefault();
