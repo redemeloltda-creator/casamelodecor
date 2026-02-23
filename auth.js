@@ -7,6 +7,7 @@
   const btnFechar = document.getElementById('authFechar');
   const tabs = document.querySelectorAll('[data-auth-tab]');
   const botoesAbrir = document.querySelectorAll('[data-auth-open]');
+  const botoesEnviarCodigo = document.querySelectorAll('[data-enviar-codigo]');
 
   const perfilMenu = document.getElementById('perfilMenu');
   const perfilBotao = document.getElementById('perfilBotao');
@@ -44,7 +45,10 @@
   const chaveCarrinho = 'casaMeloCarrinho';
   const chaveHistoricoCompras = 'casamelo_historico_compras';
   const chavePreferencias = 'casamelo_preferencias_perfil';
+  const chaveCodigosVerificacao = 'casamelo_codigos_verificacao';
   const totalDigitosCelular = 11;
+  const tamanhoCodigoVerificacao = 6;
+  const validadeCodigoEmMs = 5 * 60 * 1000;
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
   let fotoPendente = '';
 
@@ -66,6 +70,67 @@
   };
 
   const celularValido = (valor) => normalizarCelular(valor).length === totalDigitosCelular;
+
+
+  const carregarCodigosVerificacao = () => {
+    try {
+      const codigos = JSON.parse(localStorage.getItem(chaveCodigosVerificacao) || '[]');
+      return Array.isArray(codigos) ? codigos : [];
+    } catch (erro) {
+      return [];
+    }
+  };
+
+  const salvarCodigosVerificacao = (codigos) => {
+    localStorage.setItem(chaveCodigosVerificacao, JSON.stringify(codigos));
+  };
+
+  const limparCodigosExpirados = (codigos = []) => {
+    const agora = Date.now();
+    return codigos.filter((item) => Number(item?.expiraEm) > agora);
+  };
+
+  const gerarCodigoVerificacao = () => String(Math.floor(100000 + Math.random() * 900000));
+
+  const registrarCodigoVerificacao = (celular, contexto) => {
+    const codigosAtivos = limparCodigosExpirados(carregarCodigosVerificacao()).filter((item) => !(normalizarCelular(item?.celular) === normalizarCelular(celular) && item?.contexto === contexto));
+    const codigo = gerarCodigoVerificacao();
+
+    codigosAtivos.push({
+      celular: normalizarCelular(celular),
+      contexto,
+      codigo,
+      expiraEm: Date.now() + validadeCodigoEmMs
+    });
+
+    salvarCodigosVerificacao(codigosAtivos);
+    return codigo;
+  };
+
+  const validarCodigoVerificacao = (celular, contexto, codigoInformado) => {
+    const codigosAtivos = limparCodigosExpirados(carregarCodigosVerificacao());
+    const codigo = String(codigoInformado || '').replace(/\D/g, '');
+
+    const indice = codigosAtivos.findIndex((item) => normalizarCelular(item?.celular) === normalizarCelular(celular)
+      && item?.contexto === contexto
+      && String(item?.codigo) === codigo);
+
+    if (indice === -1) {
+      salvarCodigosVerificacao(codigosAtivos);
+      return false;
+    }
+
+    codigosAtivos.splice(indice, 1);
+    salvarCodigosVerificacao(codigosAtivos);
+    return true;
+  };
+
+  const solicitarCodigoVerificacao = (celular, contexto) => {
+    const codigo = registrarCodigoVerificacao(celular, contexto);
+    const celularMascarado = normalizarCelular(celular).replace(/(\d{2})\d{5}(\d{4})/, '$1*****$2');
+
+    feedback.textContent = `Código enviado para ${celularMascarado}. Confira o SMS e digite os ${tamanhoCodigoVerificacao} números para continuar. (Demo: ${codigo})`;
+  };
 
   const carregarUsuarios = () => {
     try {
@@ -524,6 +589,23 @@
     if (evento.target === modal) fecharModal();
   });
 
+  botoesEnviarCodigo.forEach((botao) => {
+    botao.addEventListener('click', () => {
+      const contexto = botao.dataset.enviarCodigo;
+      const formulario = contexto === 'cadastro' ? formCadastro : formLogin;
+      const campoCelular = contexto === 'cadastro' ? 'celular' : 'login';
+      const dados = new FormData(formulario);
+      const celular = normalizarCelular(dados.get(campoCelular));
+
+      if (!celularValido(celular)) {
+        feedback.textContent = 'Informe um celular válido com DDD + 9 números para receber o código.';
+        return;
+      }
+
+      solicitarCodigoVerificacao(celular, contexto);
+    });
+  });
+
   formCadastro.addEventListener('submit', (evento) => {
     evento.preventDefault();
 
@@ -531,9 +613,15 @@
     const nome = String(dados.get('nome') || '').trim();
     const celular = normalizarCelular(dados.get('celular'));
     const senha = String(dados.get('senha') || '');
+    const codigo = String(dados.get('codigo') || '').replace(/\D/g, '');
 
     if (!nome || !celularValido(celular) || senha.length < 6) {
       feedback.textContent = 'Use um celular com DDD + 9 números e senha de no mínimo 6 caracteres.';
+      return;
+    }
+
+    if (codigo.length !== tamanhoCodigoVerificacao || !validarCodigoVerificacao(celular, 'cadastro', codigo)) {
+      feedback.textContent = 'Código inválido ou expirado. Clique em "Enviar código" e tente novamente.';
       return;
     }
 
@@ -558,10 +646,16 @@
     const dados = new FormData(formLogin);
     const login = String(dados.get('login') || '').trim();
     const senha = String(dados.get('senha') || '');
+    const codigo = String(dados.get('codigo') || '').replace(/\D/g, '');
     const celularLogin = normalizarCelular(login);
 
     if (!celularValido(celularLogin)) {
       feedback.textContent = 'Informe seu celular com DDD + 9 números.';
+      return;
+    }
+
+    if (codigo.length !== tamanhoCodigoVerificacao || !validarCodigoVerificacao(celularLogin, 'login', codigo)) {
+      feedback.textContent = 'Código inválido ou expirado. Clique em "Enviar código" e tente novamente.';
       return;
     }
 
