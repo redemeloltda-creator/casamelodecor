@@ -19,6 +19,45 @@
   let notaSelecionada = 0;
   let avaliacoesCache = [];
 
+  const obterIdAvaliacao = (avaliacao) => {
+    const idOriginal = String(avaliacao?.id || '').trim();
+    if (idOriginal) return idOriginal;
+
+    const celular = normalizarCelular(avaliacao?.celular);
+    return `${celular}-${String(avaliacao?.comentario || '').trim()}`;
+  };
+
+  const mesclarAvaliacoes = (...listas) => {
+    const mapa = new Map();
+
+    listas
+      .flatMap((lista) => normalizarListaAvaliacoes(lista))
+      .forEach((avaliacao) => {
+        const id = obterIdAvaliacao(avaliacao);
+        const registroAtual = mapa.get(id);
+
+        if (!registroAtual) {
+          mapa.set(id, { ...avaliacao, id });
+          return;
+        }
+
+        const proximoRegistro = {
+          ...registroAtual,
+          ...avaliacao,
+          id,
+          comentario: avaliacao.comentario || registroAtual.comentario,
+          nome: avaliacao.nome || registroAtual.nome,
+          celular: avaliacao.celular || registroAtual.celular,
+          foto: avaliacao.foto || registroAtual.foto,
+          nota: Number(avaliacao.nota || registroAtual.nota) || 0
+        };
+
+        mapa.set(id, proximoRegistro);
+      });
+
+    return [...mapa.values()];
+  };
+
   const carregarSessao = () => {
     try {
       return JSON.parse(localStorage.getItem(chaveSessao) || 'null');
@@ -48,13 +87,7 @@
         })
         .flatMap((item) => normalizarListaAvaliacoes(item));
 
-      const ids = new Set();
-      return avaliacoesSalvas.filter((avaliacao) => {
-        const id = String(avaliacao.id || `${avaliacao.celular || ''}-${avaliacao.comentario || ''}`);
-        if (ids.has(id)) return false;
-        ids.add(id);
-        return true;
-      });
+      return mesclarAvaliacoes(avaliacoesSalvas);
     } catch (erro) {
       return [];
     }
@@ -126,6 +159,22 @@
     } catch (erro) {
       feedback.textContent = 'Comentário salvo apenas neste dispositivo. Verifique sua conexão para publicar online.';
       return false;
+    }
+  };
+
+  const publicarAvaliacoes = async (atualizarLista) => {
+    const listaAtual = Array.isArray(atualizarLista) ? atualizarLista : [];
+
+    try {
+      const avaliacoesOnline = await carregarAvaliacoesOnline();
+      const listaMesclada = mesclarAvaliacoes(avaliacoesOnline, avaliacoesCache, listaAtual);
+      await salvarAvaliacoesOnline(listaMesclada);
+      avaliacoesCache = listaMesclada;
+      salvarAvaliacoesLocais(listaMesclada);
+      return { publicouOnline: true, listaFinal: listaMesclada };
+    } catch (erro) {
+      await salvarComFallback(listaAtual);
+      return { publicouOnline: false, listaFinal: listaAtual };
     }
   };
 
@@ -232,7 +281,8 @@
     }
 
     const proximaLista = avaliacoesCache.filter((item) => String(item.id) !== idAvaliacao);
-    const publicouOnline = await salvarComFallback(proximaLista);
+    const { publicouOnline, listaFinal } = await publicarAvaliacoes(proximaLista);
+    avaliacoesCache = listaFinal;
     renderizarAvaliacoes();
 
     if (publicouOnline) {
@@ -278,7 +328,7 @@
     }
 
     const novaAvaliacao = {
-      id: Date.now(),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       nome: usuario.nome || 'Cliente',
       celular: usuario.celular || '',
       foto: usuario.foto || '',
@@ -287,7 +337,8 @@
     };
 
     const proximaLista = [...avaliacoesCache, novaAvaliacao];
-    const publicouOnline = await salvarComFallback(proximaLista);
+    const { publicouOnline, listaFinal } = await publicarAvaliacoes(proximaLista);
+    avaliacoesCache = listaFinal;
 
     comentarioInput.value = '';
     notaSelecionada = 0;
