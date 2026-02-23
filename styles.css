@@ -894,6 +894,21 @@ footer {
   cursor: pointer;
 }
 
+.auth-codigo {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.auth-submit-secundario {
+  margin-top: 0;
+  padding: 10px 12px;
+  background: #555;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .auth-feedback {
   min-height: 20px;
   margin-top: 12px;
