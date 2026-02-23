@@ -8,6 +8,31 @@
     anonKey: SUPABASE_ANON_KEY,
     configValida: Boolean(SUPABASE_URL && SUPABASE_ANON_KEY),
     mensagemErro: '',
+    montarHeadersAutenticacao() {
+      return {
+        apikey: this.anonKey,
+        Authorization: `Bearer ${this.anonKey}`
+      };
+    },
+    async requisicaoBasicaSupabase(opcoes = {}) {
+      const {
+        endpoint = '',
+        method = 'GET',
+        headers = {},
+        body
+      } = opcoes;
+
+      const url = `${this.url}${endpoint}`;
+
+      return fetch(url, {
+        method,
+        headers: {
+          ...this.montarHeadersAutenticacao(),
+          ...headers
+        },
+        body
+      });
+    },
     async testarConexao() {
       if (!this.configValida) {
         return {
@@ -18,13 +43,7 @@
       }
 
       try {
-        const resposta = await fetch(this.url, {
-          method: 'GET',
-          headers: {
-            apikey: this.anonKey,
-            Authorization: `Bearer ${this.anonKey}`
-          }
-        });
+        const resposta = await this.requisicaoBasicaSupabase({ method: 'GET' });
 
         return {
           ok: resposta.ok,
