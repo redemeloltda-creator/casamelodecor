@@ -277,6 +277,22 @@
     <div id="listaAvaliacoes" class="lista-avaliacoes"></div>
 </section>
 
+<section class="section" id="cadastro-clientes">
+    <h2>Cadastro de clientes</h2>
+    <p class="avaliacoes-info">Preencha seus dados para receber novidades da Casa Melo Decor.</p>
+
+    <form id="formCadastroClientes" class="avaliacao-form">
+        <label for="nome" class="avaliacao-label">Nome</label>
+        <input type="text" id="nome" placeholder="Nome" required>
+
+        <label for="email" class="avaliacao-label">Email</label>
+        <input type="email" id="email" placeholder="Email" required>
+
+        <button type="submit" class="botao" id="btnSalvarCadastro">Salvar</button>
+        <p id="cadastroFeedback" class="auth-feedback" aria-live="polite"></p>
+    </form>
+</section>
+
 <a class="whatsapp" href="https://wa.me/5538999140400" target="_blank">
 WhatsApp
 </a>
@@ -290,5 +306,6 @@ WhatsApp
 <script src="auth.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="reviews.js"></script>
+<script src="cadastro-usuarios.js"></script>
 </body>
 </html>
