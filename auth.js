@@ -121,6 +121,8 @@
       }
 
       avatar.hidden = !temFoto;
+    });
+
     if (perfilAvatarFallback) {
       perfilAvatarFallback.hidden = temFoto;
     }
