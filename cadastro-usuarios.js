@@ -1,25 +1,26 @@
 (function () {
-  const supabaseConfig = window.casameloSupabaseConfig || {};
-
-  const { createClient } = window.supabase || {};
+  const chaveCadastros = 'casamelo_cadastros_clientes';
   const formCadastroClientes = document.getElementById('formCadastroClientes');
   const nomeInput = document.getElementById('nome');
   const emailInput = document.getElementById('email');
   const cadastroFeedback = document.getElementById('cadastroFeedback');
 
-  if (!formCadastroClientes || !nomeInput || !emailInput || !createClient || !supabaseConfig.configValida) return;
+  if (!formCadastroClientes || !nomeInput || !emailInput || !cadastroFeedback) return;
 
-  const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+  const carregarCadastros = () => {
+    try {
+      const dados = JSON.parse(localStorage.getItem(chaveCadastros) || '[]');
+      return Array.isArray(dados) ? dados : [];
+    } catch (erro) {
+      return [];
+    }
+  };
 
-  if (typeof supabaseConfig.testarConexao === 'function') {
-    supabaseConfig.testarConexao().then((resultado) => {
-      if (!resultado.ok) {
-        cadastroFeedback.textContent = `Aviso de conexão: ${resultado.erro}`;
-      }
-    });
-  }
+  const salvarCadastros = (cadastros) => {
+    localStorage.setItem(chaveCadastros, JSON.stringify(cadastros));
+  };
 
-  formCadastroClientes.addEventListener('submit', async (event) => {
+  formCadastroClientes.addEventListener('submit', (event) => {
     event.preventDefault();
 
     const nome = nomeInput.value.trim();
@@ -30,19 +31,16 @@
       return;
     }
 
-    cadastroFeedback.textContent = 'Salvando...';
+    const cadastros = carregarCadastros();
+    cadastros.push({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      nome,
+      email,
+      criadoEm: new Date().toISOString()
+    });
 
-    const { error } = await supabaseClient
-      .from('usuarios')
-      .insert([{ nome, email }]);
-
-    if (error) {
-      cadastroFeedback.textContent = `Erro: ${error.message}`;
-      console.error(error);
-      return;
-    }
-
-    cadastroFeedback.textContent = 'Salvo com sucesso!';
+    salvarCadastros(cadastros);
+    cadastroFeedback.textContent = 'Cadastro salvo com sucesso neste dispositivo!';
     formCadastroClientes.reset();
   });
 })();
