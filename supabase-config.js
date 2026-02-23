@@ -7,6 +7,37 @@
     url: SUPABASE_URL,
     anonKey: SUPABASE_ANON_KEY,
     configValida: Boolean(SUPABASE_URL && SUPABASE_ANON_KEY),
-    mensagemErro: ''
+    mensagemErro: '',
+    async testarConexao() {
+      if (!this.configValida) {
+        return {
+          ok: false,
+          status: 0,
+          erro: 'Configuração do Supabase inválida.'
+        };
+      }
+
+      try {
+        const resposta = await fetch(this.url, {
+          method: 'GET',
+          headers: {
+            apikey: this.anonKey,
+            Authorization: `Bearer ${this.anonKey}`
+          }
+        });
+
+        return {
+          ok: resposta.ok,
+          status: resposta.status,
+          erro: resposta.ok ? '' : `Falha ao conectar no Supabase (status ${resposta.status}).`
+        };
+      } catch (erro) {
+        return {
+          ok: false,
+          status: 0,
+          erro: erro instanceof Error ? erro.message : 'Erro desconhecido ao conectar no Supabase.'
+        };
+      }
+    }
   };
 })();
