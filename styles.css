@@ -1010,8 +1010,11 @@ footer {
   html {
     scroll-padding-top: 110px;
   }
+  body {
+    overflow-x: hidden;
+  }
   header {
-    padding: 16px 12px;
+    padding: 14px 12px;
   }
   .header-topo {
     flex-direction: column;
@@ -1068,31 +1071,47 @@ footer {
   }
 
   .nav-conteudo {
-    padding: 8px 12px;
+    padding: 8px 0;
   }
   .menu-links {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
     gap: 8px;
+    padding: 0 12px 2px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .menu-links::-webkit-scrollbar {
+    height: 5px;
+  }
+  .menu-links::-webkit-scrollbar-thumb {
+    background: #b5b5b5;
+    border-radius: 999px;
   }
   .menu-links a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 42px;
+    min-height: 40px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    scroll-snap-align: start;
     padding: 8px;
     border: 1px solid #d0d0d0;
-    border-radius: 0;
+    border-radius: 999px;
     background: #fff;
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.3px;
   }
 
   .hero {
-    margin: 0;
-    border-radius: 0;
-    padding: 54px 12px;
+    margin: 0 0 10px;
+    border-radius: 0 0 20px 20px;
+    padding: 40px 14px;
     min-height: 320px;
+    background-position: 68% center;
   }
   .hero h2,
   .hero p {
@@ -1110,13 +1129,13 @@ footer {
   .hero-catalogo,
   .banner-localizacao-conteudo,
   .banner-produto-especifico {
-    border-radius: 0;
-    padding: 18px 12px;
+    border-radius: 16px;
+    padding: 20px 14px;
     min-height: auto;
   }
   .banner-localizacao,
   .banner-produto-especifico {
-    margin-top: 0;
+    margin-top: 10px;
   }
 
   #campoBusca,
@@ -1138,7 +1157,7 @@ footer {
   .section,
   .container {
     max-width: 100%;
-    padding: 28px 0;
+    padding: 26px 0;
   }
   .section h2 {
     margin-bottom: 18px;
@@ -1155,13 +1174,12 @@ footer {
   .produtos,
   .grid {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 14px;
   }
   .produto,
   .card {
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
+    border-radius: 14px;
+    margin: 0 12px;
   }
   .produto div,
   .card-content {
@@ -1169,8 +1187,10 @@ footer {
   }
   .mapa iframe {
     height: 270px;
-    border-radius: 0;
-    box-shadow: none;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    margin: 0 12px;
+    width: calc(100% - 24px);
   }
   .modal {
     padding-top: 28px;
@@ -1184,6 +1204,7 @@ footer {
     bottom: 10px;
     padding: 10px 12px;
     font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
   }
 }
 
@@ -1213,10 +1234,11 @@ footer {
     height: 40px;
   }
   .menu-links {
-    grid-template-columns: 1fr;
+    padding: 0 10px 2px;
   }
   .hero {
-    padding: 48px 10px;
+    padding: 34px 10px;
+    min-height: 280px;
   }
   .section h2,
   .section > p,
