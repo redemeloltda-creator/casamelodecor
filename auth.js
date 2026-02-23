@@ -55,7 +55,15 @@
     foto: String(usuario.foto || '').trim()
   });
 
-  const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
+  const normalizarCelular = (valor) => {
+    const celularSemMascara = String(valor || '').replace(/\D/g, '');
+
+    if (celularSemMascara.length === 13 && celularSemMascara.startsWith('55')) {
+      return celularSemMascara.slice(2);
+    }
+
+    return celularSemMascara;
+  };
 
   const celularValido = (valor) => normalizarCelular(valor).length === totalDigitosCelular;
 
