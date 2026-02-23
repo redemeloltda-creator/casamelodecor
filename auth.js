@@ -23,6 +23,12 @@
   const perfilFotoPendente = document.getElementById('perfilFotoPendente');
   const perfilHistoricoLista = document.getElementById('perfilHistoricoLista');
   const perfilHistoricoVazio = document.getElementById('perfilHistoricoVazio');
+  const perfilResumoCompras = document.getElementById('perfilResumoCompras');
+  const perfilResumoCarrinho = document.getElementById('perfilResumoCarrinho');
+  const perfilContatoValor = document.getElementById('perfilContatoValor');
+  const perfilUltimoAcesso = document.getElementById('perfilUltimoAcesso');
+  const perfilReceberNovidades = document.getElementById('perfilReceberNovidades');
+  const perfilAlterarSenha = document.getElementById('perfilAlterarSenha');
   const perfilExcluirConta = document.getElementById('perfilExcluirConta');
   const perfilSair = document.getElementById('perfilSair');
   const carrinhoMenu = document.getElementById('carrinhoMenu');
@@ -38,6 +44,7 @@
   const chaveSessao = 'casamelo_usuario_logado';
   const chaveCarrinho = 'casaMeloCarrinho';
   const chaveHistoricoCompras = 'casamelo_historico_compras';
+  const chavePreferencias = 'casamelo_preferencias_perfil';
   const totalDigitosCelular = 11;
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
   let fotoPendente = '';
@@ -193,6 +200,19 @@
     localStorage.setItem(chaveHistoricoCompras, JSON.stringify(historico));
   };
 
+  const carregarPreferencias = () => {
+    try {
+      const preferencias = JSON.parse(localStorage.getItem(chavePreferencias) || '{}');
+      return preferencias && typeof preferencias === 'object' ? preferencias : {};
+    } catch (erro) {
+      return {};
+    }
+  };
+
+  const salvarPreferencias = (preferencias) => {
+    localStorage.setItem(chavePreferencias, JSON.stringify(preferencias));
+  };
+
   const formatarDataHora = (valor) => {
     const data = new Date(valor);
     if (Number.isNaN(data.getTime())) return 'Data indisponível';
@@ -240,6 +260,30 @@
       item.appendChild(resumo);
       perfilHistoricoLista.appendChild(item);
     });
+  };
+
+  const atualizarResumoPerfil = () => {
+    const usuario = carregarSessao();
+    const celular = normalizarCelular(usuario?.celular);
+
+    if (!celular) return;
+
+    const quantidadeCompras = carregarHistoricoCompras().filter((compra) => normalizarCelular(compra?.celular) === celular).length;
+    const quantidadeCarrinho = carregarCarrinho().length;
+
+    if (perfilResumoCompras) perfilResumoCompras.textContent = String(quantidadeCompras);
+    if (perfilResumoCarrinho) perfilResumoCarrinho.textContent = String(quantidadeCarrinho);
+    if (perfilContatoValor) perfilContatoValor.textContent = usuario?.contato || '-';
+
+    if (perfilUltimoAcesso) {
+      const ultimoAcesso = usuario?.ultimoAcesso || new Date().toISOString();
+      perfilUltimoAcesso.textContent = formatarDataHora(ultimoAcesso);
+    }
+
+    const preferencias = carregarPreferencias();
+    if (perfilReceberNovidades) {
+      perfilReceberNovidades.checked = Boolean(preferencias?.[celular]?.receberNovidades);
+    }
   };
 
   const registrarCompraHistorico = (itens) => {
@@ -399,10 +443,16 @@
         atualizarAvatar(usuario);
         limparAlteracaoFotoPendente();
         atualizarHistoricoPerfil();
+        atualizarResumoPerfil();
       } else {
         perfilMenu.hidden = true;
         perfilNome.textContent = '';
         perfilEmail.textContent = '';
+        if (perfilResumoCompras) perfilResumoCompras.textContent = '0';
+        if (perfilResumoCarrinho) perfilResumoCarrinho.textContent = '0';
+        if (perfilContatoValor) perfilContatoValor.textContent = '-';
+        if (perfilUltimoAcesso) perfilUltimoAcesso.textContent = '-';
+        if (perfilReceberNovidades) perfilReceberNovidades.checked = false;
         atualizarAvatar(null);
         fecharPainelPerfil();
         limparAlteracaoFotoPendente();
@@ -499,7 +549,7 @@
       return;
     }
 
-    salvarSessao(montarSessaoUsuario(usuario));
+    salvarSessao({ ...montarSessaoUsuario(usuario), ultimoAcesso: new Date().toISOString() });
     atualizarAreaPerfil();
 
     feedback.textContent = `Olá, ${usuario.nome}. Login realizado!`;
@@ -554,6 +604,11 @@
       if (!confirmou) return;
 
       excluirConta(usuario.celular);
+
+      const preferencias = carregarPreferencias();
+      delete preferencias[normalizarCelular(usuario.celular)];
+      salvarPreferencias(preferencias);
+
       atualizarAreaPerfil();
       fecharPainelPerfil();
       feedback.textContent = 'Conta excluída com sucesso.';
@@ -565,6 +620,58 @@
       limparSessao();
       atualizarAreaPerfil();
       fecharPainelPerfil();
+    });
+  }
+
+  if (perfilReceberNovidades) {
+    perfilReceberNovidades.addEventListener('change', () => {
+      const usuario = carregarSessao();
+      const celular = normalizarCelular(usuario?.celular);
+
+      if (!celular) return;
+
+      const preferencias = carregarPreferencias();
+      preferencias[celular] = {
+        ...preferencias[celular],
+        receberNovidades: perfilReceberNovidades.checked
+      };
+
+      salvarPreferencias(preferencias);
+      feedback.textContent = perfilReceberNovidades.checked
+        ? 'Preferência salva: você receberá novidades no WhatsApp.'
+        : 'Preferência salva: novidades por WhatsApp desativadas.';
+    });
+  }
+
+  if (perfilAlterarSenha) {
+    perfilAlterarSenha.addEventListener('click', () => {
+      const usuario = carregarSessao();
+      const celular = normalizarCelular(usuario?.celular);
+
+      if (!celular) return;
+
+      const senhaAtual = window.prompt('Digite sua senha atual:');
+      if (senhaAtual === null) return;
+
+      const usuarios = carregarUsuarios();
+      const indiceUsuario = usuarios.findIndex((item) => normalizarCelular(item.celular) === celular);
+
+      if (indiceUsuario === -1 || usuarios[indiceUsuario].senha !== senhaAtual) {
+        feedback.textContent = 'Não foi possível confirmar sua senha atual.';
+        return;
+      }
+
+      const novaSenha = window.prompt('Digite a nova senha (mínimo 6 caracteres):');
+      if (novaSenha === null) return;
+
+      if (String(novaSenha).length < 6) {
+        feedback.textContent = 'A nova senha deve ter no mínimo 6 caracteres.';
+        return;
+      }
+
+      usuarios[indiceUsuario].senha = String(novaSenha);
+      salvarUsuarios(usuarios);
+      feedback.textContent = 'Senha alterada com sucesso.';
     });
   }
 
@@ -627,4 +734,5 @@
 
   atualizarAreaPerfil();
   atualizarCarrinho();
+  document.addEventListener('casamelo-cart-change', atualizarResumoPerfil);
 })();

@@ -287,7 +287,7 @@ header a:hover { color: #111; }
   position: absolute;
   right: 0;
   top: 48px;
-  width: 260px;
+  width: 340px;
   border-radius: 12px;
   border: 1px solid #d9d9d9;
   background: #ffffff;
@@ -343,6 +343,80 @@ header a:hover { color: #111; }
   font-size: 13px;
   color: #595959;
   margin-top: 2px;
+}
+
+
+.perfil-resumo-conta {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.perfil-resumo-item {
+  border: 1px solid #ececec;
+  border-radius: 9px;
+  padding: 8px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.perfil-resumo-rotulo {
+  font-size: 11px;
+  color: #727272;
+  text-transform: uppercase;
+}
+
+.perfil-dados-rapidos {
+  margin-top: 10px;
+  border-left: 3px solid #e8e0d0;
+  padding-left: 8px;
+  color: #4e4e4e;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.perfil-preferencias {
+  margin-top: 10px;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fcfcfc;
+}
+
+.perfil-checkbox {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 12px;
+  color: #444;
+}
+
+.perfil-links {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perfil-link {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-decoration: none;
+  color: #1f1f1f;
+  font-size: 12px;
+  background: #fff;
+}
+
+.perfil-link:hover {
+  border-color: #cbbca0;
+  color: #7d6640;
 }
 
 .perfil-acao,
