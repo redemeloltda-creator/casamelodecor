@@ -108,7 +108,7 @@
   };
 
   const atualizarAvatar = (usuario) => {
-    const foto = String(usuario?.foto || '').trim();
+    const foto = String(usuario?.foto || usuario?.dadosCliente?.foto || '').trim();
     const temFoto = Boolean(foto);
 
     [perfilAvatarBotao, perfilAvatarPainel].forEach((avatar) => {
@@ -121,11 +121,9 @@
       }
 
       avatar.hidden = !temFoto;
-    });
     if (perfilAvatarFallback) {
       perfilAvatarFallback.hidden = temFoto;
     }
-
   };
 
   const limparAlteracaoFotoPendente = () => {
