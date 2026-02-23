@@ -13,6 +13,7 @@
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
+  const endpointAvaliacoes = window.CASAMELO_AVALIACOES_API || '/api/comentarios';
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
@@ -111,10 +112,67 @@
     });
   };
 
+  const carregarAvaliacoesRemotas = async () => {
+    try {
+      const resposta = await fetch(endpointAvaliacoes, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json'
+        }
+      });
+
+      if (!resposta.ok) return [];
+
+      const dados = await resposta.json();
+      return normalizarListaAvaliacoes(dados);
+    } catch (erro) {
+      return [];
+    }
+  };
+
+  const adicionarAvaliacaoRemota = async (avaliacao) => {
+    try {
+      const resposta = await fetch(endpointAvaliacoes, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(avaliacao)
+      });
+
+      if (!resposta.ok) return null;
+
+      const dados = await resposta.json();
+      return dados && typeof dados === 'object' ? dados : null;
+    } catch (erro) {
+      return null;
+    }
+  };
+
+  const excluirAvaliacaoRemota = async (idAvaliacao, celular) => {
+    try {
+      const parametros = new URLSearchParams();
+      if (celular) parametros.set('celular', celular);
+
+      const sufixoQuery = parametros.toString() ? `?${parametros.toString()}` : '';
+      const resposta = await fetch(`${endpointAvaliacoes}/${encodeURIComponent(idAvaliacao)}${sufixoQuery}`, {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json'
+        }
+      });
+
+      return resposta.ok;
+    } catch (erro) {
+      return false;
+    }
+  };
+
   const salvarAvaliacoes = async (avaliacoes) => {
     avaliacoesCache = avaliacoes;
     salvarAvaliacoesLocais(avaliacoes);
-    return { publicouOnline: false, listaFinal: avaliacoes };
+    return { listaFinal: avaliacoes };
   };
 
   const buscarFotoUsuario = (avaliacao, usuarios) => {
@@ -238,11 +296,14 @@
       return;
     }
 
+    const excluiuRemoto = await excluirAvaliacaoRemota(idAvaliacao, celularUsuario);
     const proximaLista = avaliacoesCache.filter((item) => String(item.id) !== idAvaliacao);
     const { listaFinal } = await salvarAvaliacoes(proximaLista);
     avaliacoesCache = listaFinal;
     renderizarAvaliacoes();
-    feedback.textContent = 'Comentário excluído com sucesso.';
+    feedback.textContent = excluiuRemoto
+      ? 'Comentário excluído para todos com sucesso.'
+      : 'Comentário excluído neste dispositivo. A sincronização global não estava disponível.';
   });
 
   const atualizarEstadoFormulario = () => {
@@ -294,10 +355,11 @@
       dataAvaliacao: new Date().toISOString()
     };
 
-    const proximaLista = [...avaliacoesCache, novaAvaliacao];
     btnEnviar.disabled = true;
 
     try {
+      const avaliacaoRemota = await adicionarAvaliacaoRemota(novaAvaliacao);
+      const proximaLista = [...avaliacoesCache, avaliacaoRemota || novaAvaliacao];
       const { listaFinal } = await salvarAvaliacoes(proximaLista);
       avaliacoesCache = listaFinal;
 
@@ -305,7 +367,9 @@
       notaSelecionada = 0;
       renderizarHearts();
       renderizarAvaliacoes();
-      feedback.textContent = 'Avaliação salva neste dispositivo com sucesso. Obrigado!';
+      feedback.textContent = avaliacaoRemota
+        ? 'Avaliação publicada para todos com sucesso. Obrigado!'
+        : 'Avaliação salva neste dispositivo. Conecte a API para publicar para todos.';
     } finally {
       btnEnviar.disabled = false;
     }
@@ -316,11 +380,14 @@
     renderizarAvaliacoes();
   });
 
-  const iniciarAvaliacoes = () => {
+  const iniciarAvaliacoes = async () => {
     renderizarHearts();
     atualizarEstadoFormulario();
 
-    avaliacoesCache = carregarAvaliacoesLocais();
+    const avaliacoesLocais = carregarAvaliacoesLocais();
+    const avaliacoesRemotas = await carregarAvaliacoesRemotas();
+    avaliacoesCache = mesclarAvaliacoes(avaliacoesLocais, avaliacoesRemotas);
+    salvarAvaliacoesLocais(avaliacoesCache);
     renderizarAvaliacoes();
   };
 
