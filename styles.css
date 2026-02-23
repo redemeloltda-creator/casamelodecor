@@ -23,6 +23,10 @@ body {
   line-height: 1.55;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 h1, h2, h3 { font-family: "Times New Roman", Georgia, serif; letter-spacing: 0.5px; }
 a { color: inherit; }
 
