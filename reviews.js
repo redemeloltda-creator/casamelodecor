@@ -13,19 +13,11 @@
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
-  const intervaloSincronizacaoMs = 60000;
-  const supabaseConfig = window.casameloSupabaseConfig || {};
-  const SUPABASE_URL = supabaseConfig.url || '';
-  const SUPABASE_ANON_KEY = supabaseConfig.anonKey || '';
-  const tabelaAvaliacoes = 'comentarios';
-  const { createClient } = window.supabase || {};
-
-  const supabaseClient = createClient && supabaseConfig.configValida
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
+
+  const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
 
   const obterIdAvaliacao = (avaliacao) => {
     const idOriginal = String(avaliacao?.id || '').trim();
@@ -33,6 +25,30 @@
 
     const celular = normalizarCelular(avaliacao?.celular);
     return `${celular}-${String(avaliacao?.comentario || '').trim()}`;
+  };
+
+  const normalizarStringComparacao = (valor) => String(valor || '').trim();
+
+  const normalizarListaAvaliacoes = (valor) => {
+    if (!Array.isArray(valor)) return [];
+
+    return valor.filter((item) => item && typeof item === 'object' && item.comentario);
+  };
+
+  const carregarSessao = () => {
+    try {
+      return JSON.parse(localStorage.getItem(chaveSessao) || 'null');
+    } catch (erro) {
+      return null;
+    }
+  };
+
+  const carregarUsuarios = () => {
+    try {
+      return JSON.parse(localStorage.getItem(chaveUsuarios) || '[]');
+    } catch (erro) {
+      return [];
+    }
   };
 
   const mesclarAvaliacoes = (...listas) => {
@@ -66,49 +82,6 @@
     return [...mapa.values()];
   };
 
-  const normalizarStringComparacao = (valor) => String(valor || '').trim();
-
-  const obterChaveComparacaoAvaliacao = (avaliacao) => {
-    const dataComparacao = normalizarStringComparacao(avaliacao?.dataAvaliacao);
-
-    return [
-      obterIdAvaliacao(avaliacao),
-      normalizarStringComparacao(avaliacao?.nome),
-      normalizarCelular(avaliacao?.celular),
-      normalizarStringComparacao(avaliacao?.foto),
-      Number(avaliacao?.nota) || 0,
-      normalizarStringComparacao(avaliacao?.comentario),
-      dataComparacao
-    ].join('|');
-  };
-
-  const listasSaoIguais = (listaA = [], listaB = []) => {
-    if (listaA.length !== listaB.length) return false;
-
-    const mapaA = new Map(
-      listaA.map((avaliacao) => [obterIdAvaliacao(avaliacao), obterChaveComparacaoAvaliacao(avaliacao)])
-    );
-
-    return listaB.every((avaliacao) => {
-      const id = obterIdAvaliacao(avaliacao);
-      return mapaA.get(id) === obterChaveComparacaoAvaliacao(avaliacao);
-    });
-  };
-
-  const carregarSessao = () => {
-    try {
-      return JSON.parse(localStorage.getItem(chaveSessao) || 'null');
-    } catch (erro) {
-      return null;
-    }
-  };
-
-  const normalizarListaAvaliacoes = (valor) => {
-    if (!Array.isArray(valor)) return [];
-
-    return valor.filter((item) => item && typeof item === 'object' && item.comentario);
-  };
-
   const carregarAvaliacoesLocais = () => {
     try {
       const avaliacoesSalvas = [
@@ -130,15 +103,19 @@
     }
   };
 
-  const carregarUsuarios = () => {
-    try {
-      return JSON.parse(localStorage.getItem(chaveUsuarios) || '[]');
-    } catch (erro) {
-      return [];
-    }
+  const salvarAvaliacoesLocais = (avaliacoes) => {
+    localStorage.setItem(chaveAvaliacoes, JSON.stringify(avaliacoes));
+
+    chavesAvaliacoesLegadas.forEach((chave) => {
+      localStorage.setItem(chave, JSON.stringify(avaliacoes));
+    });
   };
 
-  const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
+  const salvarAvaliacoes = async (avaliacoes) => {
+    avaliacoesCache = avaliacoes;
+    salvarAvaliacoesLocais(avaliacoes);
+    return { publicouOnline: false, listaFinal: avaliacoes };
+  };
 
   const buscarFotoUsuario = (avaliacao, usuarios) => {
     const fotoAvaliacao = String(avaliacao?.foto || '').trim();
@@ -149,150 +126,6 @@
 
     const usuario = usuarios.find((item) => normalizarCelular(item?.celular) === celular);
     return String(usuario?.foto || '').trim();
-  };
-
-  const salvarAvaliacoesLocais = (avaliacoes) => {
-    localStorage.setItem(chaveAvaliacoes, JSON.stringify(avaliacoes));
-
-    chavesAvaliacoesLegadas.forEach((chave) => {
-      localStorage.setItem(chave, JSON.stringify(avaliacoes));
-    });
-  };
-
-  const mapearAvaliacaoParaLinha = (avaliacao) => ({
-    id: String(avaliacao.id),
-    nome: String(avaliacao.nome || 'Cliente').trim() || 'Cliente',
-    celular: normalizarCelular(avaliacao.celular),
-    foto: String(avaliacao.foto || '').trim(),
-    nota: Number(avaliacao.nota) || 0,
-    comentario: String(avaliacao.comentario || '').trim(),
-    data_avaliacao: avaliacao.dataAvaliacao || new Date().toISOString()
-  });
-
-  const mapearLinhaParaAvaliacao = (linha) => ({
-    id: String(linha.id),
-    nome: String(linha.nome || 'Cliente').trim() || 'Cliente',
-    celular: normalizarCelular(linha.celular),
-    foto: String(linha.foto || '').trim(),
-    nota: Number(linha.nota) || 0,
-    comentario: String(linha.comentario || '').trim(),
-    dataAvaliacao: linha.data_avaliacao || ''
-  });
-
-  const salvarAvaliacoesOnline = async (avaliacoes, idsRemovidos = []) => {
-    if (!supabaseClient) {
-      throw new Error(supabaseConfig.mensagemErro || 'Cliente Supabase não disponível.');
-    }
-
-    const linhas = normalizarListaAvaliacoes(avaliacoes).map(mapearAvaliacaoParaLinha);
-    const idsNormalizadosRemover = [...new Set(idsRemovidos.map((id) => String(id).trim()).filter(Boolean))];
-
-    if (idsNormalizadosRemover.length) {
-      const { error: erroExclusao } = await supabaseClient
-        .from(tabelaAvaliacoes)
-        .delete()
-        .in('id', idsNormalizadosRemover);
-
-      if (erroExclusao) {
-        throw erroExclusao;
-      }
-    }
-
-    if (!linhas.length) return;
-
-    const { error: erroUpsert } = await supabaseClient
-      .from(tabelaAvaliacoes)
-      .upsert(linhas, { onConflict: 'id' });
-
-    if (erroUpsert) {
-      throw erroUpsert;
-    }
-  };
-
-  const carregarAvaliacoesOnline = async () => {
-    if (!supabaseClient) {
-      throw new Error(supabaseConfig.mensagemErro || 'Cliente Supabase não disponível.');
-    }
-
-    const { data, error } = await supabaseClient
-      .from(tabelaAvaliacoes)
-      .select('id,nome,celular,foto,nota,comentario,data_avaliacao')
-      .order('data_avaliacao', { ascending: true });
-
-    if (error) {
-      throw error;
-    }
-
-    return normalizarListaAvaliacoes((data || []).map(mapearLinhaParaAvaliacao));
-  };
-
-  const salvarComFallback = async (avaliacoes) => {
-    avaliacoesCache = avaliacoes;
-    salvarAvaliacoesLocais(avaliacoes);
-
-    try {
-      await salvarAvaliacoesOnline(avaliacoes);
-      return true;
-    } catch (erro) {
-      console.error('Falha ao salvar avaliações no Supabase:', erro);
-      feedback.textContent = 'Comentário salvo apenas neste dispositivo. Verifique a configuração/chave do Supabase para publicar online.';
-      return false;
-    }
-  };
-
-  const publicarAvaliacoes = async (atualizarLista) => {
-    const listaAtual = Array.isArray(atualizarLista) ? atualizarLista : [];
-
-    try {
-      const avaliacoesOnline = await carregarAvaliacoesOnline();
-      const idsDesejados = new Set(listaAtual.map((avaliacao) => obterIdAvaliacao(avaliacao)));
-      const listaMesclada = mesclarAvaliacoes(avaliacoesOnline, avaliacoesCache, listaAtual)
-        .filter((avaliacao) => idsDesejados.has(obterIdAvaliacao(avaliacao)));
-      const idsRemovidos = avaliacoesCache
-        .map((avaliacao) => obterIdAvaliacao(avaliacao))
-        .filter((id) => !idsDesejados.has(id));
-
-      await salvarAvaliacoesOnline(listaMesclada, idsRemovidos);
-
-      const listaFinal = mesclarAvaliacoes(avaliacoesOnline, listaMesclada);
-      avaliacoesCache = listaFinal;
-      salvarAvaliacoesLocais(listaFinal);
-      return { publicouOnline: true, listaFinal };
-    } catch (erro) {
-      try {
-        const idsDesejados = new Set(listaAtual.map((avaliacao) => obterIdAvaliacao(avaliacao)));
-        const idsRemovidos = avaliacoesCache
-          .map((avaliacao) => obterIdAvaliacao(avaliacao))
-          .filter((id) => !idsDesejados.has(id));
-
-        await salvarAvaliacoesOnline(listaAtual, idsRemovidos);
-        avaliacoesCache = listaAtual;
-        salvarAvaliacoesLocais(listaAtual);
-        return { publicouOnline: true, listaFinal: listaAtual };
-      } catch (erroFallbackOnline) {
-        console.error('Falha ao publicar avaliações no Supabase:', erroFallbackOnline);
-        await salvarComFallback(listaAtual);
-        return { publicouOnline: false, listaFinal: listaAtual };
-      }
-    }
-  };
-
-  const sincronizarAvaliacoesOnline = async ({ silencioso = false } = {}) => {
-    const avaliacoesOnline = await carregarAvaliacoesOnline();
-    const avaliacoesLocais = carregarAvaliacoesLocais();
-    const listaPublica = mesclarAvaliacoes(avaliacoesOnline, avaliacoesLocais);
-
-    if (!listasSaoIguais(avaliacoesOnline, listaPublica)) {
-      await salvarAvaliacoesOnline(listaPublica);
-    }
-
-    avaliacoesCache = listaPublica;
-    salvarAvaliacoesLocais(listaPublica);
-    renderizarAvaliacoes();
-
-    if (!silencioso) {
-      feedback.textContent = '';
-    }
   };
 
   const coracoes = (nota) => '❤'.repeat(nota);
@@ -406,13 +239,10 @@
     }
 
     const proximaLista = avaliacoesCache.filter((item) => String(item.id) !== idAvaliacao);
-    const { publicouOnline, listaFinal } = await publicarAvaliacoes(proximaLista);
+    const { listaFinal } = await salvarAvaliacoes(proximaLista);
     avaliacoesCache = listaFinal;
     renderizarAvaliacoes();
-
-    if (publicouOnline) {
-      feedback.textContent = 'Comentário excluído com sucesso.';
-    }
+    feedback.textContent = 'Comentário excluído com sucesso.';
   });
 
   const atualizarEstadoFormulario = () => {
@@ -468,17 +298,14 @@
     btnEnviar.disabled = true;
 
     try {
-      const { publicouOnline, listaFinal } = await publicarAvaliacoes(proximaLista);
+      const { listaFinal } = await salvarAvaliacoes(proximaLista);
       avaliacoesCache = listaFinal;
 
       comentarioInput.value = '';
       notaSelecionada = 0;
       renderizarHearts();
       renderizarAvaliacoes();
-
-      if (publicouOnline) {
-        feedback.textContent = 'Avaliação enviada e publicada online com sucesso. Obrigado!';
-      }
+      feedback.textContent = 'Avaliação salva neste dispositivo com sucesso. Obrigado!';
     } finally {
       btnEnviar.disabled = false;
     }
@@ -489,27 +316,12 @@
     renderizarAvaliacoes();
   });
 
-  const iniciarAvaliacoes = async () => {
+  const iniciarAvaliacoes = () => {
     renderizarHearts();
     atualizarEstadoFormulario();
 
-    const avaliacoesLocais = carregarAvaliacoesLocais();
-    avaliacoesCache = avaliacoesLocais;
+    avaliacoesCache = carregarAvaliacoesLocais();
     renderizarAvaliacoes();
-
-    try {
-      await sincronizarAvaliacoesOnline();
-    } catch (erro) {
-      feedback.textContent = 'Não foi possível sincronizar avaliações online agora. Exibindo comentários deste dispositivo.';
-    }
-
-    setInterval(async () => {
-      try {
-        await sincronizarAvaliacoesOnline({ silencioso: true });
-      } catch (erro) {
-        // Mantém a última lista disponível para garantir que visitantes continuem vendo comentários.
-      }
-    }, intervaloSincronizacaoMs);
   };
 
   iniciarAvaliacoes();
