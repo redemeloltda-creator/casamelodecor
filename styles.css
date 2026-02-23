@@ -1118,6 +1118,13 @@ footer {
   background: rgba(255, 89, 89, 0.15);
 }
 
+.avaliacao-data {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+
 .avaliacao-vazia {
   color: var(--muted);
   text-align: center;

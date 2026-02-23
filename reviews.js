@@ -210,6 +210,19 @@
 
   const coracoes = (nota) => '❤'.repeat(nota);
 
+  const formatarDataAvaliacao = (valorData) => {
+    if (!valorData) return '';
+
+    const data = new Date(valorData);
+    if (Number.isNaN(data.getTime())) return '';
+
+    return data.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   const escaparHtml = (texto) => String(texto || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -251,6 +264,7 @@
         const nome = avaliacao.nome || 'Cliente';
         const texto = avaliacao.comentario || '';
         const nota = Number(avaliacao.nota) || 0;
+        const dataAvaliacao = formatarDataAvaliacao(avaliacao.dataAvaliacao);
         const foto = buscarFotoUsuario(avaliacao, usuarios);
         const celularAutor = normalizarCelular(avaliacao.celular);
         const podeExcluir = Boolean(celularLogado) && celularLogado === celularAutor;
@@ -274,6 +288,7 @@
                 ${acaoExcluir}
               </div>
             </div>
+            ${dataAvaliacao ? `<p class="avaliacao-data">${escaparHtml(dataAvaliacao)}</p>` : ''}
             <p>${escaparHtml(texto)}</p>
           </article>
         `;
@@ -352,7 +367,8 @@
       celular: usuario.celular || '',
       foto: usuario.foto || '',
       nota: notaSelecionada,
-      comentario
+      comentario,
+      dataAvaliacao: new Date().toISOString()
     };
 
     const proximaLista = [...avaliacoesCache, novaAvaliacao];
