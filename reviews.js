@@ -13,8 +13,14 @@
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
-  const endpointAvaliacoesOnline = 'https://jsonblob.com/api/jsonBlob/1342888989686272000';
   const intervaloSincronizacaoMs = 60000;
+  const supabaseUrl = 'https://fulymepfkdenmtickfwk.supabase.co';
+  const supabasePublishableKey = 'sb_publishable_-EkQe8BgbDCAFQJ1j_1omg_J6Eu_fbc';
+  const tabelaAvaliacoes = 'comentarios_publicos';
+
+  const supabaseClient = window.supabase?.createClient
+    ? window.supabase.createClient(supabaseUrl, supabasePublishableKey)
+    : null;
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
@@ -151,31 +157,83 @@
     });
   };
 
-  const salvarAvaliacoesOnline = async (avaliacoes) => {
-    const resposta = await fetch(endpointAvaliacoesOnline, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(avaliacoes)
-    });
+  const mapearAvaliacaoParaLinha = (avaliacao) => ({
+    id: String(avaliacao.id),
+    nome: String(avaliacao.nome || 'Cliente').trim() || 'Cliente',
+    celular: normalizarCelular(avaliacao.celular),
+    foto: String(avaliacao.foto || '').trim(),
+    nota: Number(avaliacao.nota) || 0,
+    comentario: String(avaliacao.comentario || '').trim(),
+    data_avaliacao: avaliacao.dataAvaliacao || new Date().toISOString()
+  });
 
-    if (!resposta.ok) {
-      throw new Error('Falha ao salvar avaliações online.');
+  const mapearLinhaParaAvaliacao = (linha) => ({
+    id: String(linha.id),
+    nome: String(linha.nome || 'Cliente').trim() || 'Cliente',
+    celular: normalizarCelular(linha.celular),
+    foto: String(linha.foto || '').trim(),
+    nota: Number(linha.nota) || 0,
+    comentario: String(linha.comentario || '').trim(),
+    dataAvaliacao: linha.data_avaliacao || ''
+  });
+
+  const salvarAvaliacoesOnline = async (avaliacoes) => {
+    if (!supabaseClient) {
+      throw new Error('Cliente Supabase não disponível.');
+    }
+
+    const linhas = normalizarListaAvaliacoes(avaliacoes).map(mapearAvaliacaoParaLinha);
+    const idsLocais = linhas.map((linha) => linha.id);
+
+    const { data: idsOnline, error: erroConsulta } = await supabaseClient
+      .from(tabelaAvaliacoes)
+      .select('id');
+
+    if (erroConsulta) {
+      throw erroConsulta;
+    }
+
+    const idsExcluir = (idsOnline || [])
+      .map((item) => String(item.id))
+      .filter((id) => !idsLocais.includes(id));
+
+    if (idsExcluir.length) {
+      const { error: erroExclusao } = await supabaseClient
+        .from(tabelaAvaliacoes)
+        .delete()
+        .in('id', idsExcluir);
+
+      if (erroExclusao) {
+        throw erroExclusao;
+      }
+    }
+
+    if (!linhas.length) return;
+
+    const { error: erroUpsert } = await supabaseClient
+      .from(tabelaAvaliacoes)
+      .upsert(linhas, { onConflict: 'id' });
+
+    if (erroUpsert) {
+      throw erroUpsert;
     }
   };
 
   const carregarAvaliacoesOnline = async () => {
-    const resposta = await fetch(endpointAvaliacoesOnline, {
-      cache: 'no-store'
-    });
-
-    if (!resposta.ok) {
-      throw new Error('Falha ao carregar avaliações online.');
+    if (!supabaseClient) {
+      throw new Error('Cliente Supabase não disponível.');
     }
 
-    const dados = await resposta.json();
-    return Array.isArray(dados) ? dados : [];
+    const { data, error } = await supabaseClient
+      .from(tabelaAvaliacoes)
+      .select('id,nome,celular,foto,nota,comentario,data_avaliacao')
+      .order('data_avaliacao', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return normalizarListaAvaliacoes((data || []).map(mapearLinhaParaAvaliacao));
   };
 
   const salvarComFallback = async (avaliacoes) => {
