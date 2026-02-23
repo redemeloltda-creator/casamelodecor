@@ -12,8 +12,6 @@
   const chaveSessao = 'casamelo_usuario_logado';
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
-  const chaveVersaoResetAvaliacoes = 'casamelo_reset_avaliacoes_versao';
-  const versaoResetAvaliacoes = '2026-02-23';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
   const endpointAvaliacoesOnline = 'https://jsonblob.com/api/jsonBlob/1342888989686272000';
   const intervaloSincronizacaoMs = 60000;
@@ -124,23 +122,6 @@
     });
   };
 
-  const resetarAvaliacoesSeNecessario = async () => {
-    const versaoSalva = localStorage.getItem(chaveVersaoResetAvaliacoes);
-    if (versaoSalva === versaoResetAvaliacoes) return;
-
-    const listaVazia = [];
-    avaliacoesCache = listaVazia;
-    salvarAvaliacoesLocais(listaVazia);
-
-    try {
-      await salvarAvaliacoesOnline(listaVazia);
-    } catch (erro) {
-      feedback.textContent = 'Comentários resetados neste dispositivo. A sincronização online será tentada novamente em seguida.';
-    }
-
-    localStorage.setItem(chaveVersaoResetAvaliacoes, versaoResetAvaliacoes);
-  };
-
   const salvarAvaliacoesOnline = async (avaliacoes) => {
     const resposta = await fetch(endpointAvaliacoesOnline, {
       method: 'PUT',
@@ -199,8 +180,11 @@
 
   const sincronizarAvaliacoesOnline = async ({ silencioso = false } = {}) => {
     const avaliacoesOnline = await carregarAvaliacoesOnline();
-    avaliacoesCache = avaliacoesOnline;
-    salvarAvaliacoesLocais(avaliacoesOnline);
+    const avaliacoesLocais = carregarAvaliacoesLocais();
+    const listaPublica = mesclarAvaliacoes(avaliacoesOnline, avaliacoesLocais);
+
+    avaliacoesCache = listaPublica;
+    salvarAvaliacoesLocais(listaPublica);
     renderizarAvaliacoes();
 
     if (!silencioso) {
@@ -393,8 +377,6 @@
   const iniciarAvaliacoes = async () => {
     renderizarHearts();
     atualizarEstadoFormulario();
-
-    await resetarAvaliacoesSeNecessario();
 
     const avaliacoesLocais = carregarAvaliacoesLocais();
     avaliacoesCache = avaliacoesLocais;
