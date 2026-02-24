@@ -718,11 +718,11 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
 
 
 .section-catalogo-panelas {
-  max-width: 1040px;
+  max-width: 1320px;
 }
 
 .section-catalogo-panelas .catalogo-grid-panelas {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -746,7 +746,7 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
 }
 .produtos, .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 22px;
 }
 .produto, .card {
