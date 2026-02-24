@@ -716,6 +716,36 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
 }
 .botao:hover, .btn-whatsapp:hover { background: var(--accent-soft); transform: translateY(-1px); }
 
+
+.section-catalogo-panelas {
+  max-width: 1180px;
+}
+
+.section-catalogo-panelas .grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.section-catalogo-panelas .card {
+  width: 100%;
+  margin: 0;
+}
+
+.section-catalogo-panelas .card img {
+  aspect-ratio: 4/3;
+}
+
+@media (max-width: 1080px) {
+  .section-catalogo-panelas .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .section-catalogo-panelas .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .produtos, .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
