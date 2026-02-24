@@ -721,9 +721,22 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
   max-width: 1040px;
 }
 
-.section-catalogo-panelas .grid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+.section-catalogo-panelas .catalogo-grid-panelas {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+}
+
+
+@media (max-width: 980px) {
+  .section-catalogo-panelas .catalogo-grid-panelas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .section-catalogo-panelas .catalogo-grid-panelas {
+    grid-template-columns: 1fr;
+  }
 }
 
 .section-catalogo-panelas .card {
