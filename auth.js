@@ -7,7 +7,6 @@
   const btnFechar = document.getElementById('authFechar');
   const tabs = document.querySelectorAll('[data-auth-tab]');
   const botoesAbrir = document.querySelectorAll('[data-auth-open]');
-  const botoesEnviarCodigo = document.querySelectorAll('[data-enviar-codigo]');
 
   const perfilMenu = document.getElementById('perfilMenu');
   const perfilBotao = document.getElementById('perfilBotao');
@@ -45,13 +44,7 @@
   const chaveCarrinho = 'casaMeloCarrinho';
   const chaveHistoricoCompras = 'casamelo_historico_compras';
   const chavePreferencias = 'casamelo_preferencias_perfil';
-  const chaveCodigosVerificacao = 'casamelo_codigos_verificacao';
-  const chaveUltimoEnvioCodigo = 'casamelo_ultimo_envio_codigo';
   const totalDigitosCelular = 11;
-  const tamanhoCodigoVerificacao = 6;
-  const validadeCodigoEmMs = 5 * 60 * 1000;
-  const intervaloMinimoEnvioCodigoEmMs = 60 * 1000;
-  const numeroWhatsappVerificacao = '5538999140400';
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
   let fotoPendente = '';
 
@@ -74,133 +67,6 @@
 
   const celularValido = (valor) => normalizarCelular(valor).length === totalDigitosCelular;
 
-
-  const carregarCodigosVerificacao = () => {
-    try {
-      const codigos = JSON.parse(localStorage.getItem(chaveCodigosVerificacao) || '[]');
-      return Array.isArray(codigos) ? codigos : [];
-    } catch (erro) {
-      return [];
-    }
-  };
-
-  const salvarCodigosVerificacao = (codigos) => {
-    localStorage.setItem(chaveCodigosVerificacao, JSON.stringify(codigos));
-  };
-
-  const limparCodigosExpirados = (codigos = []) => {
-    const agora = Date.now();
-    return codigos.filter((item) => Number(item?.expiraEm) > agora);
-  };
-
-  const gerarCodigoVerificacao = () => String(Math.floor(100000 + Math.random() * 900000));
-
-  const carregarControleEnvioCodigo = () => {
-    try {
-      const dados = JSON.parse(localStorage.getItem(chaveUltimoEnvioCodigo) || '{}');
-      return dados && typeof dados === 'object' ? dados : {};
-    } catch (erro) {
-      return {};
-    }
-  };
-
-  const salvarControleEnvioCodigo = (dados) => {
-    localStorage.setItem(chaveUltimoEnvioCodigo, JSON.stringify(dados));
-  };
-
-  const montarChaveEnvioCodigo = (celular, contexto) => `${normalizarCelular(celular)}_${contexto}`;
-
-  const validarIntervaloEnvioCodigo = (celular, contexto) => {
-    const controleEnvio = carregarControleEnvioCodigo();
-    const chaveEnvio = montarChaveEnvioCodigo(celular, contexto);
-    const ultimoEnvio = Number(controleEnvio[chaveEnvio] || 0);
-    const restanteEmMs = intervaloMinimoEnvioCodigoEmMs - (Date.now() - ultimoEnvio);
-
-    if (restanteEmMs > 0) {
-      return {
-        permitido: false,
-        restanteSegundos: Math.ceil(restanteEmMs / 1000)
-      };
-    }
-
-    controleEnvio[chaveEnvio] = Date.now();
-    salvarControleEnvioCodigo(controleEnvio);
-
-    return {
-      permitido: true,
-      restanteSegundos: 0
-    };
-  };
-
-  const registrarCodigoVerificacao = (celular, contexto) => {
-    const codigosAtivos = limparCodigosExpirados(carregarCodigosVerificacao()).filter((item) => !(normalizarCelular(item?.celular) === normalizarCelular(celular) && item?.contexto === contexto));
-    const codigo = gerarCodigoVerificacao();
-
-    codigosAtivos.push({
-      celular: normalizarCelular(celular),
-      contexto,
-      codigo,
-      expiraEm: Date.now() + validadeCodigoEmMs
-    });
-
-    salvarCodigosVerificacao(codigosAtivos);
-    return codigo;
-  };
-
-  const validarCodigoVerificacao = (celular, contexto, codigoInformado) => {
-    const codigosAtivos = limparCodigosExpirados(carregarCodigosVerificacao());
-    const codigo = String(codigoInformado || '').replace(/\D/g, '');
-
-    const indice = codigosAtivos.findIndex((item) => normalizarCelular(item?.celular) === normalizarCelular(celular)
-      && item?.contexto === contexto
-      && String(item?.codigo) === codigo);
-
-    if (indice === -1) {
-      salvarCodigosVerificacao(codigosAtivos);
-      return false;
-    }
-
-    codigosAtivos.splice(indice, 1);
-    salvarCodigosVerificacao(codigosAtivos);
-    return true;
-  };
-
-  const montarMensagemWhatsappCodigo = (celular, contexto, codigo) => {
-    const contextoNormalizado = contexto === 'cadastro' ? 'cadastro' : 'login';
-    const celularFormatado = normalizarCelular(celular).replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-
-    return [
-      'Olá, equipe Casa Melo Decor!',
-      '',
-      `Solicitação automática de código para ${contextoNormalizado}:`,
-      `• Destino: ${celularFormatado}`,
-      `• Código: ${codigo}`,
-      '',
-      'Por favor, enviar este código ao cliente via WhatsApp.'
-    ].join('\n');
-  };
-
-  const montarLinkWhatsappCodigo = (celular, contexto, codigo) => `https://wa.me/${numeroWhatsappVerificacao}?text=${encodeURIComponent(montarMensagemWhatsappCodigo(celular, contexto, codigo))}`;
-
-  const solicitarCodigoVerificacao = (celular, contexto) => {
-    const validacaoIntervalo = validarIntervaloEnvioCodigo(celular, contexto);
-
-    if (!validacaoIntervalo.permitido) {
-      feedback.textContent = `Aguarde ${validacaoIntervalo.restanteSegundos}s para solicitar um novo código.`;
-      return;
-    }
-
-    const codigo = registrarCodigoVerificacao(celular, contexto);
-    const celularMascarado = normalizarCelular(celular).replace(/(\d{2})\d{5}(\d{4})/, '$1*****$2');
-    const linkEnvioCodigo = montarLinkWhatsappCodigo(celular, contexto, codigo);
-    const janelaWhatsapp = window.open(linkEnvioCodigo, '_blank', 'noopener,noreferrer');
-
-    if (janelaWhatsapp) {
-      janelaWhatsapp.opener = null;
-    }
-
-    feedback.textContent = `Código solicitado para ${celularMascarado}. Finalize o envio no WhatsApp (${numeroWhatsappVerificacao}) e digite os ${tamanhoCodigoVerificacao} números para continuar.`;
-  };
 
   const carregarUsuarios = () => {
     try {
@@ -659,23 +525,6 @@
     if (evento.target === modal) fecharModal();
   });
 
-  botoesEnviarCodigo.forEach((botao) => {
-    botao.addEventListener('click', () => {
-      const contexto = botao.dataset.enviarCodigo;
-      const formulario = contexto === 'cadastro' ? formCadastro : formLogin;
-      const campoCelular = contexto === 'cadastro' ? 'celular' : 'login';
-      const dados = new FormData(formulario);
-      const celular = normalizarCelular(dados.get(campoCelular));
-
-      if (!celularValido(celular)) {
-        feedback.textContent = 'Informe um celular válido com DDD + 9 números para receber o código.';
-        return;
-      }
-
-      solicitarCodigoVerificacao(celular, contexto);
-    });
-  });
-
   formCadastro.addEventListener('submit', (evento) => {
     evento.preventDefault();
 
@@ -683,15 +532,9 @@
     const nome = String(dados.get('nome') || '').trim();
     const celular = normalizarCelular(dados.get('celular'));
     const senha = String(dados.get('senha') || '');
-    const codigo = String(dados.get('codigo') || '').replace(/\D/g, '');
 
     if (!nome || !celularValido(celular) || senha.length < 6) {
       feedback.textContent = 'Use um celular com DDD + 9 números e senha de no mínimo 6 caracteres.';
-      return;
-    }
-
-    if (codigo.length !== tamanhoCodigoVerificacao || !validarCodigoVerificacao(celular, 'cadastro', codigo)) {
-      feedback.textContent = 'Código inválido ou expirado. Clique em "Enviar código" e tente novamente.';
       return;
     }
 
@@ -716,16 +559,10 @@
     const dados = new FormData(formLogin);
     const login = String(dados.get('login') || '').trim();
     const senha = String(dados.get('senha') || '');
-    const codigo = String(dados.get('codigo') || '').replace(/\D/g, '');
     const celularLogin = normalizarCelular(login);
 
     if (!celularValido(celularLogin)) {
       feedback.textContent = 'Informe seu celular com DDD + 9 números.';
-      return;
-    }
-
-    if (codigo.length !== tamanhoCodigoVerificacao || !validarCodigoVerificacao(celularLogin, 'login', codigo)) {
-      feedback.textContent = 'Código inválido ou expirado. Clique em "Enviar código" e tente novamente.';
       return;
     }
 

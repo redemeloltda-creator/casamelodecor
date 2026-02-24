@@ -149,10 +149,6 @@
         <form id="formLogin" class="auth-form">
             <input type="tel" name="login" placeholder="Celular com DDD + 9 números" required minlength="11" maxlength="15">
             <input type="password" name="senha" placeholder="Sua senha" required>
-            <div class="auth-codigo">
-                <input type="text" name="codigo" placeholder="Código de verificação" inputmode="numeric" pattern="\d{6}" maxlength="6" required>
-                <button type="button" class="auth-submit auth-submit-secundario" data-enviar-codigo="login">Enviar código</button>
-            </div>
             <button type="submit" class="auth-submit">Entrar</button>
         </form>
 
@@ -160,10 +156,6 @@
             <input type="text" name="nome" placeholder="Nome completo" required>
             <input type="tel" name="celular" placeholder="Celular com DDD + 9 números" required minlength="11" maxlength="15">
             <input type="password" name="senha" placeholder="Crie uma senha" required minlength="6">
-            <div class="auth-codigo">
-                <input type="text" name="codigo" placeholder="Código de verificação" inputmode="numeric" pattern="\d{6}" maxlength="6" required>
-                <button type="button" class="auth-submit auth-submit-secundario" data-enviar-codigo="cadastro">Enviar código</button>
-            </div>
             <button type="submit" class="auth-submit">Cadastrar</button>
         </form>
 
