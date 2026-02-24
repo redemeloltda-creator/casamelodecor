@@ -716,6 +716,21 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
 }
 .botao:hover, .btn-whatsapp:hover { background: var(--accent-soft); transform: translateY(-1px); }
 
+
+.section-catalogo-panelas {
+  max-width: 1040px;
+}
+
+.section-catalogo-panelas .grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.section-catalogo-panelas .card {
+  max-width: 320px;
+  width: 100%;
+  margin: 0 auto;
+}
 .produtos, .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
