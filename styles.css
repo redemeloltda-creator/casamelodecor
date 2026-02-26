@@ -1567,7 +1567,7 @@ footer {
 .assistente-flutuante {
     position: fixed;
     right: 20px;
-    bottom: 20px;
+    bottom: 92px;
     z-index: 1200;
     display: flex;
     flex-direction: column;
@@ -1717,7 +1717,7 @@ footer {
 @media (max-width: 600px) {
     .assistente-flutuante {
         right: 12px;
-        bottom: 12px;
+        bottom: 84px;
     }
 
     .assistente-toggle span {
