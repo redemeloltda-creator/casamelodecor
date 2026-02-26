@@ -660,7 +660,7 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  background: linear-gradient(100deg, rgba(20, 20, 20, 0.78) 0%, rgba(20, 20, 20, 0.35) 55%, rgba(20, 20, 20, 0.2) 100%), url("bunner.jpg") center/cover;
+  background: linear-gradient(100deg, rgba(20, 20, 20, 0.78) 0%, rgba(20, 20, 20, 0.35) 55%, rgba(20, 20, 20, 0.2) 100%), url("banner.png") center right/cover;
   box-shadow: var(--shadow);
 }
 
