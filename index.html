@@ -274,6 +274,38 @@
 WhatsApp
 </a>
 
+
+<div class="assistente-flutuante">
+    <button type="button" class="assistente-toggle" id="assistenteToggle" aria-expanded="false" aria-controls="assistentePainel">
+        <img src="logo.png" alt="Mascote Casa Melo" class="assistente-avatar">
+        <span>Ajuda</span>
+    </button>
+
+    <section class="assistente-painel" id="assistentePainel" hidden>
+        <header class="assistente-topo">
+            <img src="logo.png" alt="Mascote Casa Melo" class="assistente-avatar-topo">
+            <div>
+                <p class="assistente-titulo">Lia, assistente Casa Melo</p>
+                <p class="assistente-subtitulo">Posso te ajudar com produtos, horário e localização.</p>
+            </div>
+            <button type="button" id="assistenteFechar" class="assistente-fechar" aria-label="Fechar assistente">×</button>
+        </header>
+
+        <div class="assistente-mensagens" id="assistenteMensagens" aria-live="polite">
+            <p class="assistente-msg assistente-msg-bot">Oi! Eu sou a Lia 👋 Como posso te ajudar hoje?</p>
+        </div>
+
+        <form class="assistente-form" id="assistenteForm">
+            <input type="text" id="assistenteCampo" placeholder="Digite sua dúvida..." autocomplete="off">
+            <button type="submit">Enviar</button>
+        </form>
+
+        <a class="assistente-whats" href="https://wa.me/5538999140400?text=Ol%C3%A1!%20Preciso%20de%20ajuda%20para%20comprar%20no%20site." target="_blank" rel="noopener noreferrer">
+            Falar com atendente
+        </a>
+    </section>
+</div>
+
 <footer>
     <p>© 2026 Casa Melo Decor</p>
     <p>@casamelodecor</p>
@@ -281,5 +313,6 @@ WhatsApp
 
 <script src="catalog-search.js"></script>
 <script src="auth.js"></script>
+<script src="assistant.js"></script>
 </body>
 </html>
