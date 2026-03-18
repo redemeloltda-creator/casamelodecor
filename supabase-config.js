@@ -6,14 +6,14 @@ const CASAMELO_SUPABASE_EXEMPLO = {
 
 window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   ...CASAMELO_SUPABASE_EXEMPLO,
-  enabled: false
+  enabled: true
 };
 
 (function () {
   const CONFIG_PADRAO = {
     ...CASAMELO_SUPABASE_EXEMPLO,
     schema: 'public',
-    enabled: false
+    enabled: true
   };
 
   const configGlobal = window.CASAMELO_SUPABASE_CONFIG || {};
