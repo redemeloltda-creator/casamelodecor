@@ -28,7 +28,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const config = {
     ...CONFIG_PADRAO,
     ...configGlobal,
-    enabled: configGlobal.enabled ?? credenciaisPersonalizadas
+    enabled: Boolean(configGlobal.enabled) || credenciaisPersonalizadas
   };
 
   const normalizarCelular = (valor) => {
