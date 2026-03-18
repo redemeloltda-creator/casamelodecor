@@ -86,9 +86,24 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     }
   };
 
-  const identificarCliente = (celular) => {
+  const valoresFiltroCelular = (celular) => {
     const celularNormalizado = normalizarCelular(celular);
-    return celularNormalizado ? client.from('clientes').select('*').eq('celular', celularNormalizado).maybeSingle() : Promise.resolve({ data: null, error: null });
+    if (!celularNormalizado) return [];
+
+    return celularNormalizado.length === 11
+      ? [celularNormalizado, `55${celularNormalizado}`]
+      : [celularNormalizado];
+  };
+
+  const aplicarFiltroCelular = (query, coluna, celular) => {
+    const valores = valoresFiltroCelular(celular);
+    if (!valores.length) return null;
+    return valores.length === 1 ? query.eq(coluna, valores[0]) : query.in(coluna, valores);
+  };
+
+  const identificarCliente = (celular) => {
+    const query = aplicarFiltroCelular(client.from('clientes').select('*'), 'celular', celular);
+    return query ? query.maybeSingle() : Promise.resolve({ data: null, error: null });
   };
 
   const obterContextoAuthDebug = async () => {
@@ -395,7 +410,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
 
-        const { data, error } = await client.from('carrinhos').select('itens').eq('cliente_celular', celularNormalizado).maybeSingle();
+        const query = aplicarFiltroCelular(client.from('carrinhos').select('itens'), 'cliente_celular', celularNormalizado);
+        if (!query) return [];
+
+        const { data, error } = await query.maybeSingle();
         if (error) return [];
         return Array.isArray(data?.itens) ? data.itens : [];
       });
@@ -427,11 +445,17 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
 
-        const { data, error } = await client
-          .from('historico_compras')
-          .select('*')
-          .eq('cliente_celular', celularNormalizado)
-          .order('data_compra', { ascending: false });
+        const query = aplicarFiltroCelular(
+          client
+            .from('historico_compras')
+            .select('*'),
+          'cliente_celular',
+          celularNormalizado
+        );
+
+        if (!query) return [];
+
+        const { data, error } = await query.order('data_compra', { ascending: false });
 
         if (error || !Array.isArray(data)) return [];
 
