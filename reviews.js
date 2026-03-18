@@ -15,9 +15,9 @@
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
-  const endpointAvaliacoes = window.CASAMELO_AVALIACOES_API || '/api/comentarios';
   const supabaseApi = window.CASAMELO_SUPABASE || null;
   const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
+  const supabase = supabaseApi?.getClient?.() || null;
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
@@ -39,6 +39,16 @@
 
     return valor.filter((item) => item && typeof item === 'object' && item.comentario);
   };
+
+  const mapearAvaliacaoSupabase = (avaliacao = {}) => ({
+    id: String(avaliacao.id || '').trim(),
+    nome: String(avaliacao.nome || '').trim(),
+    celular: normalizarCelular(avaliacao.celular || avaliacao.cliente_celular),
+    foto: String(avaliacao.foto || '').trim(),
+    nota: Number(avaliacao.nota) || 0,
+    comentario: String(avaliacao.comentario || '').trim(),
+    dataAvaliacao: avaliacao.created_at || avaliacao.data_avaliacao || avaliacao.criado_em || null
+  });
 
   const carregarSessao = () => {
     try {
@@ -117,84 +127,85 @@
   };
 
   const carregarAvaliacoesRemotas = async () => {
-    if (supabaseAtivo) {
+    if (supabaseAtivo && supabase) {
       try {
-        return normalizarListaAvaliacoes(await supabaseApi.listarAvaliacoes());
+        const colunasOrdenacao = ['created_at', 'data_avaliacao', 'criado_em'];
+
+        for (const coluna of colunasOrdenacao) {
+          const { data, error } = await supabase
+            .from('comentarios')
+            .select('*')
+            .order(coluna, { ascending: false });
+
+          if (!error) {
+            return normalizarListaAvaliacoes((data || []).map(mapearAvaliacaoSupabase));
+          }
+        }
       } catch (erro) {
         return [];
       }
     }
 
-    try {
-      const resposta = await fetch(endpointAvaliacoes, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json'
-        }
-      });
-
-      if (!resposta.ok) return [];
-
-      const dados = await resposta.json();
-      return normalizarListaAvaliacoes(dados);
-    } catch (erro) {
-      return [];
-    }
+    return [];
   };
 
   const adicionarAvaliacaoRemota = async (avaliacao) => {
-    if (supabaseAtivo) {
+    if (supabaseAtivo && supabase) {
       try {
-        return await supabaseApi.adicionarAvaliacao(avaliacao);
+        const instanteCriacao = avaliacao?.dataAvaliacao || new Date().toISOString();
+        const payloadBase = {
+          id: String(avaliacao?.id || `${Date.now()}`),
+          nome: String(avaliacao?.nome || '').trim(),
+          celular: normalizarCelular(avaliacao?.celular),
+          foto: String(avaliacao?.foto || '').trim() || null,
+          nota: Number(avaliacao?.nota) || 0,
+          comentario: String(avaliacao?.comentario || '').trim()
+        };
+        const payloads = [
+          { ...payloadBase, created_at: instanteCriacao },
+          { ...payloadBase, data_avaliacao: instanteCriacao },
+          { ...payloadBase, created_at: instanteCriacao, data_avaliacao: instanteCriacao }
+        ];
+
+        for (const payload of payloads) {
+          const { data, error } = await supabase
+            .from('comentarios')
+            .insert(payload)
+            .select('*')
+            .single();
+
+          if (!error && data) return mapearAvaliacaoSupabase(data);
+        }
+
+        return null;
       } catch (erro) {
         return null;
       }
     }
 
-    try {
-      const resposta = await fetch(endpointAvaliacoes, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-        body: JSON.stringify(avaliacao)
-      });
-
-      if (!resposta.ok) return null;
-
-      const dados = await resposta.json();
-      return dados && typeof dados === 'object' ? dados : null;
-    } catch (erro) {
-      return null;
-    }
+    return null;
   };
 
   const excluirAvaliacaoRemota = async (idAvaliacao, celular) => {
-    if (supabaseAtivo) {
+    if (supabaseAtivo && supabase) {
       try {
-        return await supabaseApi.excluirAvaliacao(idAvaliacao, celular);
+        let query = supabase.from('comentarios').delete().eq('id', idAvaliacao);
+
+        if (celular) {
+          const celularNormalizado = normalizarCelular(celular);
+          if (celularNormalizado) {
+            query = query.or(`celular.eq.${celularNormalizado},cliente_celular.eq.${celularNormalizado}`);
+          }
+        }
+
+        const { error } = await query;
+        return !error;
       } catch (erro) {
         return false;
       }
     }
 
-    try {
-      const parametros = new URLSearchParams();
-      if (celular) parametros.set('celular', celular);
-
-      const sufixoQuery = parametros.toString() ? `?${parametros.toString()}` : '';
-      const resposta = await fetch(`${endpointAvaliacoes}/${encodeURIComponent(idAvaliacao)}${sufixoQuery}`, {
-        method: 'DELETE',
-        headers: {
-          Accept: 'application/json'
-        }
-      });
-
-      return resposta.ok;
-    } catch (erro) {
-      return false;
-    }
+    return false;
   };
 
   const salvarAvaliacoes = async (avaliacoes) => {
