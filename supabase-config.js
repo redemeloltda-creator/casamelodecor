@@ -75,7 +75,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     foto: String(comentario.foto || '').trim(),
     nota: Number(comentario.nota) || 0,
     comentario: String(comentario.comentario || '').trim(),
-    dataAvaliacao: comentario.data_avaliacao || comentario.dataAvaliacao || comentario.criado_em || null
+    dataAvaliacao: comentario.data_avaliacao || comentario.dataAvaliacao || comentario.created_at || comentario.criado_em || null
   });
 
   const obterSessaoLocal = () => {
@@ -444,9 +444,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async listarAvaliacoes() {
       return executarConsulta('listarAvaliacoes', [], async () => {
-        const { data, error } = await client.from('comentarios').select('*').order('data_avaliacao', { ascending: true });
-        if (error || !Array.isArray(data)) return [];
-        return data.map(mapearComentario);
+        const consultasOrdenacao = ['data_avaliacao', 'created_at'];
+
+        for (const colunaData of consultasOrdenacao) {
+          const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: true });
+          if (!error && Array.isArray(data)) return data.map(mapearComentario);
+        }
+
+        return [];
       });
     },
     async adicionarAvaliacao(avaliacao = {}) {
