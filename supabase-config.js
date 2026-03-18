@@ -468,7 +468,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async listarAvaliacoes() {
       return executarConsulta('listarAvaliacoes', [], async () => {
+
+        const consultasOrdenacao = ['created_at', 'data_avaliacao', 'criado_em'];
+
         const consultasOrdenacao = ['created_at', 'data_avaliacao'];
+
 
         for (const colunaData of consultasOrdenacao) {
           const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: false });
@@ -478,6 +482,9 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         return [];
       });
     },
+    async buscarComentarios() {
+      return api.listarAvaliacoes();
+    },
     async adicionarAvaliacao(avaliacao = {}) {
       return executarConsulta('adicionarAvaliacao', null, async () => {
         const celular = normalizarCelular(avaliacao?.celular);
@@ -485,6 +492,17 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const nome = String(avaliacao?.nome || '').trim();
         const nota = Math.max(1, Math.min(5, Number(avaliacao?.nota) || 0));
         if (!comentario || !nome || !nota) return null;
+
+
+        const payload = {
+          id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
+          nome,
+          comentario,
+          nota,
+          celular: celular || null,
+          foto: String(avaliacao?.foto || '').trim() || null,
+          data_avaliacao: avaliacao?.dataAvaliacao || new Date().toISOString()
+        };
 
         const instanteCriacao = avaliacao?.dataAvaliacao || avaliacao?.createdAt || new Date().toISOString();
         const payloads = [
@@ -514,6 +532,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           }
         ];
 
+
         let ultimoErro = null;
 
         for (const payload of payloads) {
@@ -531,6 +550,9 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         return null;
       });
+    },
+    async criarComentario(comentario = {}) {
+      return api.adicionarAvaliacao(comentario);
     },
     async excluirAvaliacao(idAvaliacao, celular) {
       return executarConsulta('excluirAvaliacao', false, async () => {
