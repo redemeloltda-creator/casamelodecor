@@ -46,13 +46,129 @@
   const chavePreferencias = 'casamelo_preferencias_perfil';
   const totalDigitosCelular = 11;
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
+  const supabaseApi = window.CASAMELO_SUPABASE || null;
+  const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
   let fotoPendente = '';
+
+  const mesclarUsuarios = (usuariosLocais = [], usuariosRemotos = []) => {
+    const mapa = new Map();
+
+    [...usuariosLocais, ...usuariosRemotos].forEach((usuario) => {
+      const normalizado = criarUsuarioNormalizado({
+        ...usuario,
+        receberNovidades: usuario?.receberNovidades
+      });
+      const celular = normalizarCelular(normalizado.celular);
+      if (!celular) return;
+
+      const atual = mapa.get(celular) || {};
+      mapa.set(celular, {
+        ...atual,
+        ...normalizado,
+        celular,
+        foto: normalizado.foto || atual.foto || ''
+      });
+    });
+
+    return [...mapa.values()];
+  };
+
+  const sincronizarClienteRemoto = async (celular, campos = {}) => {
+    if (!supabaseAtivo) return null;
+
+    try {
+      return await supabaseApi.atualizarCliente(celular, campos);
+    } catch (erro) {
+      return null;
+    }
+  };
+
+  const sincronizarCarrinhoRemoto = async (itens) => {
+    if (!supabaseAtivo) return false;
+
+    const usuario = carregarSessao();
+    const celular = normalizarCelular(usuario?.celular);
+    if (!celular) return false;
+
+    try {
+      return await supabaseApi.salvarCarrinho(celular, itens);
+    } catch (erro) {
+      return false;
+    }
+  };
+
+  const sincronizarHistoricoRemoto = async (itens) => {
+    if (!supabaseAtivo) return false;
+
+    const usuario = carregarSessao();
+    const celular = normalizarCelular(usuario?.celular);
+    if (!celular) return false;
+
+    try {
+      return await supabaseApi.registrarCompra(celular, itens);
+    } catch (erro) {
+      return false;
+    }
+  };
+
+  const carregarDadosRemotos = async () => {
+    if (!supabaseAtivo) return;
+
+    try {
+      const [usuariosRemotos, carrinhoRemoto, historicoRemoto] = await Promise.all([
+        supabaseApi.listarClientes(),
+        supabaseApi.sincronizarSessaoComCarrinho(),
+        (async () => {
+          const usuario = carregarSessao();
+          const celular = normalizarCelular(usuario?.celular);
+          return celular ? supabaseApi.listarHistorico(celular) : [];
+        })()
+      ]);
+
+      const usuariosMesclados = mesclarUsuarios(carregarUsuarios(), usuariosRemotos);
+      salvarUsuarios(usuariosMesclados);
+
+      const preferencias = carregarPreferencias();
+      usuariosRemotos.forEach((usuarioRemoto) => {
+        const celularRemoto = normalizarCelular(usuarioRemoto?.celular);
+        if (!celularRemoto) return;
+        preferencias[celularRemoto] = {
+          ...preferencias[celularRemoto],
+          receberNovidades: Boolean(usuarioRemoto?.receberNovidades)
+        };
+      });
+      salvarPreferencias(preferencias);
+
+      if (Array.isArray(carrinhoRemoto) && carrinhoRemoto.length) {
+        localStorage.setItem(chaveCarrinho, JSON.stringify(carrinhoRemoto));
+      }
+
+      if (Array.isArray(historicoRemoto) && historicoRemoto.length) {
+        const historicoLocal = carregarHistoricoCompras();
+        const combinado = [...historicoLocal];
+
+        historicoRemoto.forEach((item) => {
+          const existe = combinado.some((registro) => (
+            normalizarCelular(registro?.celular) === normalizarCelular(item?.celular)
+            && String(registro?.data || '') === String(item?.data || '')
+          ));
+
+          if (!existe) combinado.push(item);
+        });
+
+        salvarHistoricoCompras(combinado);
+      }
+    } catch (erro) {
+      // fallback silencioso para manter o site funcionando offline
+    }
+  };
 
   const criarUsuarioNormalizado = (usuario = {}) => ({
     nome: String(usuario.nome || '').trim(),
     celular: normalizarCelular(usuario.celular),
     senha: String(usuario.senha || ''),
-    foto: String(usuario.foto || '').trim()
+    foto: String(usuario.foto || '').trim(),
+    receberNovidades: Boolean(usuario.receberNovidades)
   });
 
   const normalizarCelular = (valor) => {
@@ -103,6 +219,7 @@
     contato: usuario.celular || usuario.email || '',
     celular: usuario.celular || '',
     foto: usuario.foto || '',
+    receberNovidades: Boolean(usuario.receberNovidades),
     dadosCliente: criarUsuarioNormalizado(usuario)
   });
 
@@ -175,6 +292,7 @@
   const salvarCarrinho = (itens) => {
     localStorage.setItem(chaveCarrinho, JSON.stringify(itens));
     document.dispatchEvent(new Event('casamelo-cart-change'));
+    sincronizarCarrinhoRemoto(itens);
   };
 
   const removerItemCarrinho = (adicionadoEm) => {
@@ -309,6 +427,7 @@
       }))
     });
     salvarHistoricoCompras(historico);
+    sincronizarHistoricoRemoto(itens);
     atualizarHistoricoPerfil();
   };
 
@@ -525,7 +644,7 @@
     if (evento.target === modal) fecharModal();
   });
 
-  formCadastro.addEventListener('submit', (evento) => {
+  formCadastro.addEventListener('submit', async (evento) => {
     evento.preventDefault();
 
     const dados = new FormData(formCadastro);
@@ -539,21 +658,32 @@
     }
 
     const usuarios = carregarUsuarios();
-    const existe = usuarios.some((usuario) => usuario.celular === celular);
+    const existeLocal = usuarios.some((usuario) => usuario.celular === celular);
+    const existeRemoto = supabaseAtivo ? await supabaseApi.buscarClientePorCelular(celular) : null;
 
-    if (existe) {
+    if (existeLocal || existeRemoto) {
       feedback.textContent = 'Este número de celular já possui cadastro.';
       return;
     }
 
-    usuarios.push(criarUsuarioNormalizado({ nome, celular, senha, foto: '' }));
+    const novoUsuario = criarUsuarioNormalizado({ nome, celular, senha, foto: '' });
+    usuarios.push(novoUsuario);
     salvarUsuarios(usuarios);
+
+    if (supabaseAtivo) {
+      const cadastroRemoto = await supabaseApi.cadastrarCliente(novoUsuario);
+      if (!cadastroRemoto) {
+        feedback.textContent = 'Cadastro salvo localmente, mas a sincronização com o Supabase falhou. Confira suas credenciais.';
+        return;
+      }
+    }
+
     feedback.textContent = 'Cadastro realizado com sucesso. Agora faça seu login.';
     formCadastro.reset();
     trocarAba('login');
   });
 
-  formLogin.addEventListener('submit', (evento) => {
+  formLogin.addEventListener('submit', async (evento) => {
     evento.preventDefault();
 
     const dados = new FormData(formLogin);
@@ -566,16 +696,32 @@
       return;
     }
 
-    const usuarios = carregarUsuarios();
-    const usuario = usuarios.find((item) => normalizarCelular(item.celular) === celularLogin && item.senha === senha);
+    let usuario = null;
+
+    if (supabaseAtivo) {
+      usuario = await supabaseApi.autenticarCliente(celularLogin, senha);
+      if (usuario) {
+        const usuariosAtualizados = mesclarUsuarios(carregarUsuarios(), [usuario]);
+        salvarUsuarios(usuariosAtualizados);
+      }
+    }
+
+    if (!usuario) {
+      const usuarios = carregarUsuarios();
+      usuario = usuarios.find((item) => normalizarCelular(item.celular) === celularLogin && item.senha === senha);
+    }
 
     if (!usuario) {
       feedback.textContent = 'Login inválido. Confira os dados e senha.';
       return;
     }
 
-    salvarSessao({ ...montarSessaoUsuario(usuario), ultimoAcesso: new Date().toISOString() });
+    const ultimoAcesso = new Date().toISOString();
+    salvarSessao({ ...montarSessaoUsuario(usuario), ultimoAcesso });
+    sincronizarClienteRemoto(celularLogin, { ultimoAcesso });
+    await carregarDadosRemotos();
     atualizarAreaPerfil();
+    atualizarCarrinho();
 
     feedback.textContent = `Olá, ${usuario.nome}. Login realizado!`;
     formLogin.reset();
@@ -629,6 +775,7 @@
       if (!confirmou) return;
 
       excluirConta(usuario.celular);
+      if (supabaseAtivo) supabaseApi.excluirCliente(usuario.celular);
 
       const preferencias = carregarPreferencias();
       delete preferencias[normalizarCelular(usuario.celular)];
@@ -662,6 +809,7 @@
       };
 
       salvarPreferencias(preferencias);
+      sincronizarClienteRemoto(celular, { receberNovidades: perfilReceberNovidades.checked });
       feedback.textContent = perfilReceberNovidades.checked
         ? 'Preferência salva: você receberá novidades no WhatsApp.'
         : 'Preferência salva: novidades por WhatsApp desativadas.';
@@ -696,6 +844,7 @@
 
       usuarios[indiceUsuario].senha = String(novaSenha);
       salvarUsuarios(usuarios);
+      sincronizarClienteRemoto(celular, { senha: String(novaSenha) });
       feedback.textContent = 'Senha alterada com sucesso.';
     });
   }
@@ -751,13 +900,16 @@
       const novaSessao = montarSessaoUsuario({ ...usuario.dadosCliente, ...usuario, foto: fotoPendente });
       salvarSessao(novaSessao);
       atualizarFotoUsuario(usuario.celular, fotoPendente);
+      sincronizarClienteRemoto(usuario.celular, { foto: fotoPendente });
       atualizarAreaPerfil();
       feedback.textContent = 'Foto de perfil atualizada com sucesso.';
       limparAlteracaoFotoPendente();
     });
   }
 
-  atualizarAreaPerfil();
-  atualizarCarrinho();
+  carregarDadosRemotos().finally(() => {
+    atualizarAreaPerfil();
+    atualizarCarrinho();
+  });
   document.addEventListener('casamelo-cart-change', atualizarResumoPerfil);
 })();
