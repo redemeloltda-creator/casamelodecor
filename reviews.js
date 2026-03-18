@@ -14,6 +14,8 @@
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
   const endpointAvaliacoes = window.CASAMELO_AVALIACOES_API || '/api/comentarios';
+  const supabaseApi = window.CASAMELO_SUPABASE || null;
+  const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
@@ -113,6 +115,14 @@
   };
 
   const carregarAvaliacoesRemotas = async () => {
+    if (supabaseAtivo) {
+      try {
+        return normalizarListaAvaliacoes(await supabaseApi.listarAvaliacoes());
+      } catch (erro) {
+        return [];
+      }
+    }
+
     try {
       const resposta = await fetch(endpointAvaliacoes, {
         method: 'GET',
@@ -131,6 +141,14 @@
   };
 
   const adicionarAvaliacaoRemota = async (avaliacao) => {
+    if (supabaseAtivo) {
+      try {
+        return await supabaseApi.adicionarAvaliacao(avaliacao);
+      } catch (erro) {
+        return null;
+      }
+    }
+
     try {
       const resposta = await fetch(endpointAvaliacoes, {
         method: 'POST',
@@ -151,6 +169,14 @@
   };
 
   const excluirAvaliacaoRemota = async (idAvaliacao, celular) => {
+    if (supabaseAtivo) {
+      try {
+        return await supabaseApi.excluirAvaliacao(idAvaliacao, celular);
+      } catch (erro) {
+        return false;
+      }
+    }
+
     try {
       const parametros = new URLSearchParams();
       if (celular) parametros.set('celular', celular);
