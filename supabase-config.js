@@ -39,6 +39,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   let supabaseDisponivel = Boolean(client);
   let validacaoEstruturaPromise = null;
   let avisoEstruturaExibido = false;
+  let avisoAutorizacaoExibido = false;
   let ultimoErro = null;
 
   const mapearCliente = (cliente = {}) => ({
@@ -87,6 +88,22 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       || mensagem.includes('not found');
   };
 
+  const erroIndicaAutorizacaoInvalida = (error) => {
+    const status = Number(error?.status || error?.code || 0);
+    const codigo = String(error?.code || '').toUpperCase();
+    const mensagem = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+
+    return status === 401
+      || status === 403
+      || codigo === 'PGRST301'
+      || mensagem.includes('invalid api key')
+      || mensagem.includes('invalid jwt')
+      || mensagem.includes('jwt')
+      || mensagem.includes('row level security')
+      || mensagem.includes('permission denied')
+      || mensagem.includes('not allowed');
+  };
+
   const avisarEstruturaIncompativel = (origem, error) => {
     if (avisoEstruturaExibido) return;
 
@@ -95,6 +112,18 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       `[Casa Melo Decor] Supabase desativado: a estrutura atual do banco não bate com o site. `
       + `A rotina "${origem}" esperava as tabelas public.clientes, public.carrinhos, public.historico_compras e public.comentarios. `
       + `No projeto Supabase, execute o arquivo database/schema.supabase.sql ou aplique database/supabase-compat.sql se você já criou tabelas como usuarios/comentarios com outro formato.`,
+      error
+    );
+  };
+
+  const avisarAutorizacaoInvalida = (origem, error) => {
+    if (avisoAutorizacaoExibido) return;
+
+    avisoAutorizacaoExibido = true;
+    console.error(
+      `[Casa Melo Decor] Supabase desativado: o projeto recusou a requisição da rotina "${origem}" com erro de autorização. `
+      + `Confira se a Project URL e a anon key em supabase-config.js pertencem ao mesmo projeto e se o SQL de database/schema.supabase.sql `
+      + `ou database/supabase-compat.sql foi executado com as políticas RLS liberando acesso anon para clientes, carrinhos, historico_compras e comentarios.`,
       error
     );
   };
@@ -116,6 +145,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
               return false;
             }
 
+            if (erroIndicaAutorizacaoInvalida(error)) {
+              supabaseDisponivel = false;
+              avisarAutorizacaoInvalida(origem, error);
+              return false;
+            }
+
             throw error;
           }
         }
@@ -125,6 +160,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (erroIndicaEstruturaIncompativel(error)) {
           supabaseDisponivel = false;
           avisarEstruturaIncompativel(origem, error);
+          return false;
+        }
+
+        if (erroIndicaAutorizacaoInvalida(error)) {
+          supabaseDisponivel = false;
+          avisarAutorizacaoInvalida(origem, error);
           return false;
         }
 
@@ -150,6 +191,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       if (erroIndicaEstruturaIncompativel(error)) {
         supabaseDisponivel = false;
         avisarEstruturaIncompativel(origem, error);
+        return fallback;
+      }
+
+      if (erroIndicaAutorizacaoInvalida(error)) {
+        supabaseDisponivel = false;
+        avisarAutorizacaoInvalida(origem, error);
         return fallback;
       }
 
