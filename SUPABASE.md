@@ -95,6 +95,28 @@ Se você já migrou o cadastro/login para `supabase.auth.*` e o `insert` em `pub
 
 O `supabase-config.js` agora também registra no console o `payload`, o `error`, o estado resumido de autenticação e dicas quando um `insert` em `clientes` ou `comentarios` falha.
 
+### 6.1. Buscar e criar comentários em projetos que usam `created_at`
+Se o seu projeto Supabase foi criado com a tabela `comentarios` no formato mais simples (`nome`, `comentario`, `nota`, `created_at`), você pode usar consultas como estas:
+
+```js
+const { data, error } = await supabase
+  .from('comentarios')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+console.log(data);
+
+await supabase
+  .from('comentarios')
+  .insert({
+    nome: 'Cliente',
+    comentario: 'Muito bom!',
+    nota: 5
+  });
+```
+
+O front-end do repositório agora tenta primeiro esse formato com `created_at` e, se a tabela estiver no formato compatível do projeto (`data_avaliacao`, `celular`, `foto`, `id`), faz fallback automático para ele.
+
 Para produção, o ideal é evoluir depois para um modelo com:
 - Supabase Auth;
 - políticas RLS por usuário autenticado;
