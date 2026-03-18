@@ -6,6 +6,8 @@
   const lista = document.getElementById('listaAvaliacoes');
   const btnEnviar = document.getElementById('btnEnviarAvaliacao');
   const btnLogin = document.getElementById('btnLoginAvaliacao');
+  const tabsExperiencia = document.querySelectorAll('[data-experience-tab]');
+  const paineisExperiencia = document.querySelectorAll('[data-experience-panel]');
 
   if (!form || !heartsInput || !comentarioInput || !feedback || !lista || !btnEnviar || !btnLogin) return;
 
@@ -227,6 +229,22 @@
     });
   };
 
+  const ativarAbaExperiencia = (aba) => {
+    if (!tabsExperiencia.length || !paineisExperiencia.length) return;
+
+    const abaAtiva = aba === 'visao-geral' ? 'visao-geral' : 'comentarios';
+
+    tabsExperiencia.forEach((tab) => {
+      const ativa = tab.dataset.experienceTab === abaAtiva;
+      tab.classList.toggle('ativo', ativa);
+      tab.setAttribute('aria-selected', String(ativa));
+    });
+
+    paineisExperiencia.forEach((painel) => {
+      painel.hidden = painel.dataset.experiencePanel !== abaAtiva;
+    });
+  };
+
   const escaparHtml = (texto) => String(texto || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -347,6 +365,22 @@
     }
   };
 
+  btnLogin.addEventListener('click', () => {
+    const botaoAbrirLogin = document.querySelector('[data-auth-open="login"]');
+    if (botaoAbrirLogin) botaoAbrirLogin.click();
+  });
+
+  tabsExperiencia.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const aba = tab.dataset.experienceTab;
+      ativarAbaExperiencia(aba);
+      const novaHash = aba === 'comentarios' ? '#comentarios' : '#visao-geral';
+      if (window.location.hash !== novaHash) {
+        history.replaceState(null, '', novaHash);
+      }
+    });
+  });
+
   form.addEventListener('submit', async (evento) => {
     evento.preventDefault();
 
@@ -406,7 +440,12 @@
     renderizarAvaliacoes();
   });
 
+  window.addEventListener('hashchange', () => {
+    ativarAbaExperiencia(window.location.hash === '#visao-geral' ? 'visao-geral' : 'comentarios');
+  });
+
   const iniciarAvaliacoes = async () => {
+    ativarAbaExperiencia(window.location.hash === '#visao-geral' ? 'visao-geral' : 'comentarios');
     renderizarHearts();
     atualizarEstadoFormulario();
 

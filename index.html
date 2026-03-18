@@ -122,6 +122,7 @@
             <a href="#produtos">Produtos</a>
             <a href="#diferenciais">Por que comprar</a>
             <a href="#local">Localização</a>
+            <a href="#comentarios">Comentários</a>
             <a href="#contato">Contato</a>
         </div>
     </div>
@@ -218,6 +219,53 @@
     </div>
 </section>
 
+<section class="section experiencia-tabs" id="comentarios">
+    <div class="experiencia-cabecalho">
+        <p class="hero-tag">Casa Melo Decor</p>
+        <h2>Comentários de clientes</h2>
+        <p>Confira avaliações reais da loja e compartilhe sua experiência depois do login.</p>
+    </div>
+
+    <div class="experience-tabs" role="tablist" aria-label="Visão geral e comentários">
+        <button type="button" class="experience-tab" data-experience-tab="visao-geral" aria-selected="false">Visão geral</button>
+        <button type="button" class="experience-tab ativo" data-experience-tab="comentarios" aria-selected="true">Comentários</button>
+    </div>
+
+    <div class="experience-panel" data-experience-panel="visao-geral" hidden>
+        <div class="experience-grid">
+            <article class="experience-card">
+                <h3>Atendimento próximo</h3>
+                <p>Loja física no centro de Coração de Jesus com suporte rápido pelo WhatsApp e Instagram.</p>
+            </article>
+            <article class="experience-card">
+                <h3>Compra com confiança</h3>
+                <p>Cadastre sua conta para salvar carrinho, acompanhar histórico e publicar seu comentário com foto.</p>
+            </article>
+            <article class="experience-card">
+                <h3>Novidades frequentes</h3>
+                <p>O catálogo recebe atualizações constantes com itens de decoração, utilidades e presentes.</p>
+            </article>
+        </div>
+    </div>
+
+    <div class="experience-panel" data-experience-panel="comentarios">
+        <p class="avaliacoes-info">Sua opinião ajuda outras pessoas a comprarem com mais segurança.</p>
+
+        <form id="formAvaliacao" class="avaliacao-form">
+            <label class="avaliacao-label" for="comentarioAvaliacao">Como foi sua experiência com a Casa Melo Decor?</label>
+            <div id="heartsInput" class="heart-group" aria-label="Selecione sua nota de 1 a 5 corações"></div>
+            <textarea id="comentarioAvaliacao" rows="4" maxlength="500" placeholder="Conte o que você achou do atendimento, entrega ou produtos."></textarea>
+            <div class="avaliacao-acoes-form">
+                <button type="submit" id="btnEnviarAvaliacao" class="botao">Publicar comentário</button>
+                <button type="button" id="btnLoginAvaliacao" class="botao botao-secundario">Entrar para comentar</button>
+            </div>
+            <p id="avaliacaoFeedback" class="auth-feedback" aria-live="polite"></p>
+        </form>
+
+        <div id="listaAvaliacoes" class="lista-avaliacoes" aria-live="polite"></div>
+    </div>
+</section>
+
 <section class="section diferenciais" id="diferenciais">
     <h2>Por que escolher a Casa Melo Decor?</h2>
 
@@ -285,5 +333,6 @@ WhatsApp
 <script src="catalog-search.js"></script>
 <script src="auth.js"></script>
 <script src="cart-global.js"></script>
+<script src="reviews.js"></script>
 </body>
 </html>
