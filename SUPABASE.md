@@ -87,6 +87,14 @@ async function postComment(textoComentario, user) {
 
 > Observação: esse exemplo representa uma evolução possível. O código atual do site ainda usa um fluxo próprio de cadastro/login no front-end, sem `Supabase Auth`.
 
+Se você já migrou o cadastro/login para `supabase.auth.*` e o `insert` em `public.clientes` falha, faça este checklist:
+
+1. no console do navegador, execute `await window.CASAMELO_SUPABASE.debugAuthState()`;
+2. confirme se `user` não é `null` e se existe `session` ativa;
+3. se o erro mencionar `row-level security`, aplique `database/supabase-auth-clientes.sql` para criar a coluna `user_id`, definir `default auth.uid()` e trocar a policy pública por policies baseadas em `auth.uid()`.
+
+O `supabase-config.js` agora também registra no console o `payload`, o `error`, o estado resumido de autenticação e dicas quando um `insert` em `clientes` ou `comentarios` falha.
+
 Para produção, o ideal é evoluir depois para um modelo com:
 - Supabase Auth;
 - políticas RLS por usuário autenticado;
