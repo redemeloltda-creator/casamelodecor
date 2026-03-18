@@ -43,6 +43,22 @@ Quando a configuração estiver preenchida, o site sincroniza automaticamente:
 ## 5. Importante
 O projeto atual é um site estático puro, sem back-end intermediário. Por isso, o SQL foi deixado com políticas abertas para a chave anon funcionar direto no navegador.
 
+## 5.1. Consultas rápidas para comentários
+Se você só quiser testar a tabela `comentarios` direto no console do navegador, pode usar os helpers já expostos pelo site:
+
+```js
+const comentarios = await window.CASAMELO_SUPABASE.buscarComentarios();
+console.log(comentarios);
+
+await window.CASAMELO_SUPABASE.criarComentario({
+  nome: 'Cliente',
+  comentario: 'Muito bom!',
+  nota: 5
+});
+```
+
+Internamente, a leitura tenta primeiro `created_at` e depois `data_avaliacao` / `criado_em`, sempre trazendo os comentários mais recentes primeiro.
+
 ## 6. Exemplo futuro com Supabase Auth + comentários
 Se você quiser evoluir o projeto para usar autenticação nativa do Supabase, um fluxo simples seria:
 

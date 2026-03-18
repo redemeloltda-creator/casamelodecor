@@ -468,15 +468,18 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async listarAvaliacoes() {
       return executarConsulta('listarAvaliacoes', [], async () => {
-        const consultasOrdenacao = ['data_avaliacao', 'created_at'];
+        const consultasOrdenacao = ['created_at', 'data_avaliacao', 'criado_em'];
 
         for (const colunaData of consultasOrdenacao) {
-          const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: true });
+          const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: false });
           if (!error && Array.isArray(data)) return data.map(mapearComentario);
         }
 
         return [];
       });
+    },
+    async buscarComentarios() {
+      return api.listarAvaliacoes();
     },
     async adicionarAvaliacao(avaliacao = {}) {
       return executarConsulta('adicionarAvaliacao', null, async () => {
@@ -489,10 +492,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const payload = {
           id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
           nome,
+          comentario,
+          nota,
           celular: celular || null,
           foto: String(avaliacao?.foto || '').trim() || null,
-          nota,
-          comentario,
           data_avaliacao: avaliacao?.dataAvaliacao || new Date().toISOString()
         };
 
@@ -503,6 +506,9 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         }
         return mapearComentario(data);
       });
+    },
+    async criarComentario(comentario = {}) {
+      return api.adicionarAvaliacao(comentario);
     },
     async excluirAvaliacao(idAvaliacao, celular) {
       return executarConsulta('excluirAvaliacao', false, async () => {
