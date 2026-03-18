@@ -36,6 +36,9 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const client = criarCliente();
+  let supabaseDisponivel = Boolean(client);
+  let validacaoEstruturaPromise = null;
+  let avisoEstruturaExibido = false;
 
   const mapearCliente = (cliente = {}) => ({
     id: cliente.id || null,
@@ -72,6 +75,84 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return celularNormalizado ? client.from('clientes').select('*').eq('celular', celularNormalizado).maybeSingle() : Promise.resolve({ data: null, error: null });
   };
 
+  const erroIndicaEstruturaIncompativel = (error) => {
+    const status = Number(error?.status || error?.code || 0);
+    const mensagem = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+
+    return status === 404
+      || mensagem.includes('relation')
+      || mensagem.includes('does not exist')
+      || mensagem.includes('could not find')
+      || mensagem.includes('not found');
+  };
+
+  const avisarEstruturaIncompativel = (origem, error) => {
+    if (avisoEstruturaExibido) return;
+
+    avisoEstruturaExibido = true;
+    console.error(
+      `[Casa Melo Decor] Supabase desativado: a estrutura atual do banco não bate com o site. `
+      + `A rotina "${origem}" esperava as tabelas public.clientes, public.carrinhos, public.historico_compras e public.comentarios. `
+      + `No projeto Supabase, execute o arquivo database/schema.supabase.sql ou aplique database/supabase-compat.sql se você já criou tabelas como usuarios/comentarios com outro formato.`,
+      error
+    );
+  };
+
+  const garantirEstruturaCompativel = async (origem = 'inicialização') => {
+    if (!client || !supabaseDisponivel) return false;
+
+    if (!validacaoEstruturaPromise) {
+      validacaoEstruturaPromise = (async () => {
+        const tabelasObrigatorias = ['clientes', 'carrinhos', 'historico_compras', 'comentarios'];
+
+        for (const tabela of tabelasObrigatorias) {
+          const { error } = await client.from(tabela).select('*', { head: true, count: 'exact' }).limit(1);
+
+          if (error) {
+            if (erroIndicaEstruturaIncompativel(error)) {
+              supabaseDisponivel = false;
+              avisarEstruturaIncompativel(origem, error);
+              return false;
+            }
+
+            throw error;
+          }
+        }
+
+        return true;
+      })().catch((error) => {
+        if (erroIndicaEstruturaIncompativel(error)) {
+          supabaseDisponivel = false;
+          avisarEstruturaIncompativel(origem, error);
+          return false;
+        }
+
+        throw error;
+      });
+    }
+
+    return validacaoEstruturaPromise;
+  };
+
+  const executarConsulta = async (origem, fallback, operacao) => {
+    if (!client || !supabaseDisponivel) return fallback;
+
+    const estruturaOk = await garantirEstruturaCompativel(origem);
+    if (!estruturaOk) return fallback;
+
+    try {
+      return await operacao();
+    } catch (error) {
+      if (erroIndicaEstruturaIncompativel(error)) {
+        supabaseDisponivel = false;
+        avisarEstruturaIncompativel(origem, error);
+        return fallback;
+      }
+
+      throw error;
+    }
+  };
+
   const api = {
     config,
     isConfigured() {
@@ -82,188 +163,197 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     normalizarCelular,
     async listarClientes() {
-      if (!client) return [];
-      const { data, error } = await client.from('clientes').select('*').order('criado_em', { ascending: true });
-      if (error || !Array.isArray(data)) return [];
-      return data.map(mapearCliente);
+      return executarConsulta('listarClientes', [], async () => {
+        const { data, error } = await client.from('clientes').select('*').order('criado_em', { ascending: true });
+        if (error || !Array.isArray(data)) return [];
+        return data.map(mapearCliente);
+      });
     },
     async buscarClientePorCelular(celular) {
-      if (!client) return null;
-      const { data, error } = await identificarCliente(celular);
-      if (error || !data) return null;
-      return mapearCliente(data);
+      return executarConsulta('buscarClientePorCelular', null, async () => {
+        const { data, error } = await identificarCliente(celular);
+        if (error || !data) return null;
+        return mapearCliente(data);
+      });
     },
     async cadastrarCliente(clienteCadastro) {
-      if (!client) return null;
+      return executarConsulta('cadastrarCliente', null, async () => {
+        const registro = {
+          nome: String(clienteCadastro?.nome || '').trim(),
+          celular: normalizarCelular(clienteCadastro?.celular),
+          senha: String(clienteCadastro?.senha || ''),
+          foto: String(clienteCadastro?.foto || '').trim(),
+          receber_novidades: Boolean(clienteCadastro?.receberNovidades),
+          ultimo_acesso: new Date().toISOString()
+        };
 
-      const registro = {
-        nome: String(clienteCadastro?.nome || '').trim(),
-        celular: normalizarCelular(clienteCadastro?.celular),
-        senha: String(clienteCadastro?.senha || ''),
-        foto: String(clienteCadastro?.foto || '').trim(),
-        receber_novidades: Boolean(clienteCadastro?.receberNovidades),
-        ultimo_acesso: new Date().toISOString()
-      };
-
-      const { data, error } = await client.from('clientes').insert(registro).select('*').single();
-      if (error || !data) return null;
-      return mapearCliente(data);
+        const { data, error } = await client.from('clientes').insert(registro).select('*').single();
+        if (error || !data) return null;
+        return mapearCliente(data);
+      });
     },
     async autenticarCliente(celular, senha) {
-      if (!client) return null;
+      return executarConsulta('autenticarCliente', null, async () => {
+        const celularNormalizado = normalizarCelular(celular);
+        const senhaNormalizada = String(senha || '');
+        if (!celularNormalizado || !senhaNormalizada) return null;
 
-      const celularNormalizado = normalizarCelular(celular);
-      const senhaNormalizada = String(senha || '');
-      if (!celularNormalizado || !senhaNormalizada) return null;
+        const { data, error } = await client
+          .from('clientes')
+          .select('*')
+          .eq('celular', celularNormalizado)
+          .eq('senha', senhaNormalizada)
+          .maybeSingle();
 
-      const { data, error } = await client
-        .from('clientes')
-        .select('*')
-        .eq('celular', celularNormalizado)
-        .eq('senha', senhaNormalizada)
-        .maybeSingle();
+        if (error || !data) return null;
 
-      if (error || !data) return null;
-
-      await client.from('clientes').update({ ultimo_acesso: new Date().toISOString() }).eq('celular', celularNormalizado);
-      return mapearCliente({ ...data, ultimo_acesso: new Date().toISOString() });
+        await client.from('clientes').update({ ultimo_acesso: new Date().toISOString() }).eq('celular', celularNormalizado);
+        return mapearCliente({ ...data, ultimo_acesso: new Date().toISOString() });
+      });
     },
     async atualizarCliente(celular, campos = {}) {
-      if (!client) return null;
+      return executarConsulta('atualizarCliente', null, async () => {
+        const celularNormalizado = normalizarCelular(celular);
+        if (!celularNormalizado) return null;
 
-      const celularNormalizado = normalizarCelular(celular);
-      if (!celularNormalizado) return null;
+        const atualizacao = {};
 
-      const atualizacao = {};
+        if (typeof campos.nome !== 'undefined') atualizacao.nome = String(campos.nome || '').trim();
+        if (typeof campos.senha !== 'undefined') atualizacao.senha = String(campos.senha || '');
+        if (typeof campos.foto !== 'undefined') atualizacao.foto = String(campos.foto || '').trim();
+        if (typeof campos.receberNovidades !== 'undefined') atualizacao.receber_novidades = Boolean(campos.receberNovidades);
+        if (typeof campos.ultimoAcesso !== 'undefined') atualizacao.ultimo_acesso = campos.ultimoAcesso || new Date().toISOString();
 
-      if (typeof campos.nome !== 'undefined') atualizacao.nome = String(campos.nome || '').trim();
-      if (typeof campos.senha !== 'undefined') atualizacao.senha = String(campos.senha || '');
-      if (typeof campos.foto !== 'undefined') atualizacao.foto = String(campos.foto || '').trim();
-      if (typeof campos.receberNovidades !== 'undefined') atualizacao.receber_novidades = Boolean(campos.receberNovidades);
-      if (typeof campos.ultimoAcesso !== 'undefined') atualizacao.ultimo_acesso = campos.ultimoAcesso || new Date().toISOString();
+        const { data, error } = await client
+          .from('clientes')
+          .update(atualizacao)
+          .eq('celular', celularNormalizado)
+          .select('*')
+          .single();
 
-      const { data, error } = await client
-        .from('clientes')
-        .update(atualizacao)
-        .eq('celular', celularNormalizado)
-        .select('*')
-        .single();
-
-      if (error || !data) return null;
-      return mapearCliente(data);
+        if (error || !data) return null;
+        return mapearCliente(data);
+      });
     },
     async excluirCliente(celular) {
-      if (!client) return false;
-      const celularNormalizado = normalizarCelular(celular);
-      if (!celularNormalizado) return false;
+      return executarConsulta('excluirCliente', false, async () => {
+        const celularNormalizado = normalizarCelular(celular);
+        if (!celularNormalizado) return false;
 
-      const { error } = await client.from('clientes').delete().eq('celular', celularNormalizado);
-      if (error) return false;
+        const { error } = await client.from('clientes').delete().eq('celular', celularNormalizado);
+        if (error) return false;
 
-      await Promise.all([
-        client.from('carrinhos').delete().eq('cliente_celular', celularNormalizado),
-        client.from('historico_compras').delete().eq('cliente_celular', celularNormalizado),
-        client.from('comentarios').delete().eq('celular', celularNormalizado)
-      ]);
+        await Promise.all([
+          client.from('carrinhos').delete().eq('cliente_celular', celularNormalizado),
+          client.from('historico_compras').delete().eq('cliente_celular', celularNormalizado),
+          client.from('comentarios').delete().eq('celular', celularNormalizado)
+        ]);
 
-      return true;
+        return true;
+      });
     },
     async carregarCarrinho(celular) {
-      if (!client) return [];
-      const celularNormalizado = normalizarCelular(celular);
-      if (!celularNormalizado) return [];
+      return executarConsulta('carregarCarrinho', [], async () => {
+        const celularNormalizado = normalizarCelular(celular);
+        if (!celularNormalizado) return [];
 
-      const { data, error } = await client
-        .from('carrinhos')
-        .select('itens')
-        .eq('cliente_celular', celularNormalizado)
-        .maybeSingle();
+        const { data, error } = await client
+          .from('carrinhos')
+          .select('itens')
+          .eq('cliente_celular', celularNormalizado)
+          .maybeSingle();
 
-      if (error || !data || !Array.isArray(data.itens)) return [];
-      return data.itens;
+        if (error || !data || !Array.isArray(data.itens)) return [];
+        return data.itens;
+      });
     },
     async salvarCarrinho(celular, itens) {
-      if (!client) return false;
-      const celularNormalizado = normalizarCelular(celular);
-      if (!celularNormalizado) return false;
+      return executarConsulta('salvarCarrinho', false, async () => {
+        const celularNormalizado = normalizarCelular(celular);
+        if (!celularNormalizado) return false;
 
-      const { error } = await client.from('carrinhos').upsert({
-        cliente_celular: celularNormalizado,
-        itens: Array.isArray(itens) ? itens : [],
-        atualizado_em: new Date().toISOString()
-      }, { onConflict: 'cliente_celular' });
+        const { error } = await client.from('carrinhos').upsert({
+          cliente_celular: celularNormalizado,
+          itens: Array.isArray(itens) ? itens : [],
+          atualizado_em: new Date().toISOString()
+        }, { onConflict: 'cliente_celular' });
 
-      return !error;
+        return !error;
+      });
     },
     async listarHistorico(celular) {
-      if (!client) return [];
-      const celularNormalizado = normalizarCelular(celular);
-      if (!celularNormalizado) return [];
+      return executarConsulta('listarHistorico', [], async () => {
+        const celularNormalizado = normalizarCelular(celular);
+        if (!celularNormalizado) return [];
 
-      const { data, error } = await client
-        .from('historico_compras')
-        .select('*')
-        .eq('cliente_celular', celularNormalizado)
-        .order('data_compra', { ascending: false });
+        const { data, error } = await client
+          .from('historico_compras')
+          .select('*')
+          .eq('cliente_celular', celularNormalizado)
+          .order('data_compra', { ascending: false });
 
-      if (error || !Array.isArray(data)) return [];
+        if (error || !Array.isArray(data)) return [];
 
-      return data.map((item) => ({
-        celular: celularNormalizado,
-        data: item.data_compra,
-        itens: Array.isArray(item.itens) ? item.itens : []
-      }));
+        return data.map((item) => ({
+          celular: celularNormalizado,
+          data: item.data_compra,
+          itens: Array.isArray(item.itens) ? item.itens : []
+        }));
+      });
     },
     async registrarCompra(celular, itens) {
-      if (!client) return false;
-      const celularNormalizado = normalizarCelular(celular);
-      if (!celularNormalizado) return false;
+      return executarConsulta('registrarCompra', false, async () => {
+        const celularNormalizado = normalizarCelular(celular);
+        if (!celularNormalizado) return false;
 
-      const { error } = await client.from('historico_compras').insert({
-        cliente_celular: celularNormalizado,
-        itens: Array.isArray(itens) ? itens : [],
-        data_compra: new Date().toISOString()
+        const { error } = await client.from('historico_compras').insert({
+          cliente_celular: celularNormalizado,
+          itens: Array.isArray(itens) ? itens : [],
+          data_compra: new Date().toISOString()
+        });
+
+        return !error;
       });
-
-      return !error;
     },
     async listarAvaliacoes() {
-      if (!client) return [];
-      const { data, error } = await client
-        .from('comentarios')
-        .select('*')
-        .order('data_avaliacao', { ascending: true });
+      return executarConsulta('listarAvaliacoes', [], async () => {
+        const { data, error } = await client
+          .from('comentarios')
+          .select('*')
+          .order('data_avaliacao', { ascending: true });
 
-      if (error || !Array.isArray(data)) return [];
-      return data.map(mapearComentario);
+        if (error || !Array.isArray(data)) return [];
+        return data.map(mapearComentario);
+      });
     },
     async adicionarAvaliacao(avaliacao) {
-      if (!client) return null;
+      return executarConsulta('adicionarAvaliacao', null, async () => {
+        const registro = {
+          id: String(avaliacao?.id || '').trim(),
+          nome: String(avaliacao?.nome || 'Cliente').trim(),
+          celular: normalizarCelular(avaliacao?.celular),
+          foto: String(avaliacao?.foto || '').trim(),
+          nota: Number(avaliacao?.nota) || 0,
+          comentario: String(avaliacao?.comentario || '').trim(),
+          data_avaliacao: avaliacao?.dataAvaliacao || new Date().toISOString()
+        };
 
-      const registro = {
-        id: String(avaliacao?.id || '').trim(),
-        nome: String(avaliacao?.nome || 'Cliente').trim(),
-        celular: normalizarCelular(avaliacao?.celular),
-        foto: String(avaliacao?.foto || '').trim(),
-        nota: Number(avaliacao?.nota) || 0,
-        comentario: String(avaliacao?.comentario || '').trim(),
-        data_avaliacao: avaliacao?.dataAvaliacao || new Date().toISOString()
-      };
-
-      const { data, error } = await client.from('comentarios').insert(registro).select('*').single();
-      if (error || !data) return null;
-      return mapearComentario(data);
+        const { data, error } = await client.from('comentarios').insert(registro).select('*').single();
+        if (error || !data) return null;
+        return mapearComentario(data);
+      });
     },
     async excluirAvaliacao(idAvaliacao, celular) {
-      if (!client) return false;
-      const id = String(idAvaliacao || '').trim();
-      if (!id) return false;
+      return executarConsulta('excluirAvaliacao', false, async () => {
+        const id = String(idAvaliacao || '').trim();
+        if (!id) return false;
 
-      let query = client.from('comentarios').delete().eq('id', id);
-      const celularNormalizado = normalizarCelular(celular);
-      if (celularNormalizado) query = query.eq('celular', celularNormalizado);
-      const { error } = await query;
-      return !error;
+        let query = client.from('comentarios').delete().eq('id', id);
+        const celularNormalizado = normalizarCelular(celular);
+        if (celularNormalizado) query = query.eq('celular', celularNormalizado);
+        const { error } = await query;
+        return !error;
+      });
     },
     async sincronizarSessaoComCarrinho() {
       const sessao = obterSessaoLocal();
@@ -272,6 +362,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       return api.carregarCarrinho(celular);
     }
   };
+
+  garantirEstruturaCompativel().catch(() => {});
 
   window.CASAMELO_SUPABASE = api;
 })();

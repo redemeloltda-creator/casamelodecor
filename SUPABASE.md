@@ -7,6 +7,7 @@
 
 ## 2. Crie o banco de dados usado pelo site
 - No SQL Editor do Supabase, execute o arquivo `database/schema.supabase.sql`.
+- Se você já criou tabelas manualmente e o console mostra erros `404` para `/rest/v1/clientes`, `/carrinhos` ou `/historico_compras`, aplique `database/supabase-compat.sql`.
 - Esse script cria as tabelas:
   - `clientes`
   - `carrinhos`
@@ -85,3 +86,19 @@ Para produção, o ideal é evoluir depois para um modelo com:
 - políticas RLS por usuário autenticado;
 - senhas com hash;
 - Storage para fotos em vez de Data URL.
+
+
+## 7. Erro comum: 404 ao acessar `/rest/v1/clientes`
+Esse erro quase sempre significa que o banco do Supabase **não está com a mesma estrutura esperada pelo site**.
+
+O front-end desta loja consulta exatamente estas tabelas e colunas:
+- `public.clientes` com `nome`, `celular`, `senha`, `foto`, `receber_novidades`, `ultimo_acesso`;
+- `public.carrinhos` com `cliente_celular`, `itens`, `atualizado_em`;
+- `public.historico_compras` com `cliente_celular`, `itens`, `data_compra`;
+- `public.comentarios` com `id`, `nome`, `celular`, `foto`, `nota`, `comentario`, `data_avaliacao`.
+
+Se no painel do Supabase você vê tabelas como `usuarios` e uma `comentarios` com `user_id` / `created_at`, isso é **outro modelo de banco** e o site não consegue consultar esses endpoints. Nesse caso:
+1. execute `database/supabase-compat.sql` para adaptar a estrutura; ou
+2. recrie do zero com `database/schema.supabase.sql`.
+
+Depois disso, recarregue o site. O arquivo `supabase-config.js` agora também registra um erro mais claro no console quando detecta essa incompatibilidade.
