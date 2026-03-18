@@ -471,9 +471,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         const consultasOrdenacao = ['created_at', 'data_avaliacao', 'criado_em'];
 
-        const consultasOrdenacao = ['created_at', 'data_avaliacao'];
-
-
         for (const colunaData of consultasOrdenacao) {
           const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: false });
           if (!error && Array.isArray(data)) return data.map(mapearComentario);
