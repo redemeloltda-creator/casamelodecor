@@ -91,6 +91,75 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return celularNormalizado ? client.from('clientes').select('*').eq('celular', celularNormalizado).maybeSingle() : Promise.resolve({ data: null, error: null });
   };
 
+  const obterContextoAuthDebug = async () => {
+    if (!client?.auth) {
+      return {
+        user: null,
+        session: null,
+        userError: null,
+        sessionError: null,
+        authDisponivel: false
+      };
+    }
+
+    const [userResponse, sessionResponse] = await Promise.all([
+      client.auth.getUser().catch((error) => ({ data: { user: null }, error })),
+      client.auth.getSession().catch((error) => ({ data: { session: null }, error }))
+    ]);
+
+    return {
+      user: userResponse?.data?.user || null,
+      session: sessionResponse?.data?.session || null,
+      userError: userResponse?.error || null,
+      sessionError: sessionResponse?.error || null,
+      authDisponivel: true
+    };
+  };
+
+  const registrarFalhaOperacao = async (origem, detalhes = {}) => {
+    const contextoAuth = await obterContextoAuthDebug();
+    const resumoAuth = {
+      authDisponivel: contextoAuth.authDisponivel,
+      user: contextoAuth.user ? {
+        id: contextoAuth.user.id,
+        email: contextoAuth.user.email || null,
+        phone: contextoAuth.user.phone || null
+      } : null,
+      sessionAtiva: Boolean(contextoAuth.session),
+      userError: contextoAuth.userError ? {
+        message: contextoAuth.userError.message,
+        status: contextoAuth.userError.status || null,
+        name: contextoAuth.userError.name || null
+      } : null,
+      sessionError: contextoAuth.sessionError ? {
+        message: contextoAuth.sessionError.message,
+        status: contextoAuth.sessionError.status || null,
+        name: contextoAuth.sessionError.name || null
+      } : null
+    };
+
+    const mensagemErro = `${detalhes?.error?.message || ''} ${detalhes?.error?.details || ''} ${detalhes?.error?.hint || ''}`.toLowerCase();
+    const dicas = [];
+
+    if (!resumoAuth.user) {
+      dicas.push('Supabase Auth não encontrou usuário autenticado. Execute await window.CASAMELO_SUPABASE.debugAuthState() e confirme se data.user não é null.');
+    }
+
+    if (mensagemErro.includes('row-level security')) {
+      dicas.push('O INSERT foi bloqueado por RLS. Revise as policies da tabela e, se usar user_id, confirme se a coluna recebe auth.uid() por default.');
+    }
+
+    if (mensagemErro.includes('null value') && mensagemErro.includes('user_id')) {
+      dicas.push('A coluna user_id continua nula. Se a policy depender dela, aplique alter table public.clientes alter column user_id set default auth.uid();');
+    }
+
+    console.error(`[Casa Melo Decor] Falha em ${origem}.`, {
+      ...detalhes,
+      auth: resumoAuth,
+      dicas
+    });
+  };
+
   const erroIndicaEstruturaIncompativel = (error) => {
     const status = Number(error?.status || error?.code || 0);
     const mensagem = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
@@ -199,6 +268,27 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     getClient() {
       return client;
     },
+    async debugAuthState() {
+      const contextoAuth = await obterContextoAuthDebug();
+      const resumo = {
+        authDisponivel: contextoAuth.authDisponivel,
+        user: contextoAuth.user ? {
+          id: contextoAuth.user.id,
+          email: contextoAuth.user.email || null,
+          phone: contextoAuth.user.phone || null
+        } : null,
+        session: contextoAuth.session ? {
+          expires_at: contextoAuth.session.expires_at || null,
+          token_type: contextoAuth.session.token_type || null,
+          user_id: contextoAuth.session.user?.id || null
+        } : null,
+        userError: contextoAuth.userError,
+        sessionError: contextoAuth.sessionError
+      };
+
+      console.log('[Casa Melo Decor] debugAuthState()', resumo);
+      return resumo;
+    },
     normalizarCelular,
     async listarClientes() {
       return executarConsulta('listarClientes', [], async () => {
@@ -226,7 +316,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         };
 
         const { data, error } = await client.from('clientes').insert(registro).select('*').single();
-        if (error || !data) return null;
+        if (error || !data) {
+          if (error) await registrarFalhaOperacao('cadastrarCliente', { payload: registro, data, error });
+          return null;
+        }
         return mapearCliente(data);
       });
     },
@@ -375,7 +468,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         };
 
         const { data, error } = await client.from('comentarios').insert(payload).select('*').single();
-        if (error || !data) return null;
+        if (error || !data) {
+          if (error) await registrarFalhaOperacao('adicionarAvaliacao', { payload, data, error });
+          return null;
+        }
         return mapearComentario(data);
       });
     },
