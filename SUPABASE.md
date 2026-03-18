@@ -27,9 +27,9 @@ window.CASAMELO_SUPABASE_CONFIG = {
 ```
 
 ## 3.1. Configuração padrão do repositório
-- O arquivo versionado traz credenciais de exemplo e agora inicia com `enabled: false`.
-- A integração só é ativada automaticamente quando você troca a URL/chave por credenciais próprias, ou quando define `enabled: true` manualmente.
-- Isso evita erros de console quando o projeto Supabase de exemplo não tem o schema compatível.
+- O arquivo versionado já traz um projeto Supabase configurado em `supabase-config.js`, com `enabled: true` por padrão.
+- Se quiser trocar de projeto, sobrescreva `window.CASAMELO_SUPABASE_CONFIG` com a sua `url`, `anonKey`, `schema` e `enabled: true` antes de carregar `supabase-config.js`.
+- Se preferir desativar a integração temporariamente, defina `window.CASAMELO_SUPABASE_CONFIG.enabled = false`.
 
 ## 4. O que o site passa a salvar no Supabase
 Quando a configuração estiver preenchida, o site sincroniza automaticamente:
