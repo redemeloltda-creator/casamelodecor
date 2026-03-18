@@ -21,9 +21,15 @@ Edite `supabase-config.js` e preencha:
 window.CASAMELO_SUPABASE_CONFIG = {
   url: 'https://SEU-PROJETO.supabase.co',
   anonKey: 'SUA_CHAVE_ANON',
-  schema: 'public'
+  schema: 'public',
+  enabled: true
 };
 ```
+
+## 3.1. Configuração padrão do repositório
+- O arquivo versionado traz credenciais de exemplo e agora inicia com `enabled: false`.
+- A integração só é ativada automaticamente quando você troca a URL/chave por credenciais próprias, ou quando define `enabled: true` manualmente.
+- Isso evita erros de console quando o projeto Supabase de exemplo não tem o schema compatível.
 
 ## 4. O que o site passa a salvar no Supabase
 Quando a configuração estiver preenchida, o site sincroniza automaticamente:

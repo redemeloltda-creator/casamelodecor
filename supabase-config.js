@@ -1,20 +1,34 @@
-window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
+const CASAMELO_SUPABASE_EXEMPLO = {
   url: 'https://fulymepfkdenmtickfwk.supabase.co',
   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bHltZXBma2Rlbm10aWNrZndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NTY4MTMsImV4cCI6MjA4NzQzMjgxM30.6BRJj59Amct0VLW8EdwRhZhHQVtmkIZtRkXPiXIzOpY',
   schema: 'public'
 };
 
+window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
+  ...CASAMELO_SUPABASE_EXEMPLO,
+  enabled: false
+};
+
 (function () {
   const CONFIG_PADRAO = {
-    url: 'https://fulymepfkdenmtickfwk.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bHltZXBma2Rlbm10aWNrZndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NTY4MTMsImV4cCI6MjA4NzQzMjgxM30.6BRJj59Amct0VLW8EdwRhZhHQVtmkIZtRkXPiXIzOpY',
-    schema: 'public'
+    ...CASAMELO_SUPABASE_EXEMPLO,
+    schema: 'public',
+    enabled: false
   };
 
   const configGlobal = window.CASAMELO_SUPABASE_CONFIG || {};
+  const credenciaisPersonalizadas = Boolean(
+    configGlobal.url
+    && configGlobal.anonKey
+    && (
+      configGlobal.url !== CASAMELO_SUPABASE_EXEMPLO.url
+      || configGlobal.anonKey !== CASAMELO_SUPABASE_EXEMPLO.anonKey
+    )
+  );
   const config = {
     ...CONFIG_PADRAO,
-    ...configGlobal
+    ...configGlobal,
+    enabled: configGlobal.enabled ?? credenciaisPersonalizadas
   };
 
   const normalizarCelular = (valor) => {
@@ -28,7 +42,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const criarCliente = () => {
-    if (!window.supabase || !config.url || !config.anonKey) return null;
+    if (!config.enabled || !window.supabase || !config.url || !config.anonKey) return null;
 
     return window.supabase.createClient(config.url, config.anonKey, {
       db: { schema: config.schema }
@@ -39,6 +53,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   let supabaseDisponivel = Boolean(client);
   let validacaoEstruturaPromise = null;
   let avisoEstruturaExibido = false;
+  let avisoConfiguracaoExibido = false;
   let ultimoErro = null;
 
   const mapearCliente = (cliente = {}) => ({
@@ -85,6 +100,16 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       || mensagem.includes('does not exist')
       || mensagem.includes('could not find')
       || mensagem.includes('not found');
+  };
+
+  const avisarConfiguracaoDesativada = () => {
+    if (avisoConfiguracaoExibido || config.enabled) return;
+
+    avisoConfiguracaoExibido = true;
+    console.info(
+      '[Casa Melo Decor] Integração com Supabase desativada até você informar credenciais próprias em supabase-config.js '
+      + 'ou definir window.CASAMELO_SUPABASE_CONFIG.enabled = true com um projeto compatível.'
+    );
   };
 
   const avisarEstruturaIncompativel = (origem, error) => {
@@ -136,7 +161,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const executarConsulta = async (origem, fallback, operacao) => {
-    if (!client || !supabaseDisponivel) return fallback;
+    if (!client || !supabaseDisponivel) {
+      avisarConfiguracaoDesativada();
+      return fallback;
+    }
 
     const estruturaOk = await garantirEstruturaCompativel(origem);
     if (!estruturaOk) return fallback;
@@ -218,7 +246,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (error || !data) return null;
 
         await client.from('clientes').update({ ultimo_acesso: new Date().toISOString() }).eq('celular', celularNormalizado);
-        return mapearCliente({ ...data, ultimo_acesso: new Date().toISOString() });
+
+        return mapearCliente(data);
       });
     },
     async atualizarCliente(celular, campos = {}) {
@@ -226,20 +255,19 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return null;
 
-        const atualizacao = {};
-
-        if (typeof campos.nome !== 'undefined') atualizacao.nome = String(campos.nome || '').trim();
-        if (typeof campos.senha !== 'undefined') atualizacao.senha = String(campos.senha || '');
-        if (typeof campos.foto !== 'undefined') atualizacao.foto = String(campos.foto || '').trim();
-        if (typeof campos.receberNovidades !== 'undefined') atualizacao.receber_novidades = Boolean(campos.receberNovidades);
-        if (typeof campos.ultimoAcesso !== 'undefined') atualizacao.ultimo_acesso = campos.ultimoAcesso || new Date().toISOString();
+        const payload = {};
+        if (Object.hasOwn(campos, 'nome')) payload.nome = String(campos.nome || '').trim();
+        if (Object.hasOwn(campos, 'senha')) payload.senha = String(campos.senha || '');
+        if (Object.hasOwn(campos, 'foto')) payload.foto = String(campos.foto || '').trim();
+        if (Object.hasOwn(campos, 'receberNovidades')) payload.receber_novidades = Boolean(campos.receberNovidades);
+        if (Object.hasOwn(campos, 'ultimoAcesso')) payload.ultimo_acesso = campos.ultimoAcesso;
 
         const { data, error } = await client
           .from('clientes')
-          .update(atualizacao)
+          .update(payload)
           .eq('celular', celularNormalizado)
           .select('*')
-          .single();
+          .maybeSingle();
 
         if (error || !data) return null;
         return mapearCliente(data);
@@ -251,15 +279,22 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (!celularNormalizado) return false;
 
         const { error } = await client.from('clientes').delete().eq('celular', celularNormalizado);
-        if (error) return false;
+        return !error;
+      });
+    },
+    async salvarCarrinho(celular, itens = []) {
+      return executarConsulta('salvarCarrinho', false, async () => {
+        const celularNormalizado = normalizarCelular(celular);
+        if (!celularNormalizado) return false;
 
-        await Promise.all([
-          client.from('carrinhos').delete().eq('cliente_celular', celularNormalizado),
-          client.from('historico_compras').delete().eq('cliente_celular', celularNormalizado),
-          client.from('comentarios').delete().eq('celular', celularNormalizado)
-        ]);
+        const payload = {
+          cliente_celular: celularNormalizado,
+          itens,
+          atualizado_em: new Date().toISOString()
+        };
 
-        return true;
+        const { error } = await client.from('carrinhos').upsert(payload, { onConflict: 'cliente_celular' });
+        return !error;
       });
     },
     async carregarCarrinho(celular) {
@@ -267,26 +302,29 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
 
-        const { data, error } = await client
-          .from('carrinhos')
-          .select('itens')
-          .eq('cliente_celular', celularNormalizado)
-          .maybeSingle();
-
-        if (error || !data || !Array.isArray(data.itens)) return [];
-        return data.itens;
+        const { data, error } = await client.from('carrinhos').select('itens').eq('cliente_celular', celularNormalizado).maybeSingle();
+        if (error) return [];
+        return Array.isArray(data?.itens) ? data.itens : [];
       });
     },
-    async salvarCarrinho(celular, itens) {
-      return executarConsulta('salvarCarrinho', false, async () => {
+    async sincronizarSessaoComCarrinho() {
+      return executarConsulta('sincronizarSessaoComCarrinho', [], async () => {
+        const sessao = obterSessaoLocal();
+        const celular = normalizarCelular(sessao?.celular);
+        if (!celular) return [];
+        return api.carregarCarrinho(celular);
+      });
+    },
+    async registrarCompra(celular, itens = []) {
+      return executarConsulta('registrarCompra', false, async () => {
         const celularNormalizado = normalizarCelular(celular);
-        if (!celularNormalizado) return false;
+        if (!celularNormalizado || !Array.isArray(itens) || !itens.length) return false;
 
-        const { error } = await client.from('carrinhos').upsert({
+        const { error } = await client.from('historico_compras').insert({
           cliente_celular: celularNormalizado,
-          itens: Array.isArray(itens) ? itens : [],
-          atualizado_em: new Date().toISOString()
-        }, { onConflict: 'cliente_celular' });
+          itens,
+          data_compra: new Date().toISOString()
+        });
 
         return !error;
       });
@@ -305,50 +343,38 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (error || !Array.isArray(data)) return [];
 
         return data.map((item) => ({
-          celular: celularNormalizado,
-          data: item.data_compra,
-          itens: Array.isArray(item.itens) ? item.itens : []
+          celular: item.cliente_celular,
+          itens: Array.isArray(item.itens) ? item.itens : [],
+          data: item.data_compra
         }));
-      });
-    },
-    async registrarCompra(celular, itens) {
-      return executarConsulta('registrarCompra', false, async () => {
-        const celularNormalizado = normalizarCelular(celular);
-        if (!celularNormalizado) return false;
-
-        const { error } = await client.from('historico_compras').insert({
-          cliente_celular: celularNormalizado,
-          itens: Array.isArray(itens) ? itens : [],
-          data_compra: new Date().toISOString()
-        });
-
-        return !error;
       });
     },
     async listarAvaliacoes() {
       return executarConsulta('listarAvaliacoes', [], async () => {
-        const { data, error } = await client
-          .from('comentarios')
-          .select('*')
-          .order('data_avaliacao', { ascending: true });
-
+        const { data, error } = await client.from('comentarios').select('*').order('data_avaliacao', { ascending: true });
         if (error || !Array.isArray(data)) return [];
         return data.map(mapearComentario);
       });
     },
-    async adicionarAvaliacao(avaliacao) {
+    async adicionarAvaliacao(avaliacao = {}) {
       return executarConsulta('adicionarAvaliacao', null, async () => {
-        const registro = {
-          id: String(avaliacao?.id || '').trim(),
-          nome: String(avaliacao?.nome || 'Cliente').trim(),
-          celular: normalizarCelular(avaliacao?.celular),
-          foto: String(avaliacao?.foto || '').trim(),
-          nota: Number(avaliacao?.nota) || 0,
-          comentario: String(avaliacao?.comentario || '').trim(),
+        const celular = normalizarCelular(avaliacao?.celular);
+        const comentario = String(avaliacao?.comentario || '').trim();
+        const nome = String(avaliacao?.nome || '').trim();
+        const nota = Math.max(1, Math.min(5, Number(avaliacao?.nota) || 0));
+        if (!comentario || !nome || !nota) return null;
+
+        const payload = {
+          id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
+          nome,
+          celular: celular || null,
+          foto: String(avaliacao?.foto || '').trim() || null,
+          nota,
+          comentario,
           data_avaliacao: avaliacao?.dataAvaliacao || new Date().toISOString()
         };
 
-        const { data, error } = await client.from('comentarios').insert(registro).select('*').single();
+        const { data, error } = await client.from('comentarios').insert(payload).select('*').single();
         if (error || !data) return null;
         return mapearComentario(data);
       });
@@ -361,19 +387,13 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         let query = client.from('comentarios').delete().eq('id', id);
         const celularNormalizado = normalizarCelular(celular);
         if (celularNormalizado) query = query.eq('celular', celularNormalizado);
+
         const { error } = await query;
         return !error;
       });
-    },
-    async sincronizarSessaoComCarrinho() {
-      const sessao = obterSessaoLocal();
-      const celular = normalizarCelular(sessao?.celular);
-      if (!client || !celular) return [];
-      return api.carregarCarrinho(celular);
     }
   };
 
-  garantirEstruturaCompativel().catch(() => {});
-
+  avisarConfiguracaoDesativada();
   window.CASAMELO_SUPABASE = api;
 })();
