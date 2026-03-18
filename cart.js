@@ -1,5 +1,25 @@
 (function () {
   const CHAVE_CARRINHO = 'casaMeloCarrinho';
+  const supabaseApi = window.CASAMELO_SUPABASE || null;
+  const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
+
+  const lerSessao = () => {
+    try {
+      return JSON.parse(localStorage.getItem('casamelo_usuario_logado') || 'null');
+    } catch (erro) {
+      return null;
+    }
+  };
+
+  const sincronizarCarrinhoRemoto = async (itens) => {
+    if (!supabaseAtivo) return;
+
+    const usuario = lerSessao();
+    const celular = supabaseApi.normalizarCelular(usuario?.celular);
+    if (!celular) return;
+
+    await supabaseApi.salvarCarrinho(celular, itens);
+  };
 
   const lerCarrinho = () => {
     try {
@@ -13,6 +33,7 @@
   const salvarCarrinho = (itens) => {
     localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(itens));
     document.dispatchEvent(new Event('casamelo-cart-change'));
+    sincronizarCarrinhoRemoto(itens);
   };
 
   const adicionarItem = (produto) => {

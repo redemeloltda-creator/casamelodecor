@@ -1,5 +1,7 @@
 (function () {
   const CHAVE_CARRINHO = 'casaMeloCarrinho';
+  const supabaseApi = window.CASAMELO_SUPABASE || null;
+  const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
 
   const headerTopo = document.querySelector('.header-topo');
   if (!headerTopo) return;
@@ -7,6 +9,14 @@
   if (document.getElementById('authModal')) {
     return;
   }
+
+  const lerSessao = () => {
+    try {
+      return JSON.parse(localStorage.getItem('casamelo_usuario_logado') || 'null');
+    } catch (erro) {
+      return null;
+    }
+  };
 
   const lerCarrinho = () => {
     try {
@@ -17,9 +27,31 @@
     }
   };
 
+  const sincronizarCarrinhoRemoto = async (itens) => {
+    if (!supabaseAtivo) return;
+    const usuario = lerSessao();
+    const celular = supabaseApi.normalizarCelular(usuario?.celular);
+    if (!celular) return;
+    await supabaseApi.salvarCarrinho(celular, itens);
+  };
+
+  const hidratarCarrinhoRemoto = async () => {
+    if (!supabaseAtivo) return;
+    const usuario = lerSessao();
+    const celular = supabaseApi.normalizarCelular(usuario?.celular);
+    if (!celular) return;
+
+    const carrinhoRemoto = await supabaseApi.carregarCarrinho(celular);
+    if (!Array.isArray(carrinhoRemoto) || !carrinhoRemoto.length) return;
+
+    localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(carrinhoRemoto));
+    document.dispatchEvent(new Event('casamelo-cart-change'));
+  };
+
   const salvarCarrinho = (itens) => {
     localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(itens));
     document.dispatchEvent(new Event('casamelo-cart-change'));
+    sincronizarCarrinhoRemoto(itens);
   };
 
   const removerItem = (adicionadoEm) => {
@@ -186,5 +218,5 @@
 
   document.addEventListener('casamelo-cart-change', atualizarCarrinho);
 
-  atualizarCarrinho();
+  hidratarCarrinhoRemoto().finally(atualizarCarrinho);
 })();
