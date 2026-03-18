@@ -102,3 +102,14 @@ Se no painel do Supabase você vê tabelas como `usuarios` e uma `comentarios` c
 2. recrie do zero com `database/schema.supabase.sql`.
 
 Depois disso, recarregue o site. O arquivo `supabase-config.js` agora também registra um erro mais claro no console quando detecta essa incompatibilidade.
+
+## 8. Erro comum: 401 Unauthorized ao acessar `/rest/v1/clientes`
+Esse erro normalmente significa que o Supabase **recusou a chave enviada pelo front-end** ou que as tabelas existem, mas o acesso `anon` não foi liberado.
+
+Verifique nesta ordem:
+1. se `url` e `anonKey` em `supabase-config.js` pertencem exatamente ao mesmo projeto;
+2. se você copiou a **anon public key**, e não uma chave antiga ou de outro ambiente;
+3. se executou `database/schema.supabase.sql` ou `database/supabase-compat.sql` no SQL Editor do projeto correto;
+4. se as tabelas `clientes`, `carrinhos`, `historico_compras` e `comentarios` estão com **Row Level Security** habilitada e com políticas permitindo acesso `anon`.
+
+O front-end agora desativa a integração automaticamente quando recebe `401`/`403` e registra um aviso mais direto no console para facilitar o diagnóstico.
