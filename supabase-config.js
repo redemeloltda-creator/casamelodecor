@@ -39,6 +39,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   let supabaseDisponivel = Boolean(client);
   let validacaoEstruturaPromise = null;
   let avisoEstruturaExibido = false;
+  let ultimoErro = null;
 
   const mapearCliente = (cliente = {}) => ({
     id: cliente.id || null,
@@ -141,8 +142,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     if (!estruturaOk) return fallback;
 
     try {
+      ultimoErro = null;
       return await operacao();
     } catch (error) {
+      ultimoErro = error || null;
+
       if (erroIndicaEstruturaIncompativel(error)) {
         supabaseDisponivel = false;
         avisarEstruturaIncompativel(origem, error);
@@ -157,6 +161,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     config,
     isConfigured() {
       return Boolean(client);
+    },
+    isAvailable() {
+      return Boolean(client) && supabaseDisponivel;
+    },
+    getLastError() {
+      return ultimoErro;
     },
     getClient() {
       return client;

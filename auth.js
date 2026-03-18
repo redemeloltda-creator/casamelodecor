@@ -47,7 +47,10 @@
   const totalDigitosCelular = 11;
   const tamanhoMaximoFoto = 2 * 1024 * 1024;
   const supabaseApi = window.CASAMELO_SUPABASE || null;
-  const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
+  const supabaseDisponivel = () => Boolean(
+    supabaseApi?.isAvailable?.()
+    ?? supabaseApi?.isConfigured?.()
+  );
   let fotoPendente = '';
 
   const mesclarUsuarios = (usuariosLocais = [], usuariosRemotos = []) => {
@@ -74,7 +77,7 @@
   };
 
   const sincronizarClienteRemoto = async (celular, campos = {}) => {
-    if (!supabaseAtivo) return null;
+    if (!supabaseDisponivel()) return null;
 
     try {
       return await supabaseApi.atualizarCliente(celular, campos);
@@ -84,7 +87,7 @@
   };
 
   const sincronizarCarrinhoRemoto = async (itens) => {
-    if (!supabaseAtivo) return false;
+    if (!supabaseDisponivel()) return false;
 
     const usuario = carregarSessao();
     const celular = normalizarCelular(usuario?.celular);
@@ -98,7 +101,7 @@
   };
 
   const sincronizarHistoricoRemoto = async (itens) => {
-    if (!supabaseAtivo) return false;
+    if (!supabaseDisponivel()) return false;
 
     const usuario = carregarSessao();
     const celular = normalizarCelular(usuario?.celular);
@@ -112,7 +115,7 @@
   };
 
   const carregarDadosRemotos = async () => {
-    if (!supabaseAtivo) return;
+    if (!supabaseDisponivel()) return;
 
     try {
       const [usuariosRemotos, carrinhoRemoto, historicoRemoto] = await Promise.all([
@@ -659,7 +662,7 @@
 
     const usuarios = carregarUsuarios();
     const existeLocal = usuarios.some((usuario) => usuario.celular === celular);
-    const existeRemoto = supabaseAtivo ? await supabaseApi.buscarClientePorCelular(celular) : null;
+    const existeRemoto = supabaseDisponivel() ? await supabaseApi.buscarClientePorCelular(celular) : null;
 
     if (existeLocal || existeRemoto) {
       feedback.textContent = 'Este número de celular já possui cadastro.';
@@ -670,10 +673,14 @@
     usuarios.push(novoUsuario);
     salvarUsuarios(usuarios);
 
-    if (supabaseAtivo) {
+    if (supabaseDisponivel()) {
       const cadastroRemoto = await supabaseApi.cadastrarCliente(novoUsuario);
       if (!cadastroRemoto) {
-        feedback.textContent = 'Cadastro salvo localmente, mas a sincronização com o Supabase falhou. Confira suas credenciais.';
+        const erroSupabase = supabaseApi?.getLastError?.();
+        console.warn('[Casa Melo Decor] Cadastro salvo apenas neste dispositivo.', erroSupabase || 'Falha ao sincronizar com o Supabase.');
+        feedback.textContent = 'Cadastro realizado com sucesso neste dispositivo. A sincronização online está indisponível no momento.';
+        formCadastro.reset();
+        trocarAba('login');
         return;
       }
     }
@@ -698,7 +705,7 @@
 
     let usuario = null;
 
-    if (supabaseAtivo) {
+    if (supabaseDisponivel()) {
       usuario = await supabaseApi.autenticarCliente(celularLogin, senha);
       if (usuario) {
         const usuariosAtualizados = mesclarUsuarios(carregarUsuarios(), [usuario]);
@@ -775,7 +782,7 @@
       if (!confirmou) return;
 
       excluirConta(usuario.celular);
-      if (supabaseAtivo) supabaseApi.excluirCliente(usuario.celular);
+      if (supabaseDisponivel()) supabaseApi.excluirCliente(usuario.celular);
 
       const preferencias = carregarPreferencias();
       delete preferencias[normalizarCelular(usuario.celular)];
