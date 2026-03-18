@@ -468,7 +468,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async listarAvaliacoes() {
       return executarConsulta('listarAvaliacoes', [], async () => {
+
         const consultasOrdenacao = ['created_at', 'data_avaliacao', 'criado_em'];
+
+        const consultasOrdenacao = ['created_at', 'data_avaliacao'];
+
 
         for (const colunaData of consultasOrdenacao) {
           const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: false });
@@ -489,6 +493,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const nota = Math.max(1, Math.min(5, Number(avaliacao?.nota) || 0));
         if (!comentario || !nome || !nota) return null;
 
+
         const payload = {
           id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
           nome,
@@ -499,12 +504,51 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           data_avaliacao: avaliacao?.dataAvaliacao || new Date().toISOString()
         };
 
-        const { data, error } = await client.from('comentarios').insert(payload).select('*').single();
-        if (error || !data) {
-          if (error) await registrarFalhaOperacao('adicionarAvaliacao', { payload, data, error });
-          return null;
+        const instanteCriacao = avaliacao?.dataAvaliacao || avaliacao?.createdAt || new Date().toISOString();
+        const payloads = [
+          {
+            id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
+            nome,
+            celular: celular || null,
+            foto: String(avaliacao?.foto || '').trim() || null,
+            nota,
+            comentario,
+            data_avaliacao: instanteCriacao
+          },
+          {
+            nome,
+            comentario,
+            nota,
+            ...(celular ? { celular } : {}),
+            ...(String(avaliacao?.foto || '').trim() ? { foto: String(avaliacao.foto).trim() } : {}),
+            created_at: instanteCriacao
+          },
+          {
+            nome,
+            comentario,
+            nota,
+            ...(celular ? { celular } : {}),
+            ...(String(avaliacao?.foto || '').trim() ? { foto: String(avaliacao.foto).trim() } : {})
+          }
+        ];
+
+
+        let ultimoErro = null;
+
+        for (const payload of payloads) {
+          const { data, error } = await client.from('comentarios').insert(payload).select('*').single();
+          if (!error && data) return mapearComentario(data);
+          ultimoErro = error || ultimoErro;
         }
-        return mapearComentario(data);
+
+        if (ultimoErro) {
+          await registrarFalhaOperacao('adicionarAvaliacao', {
+            payloads,
+            error: ultimoErro
+          });
+        }
+
+        return null;
       });
     },
     async criarComentario(comentario = {}) {
