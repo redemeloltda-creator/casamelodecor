@@ -3,8 +3,11 @@
   const titulo = document.getElementById('authTitulo');
   const feedback = document.getElementById('authFeedback');
   const formLogin = document.getElementById('formLogin');
+  const formRecuperacao = document.getElementById('formRecuperacao');
   const formCadastro = document.getElementById('formCadastro');
   const btnFechar = document.getElementById('authFechar');
+  const btnEsqueciSenha = document.getElementById('authEsqueciSenha');
+  const btnVoltarLogin = document.getElementById('authVoltarLogin');
   const tabs = document.querySelectorAll('[data-auth-tab]');
   const botoesAbrir = document.querySelectorAll('[data-auth-open]');
 
@@ -37,7 +40,7 @@
   const carrinhoLista = document.getElementById('carrinhoLista');
   const carrinhoVazio = document.getElementById('carrinhoVazio');
 
-  if (!modal || !formLogin || !formCadastro) return;
+  if (!modal || !formLogin || !formRecuperacao || !formCadastro) return;
 
   const chaveUsuarios = 'casamelo_usuarios';
   const chaveSessao = 'casamelo_usuario_logado';
@@ -185,6 +188,13 @@
   };
 
   const celularValido = (valor) => normalizarCelular(valor).length === totalDigitosCelular;
+
+  const normalizarNomeComparacao = (valor) => String(valor || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
 
 
   const carregarUsuarios = () => {
@@ -596,21 +606,28 @@
     const abaNormalizada = String(aba || '').trim().toLowerCase();
 
     if (['cadastro', 'registrar', 'register'].includes(abaNormalizada)) return 'cadastro';
+    if (['recuperacao', 'recuperar', 'esqueci-senha', 'esqueci minha senha'].includes(abaNormalizada)) return 'recuperacao';
     if (['login', 'entrar', 'logan'].includes(abaNormalizada)) return 'login';
 
     return 'login';
   };
 
   const trocarAba = (aba) => {
-    const loginAtivo = normalizarAbaAutenticacao(aba) !== 'cadastro';
+    const abaAtiva = normalizarAbaAutenticacao(aba);
+    const loginAtivo = abaAtiva === 'login';
+    const cadastroAtivo = abaAtiva === 'cadastro';
+    const recuperacaoAtiva = abaAtiva === 'recuperacao';
 
-    titulo.textContent = loginAtivo ? 'Login' : 'Cadastro';
+    titulo.textContent = recuperacaoAtiva
+      ? 'Recuperar conta'
+      : (loginAtivo ? 'Login' : 'Cadastro');
     formLogin.hidden = !loginAtivo;
-    formCadastro.hidden = loginAtivo;
+    formRecuperacao.hidden = !recuperacaoAtiva;
+    formCadastro.hidden = !cadastroAtivo;
     feedback.textContent = '';
 
     tabs.forEach((tab) => {
-      tab.classList.toggle('ativo', tab.dataset.authTab === (loginAtivo ? 'login' : 'cadastro'));
+      tab.classList.toggle('ativo', tab.dataset.authTab === abaAtiva);
     });
   };
 
@@ -641,6 +658,14 @@
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => trocarAba(tab.dataset.authTab));
   });
+
+  if (btnEsqueciSenha) {
+    btnEsqueciSenha.addEventListener('click', () => trocarAba('recuperacao'));
+  }
+
+  if (btnVoltarLogin) {
+    btnVoltarLogin.addEventListener('click', () => trocarAba('login'));
+  }
 
   btnFechar.addEventListener('click', fecharModal);
   modal.addEventListener('click', (evento) => {
@@ -693,6 +718,50 @@
 
     feedback.textContent = 'Cadastro realizado com sucesso. Agora faça seu login.';
     formCadastro.reset();
+    trocarAba('login');
+  });
+
+  formRecuperacao.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+
+    const dados = new FormData(formRecuperacao);
+    const celular = normalizarCelular(dados.get('celular'));
+    const nome = String(dados.get('nome') || '').trim();
+    const novaSenha = String(dados.get('novaSenha') || '');
+
+    if (!celularValido(celular) || !nome || novaSenha.length < 6) {
+      feedback.textContent = 'Informe o celular cadastrado, o nome completo e uma nova senha com pelo menos 6 caracteres.';
+      return;
+    }
+
+    const usuarios = carregarUsuarios();
+    let usuario = usuarios.find((item) => normalizarCelular(item.celular) === celular) || null;
+
+    if (!usuario && supabaseDisponivel()) {
+      usuario = await supabaseApi.buscarClientePorCelular(celular);
+    }
+
+    if (!usuario) {
+      feedback.textContent = 'Não encontramos uma conta com esse celular. Confira os dados ou fale com a loja no WhatsApp.';
+      return;
+    }
+
+    if (normalizarNomeComparacao(usuario.nome) !== normalizarNomeComparacao(nome)) {
+      feedback.textContent = 'O nome informado não confere com o cadastro dessa conta.';
+      return;
+    }
+
+    const usuariosAtualizados = mesclarUsuarios(usuarios, [{ ...usuario, senha: novaSenha }]).map((item) => (
+      normalizarCelular(item.celular) === celular
+        ? criarUsuarioNormalizado({ ...item, senha: novaSenha })
+        : item
+    ));
+
+    salvarUsuarios(usuariosAtualizados);
+    await sincronizarClienteRemoto(celular, { senha: novaSenha });
+
+    feedback.textContent = 'Senha redefinida com sucesso. Agora você já pode fazer login.';
+    formRecuperacao.reset();
     trocarAba('login');
   });
 
