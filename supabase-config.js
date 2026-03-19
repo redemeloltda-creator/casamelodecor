@@ -56,6 +56,19 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   let avisoConfiguracaoExibido = false;
   let ultimoErro = null;
 
+  const resumirErroSupabase = (error) => {
+    if (!error) return null;
+
+    return {
+      message: error.message || 'Erro desconhecido',
+      details: error.details || null,
+      hint: error.hint || null,
+      code: error.code || null,
+      status: error.status || null,
+      name: error.name || null
+    };
+  };
+
   const mapearCliente = (cliente = {}) => ({
     id: cliente.id || null,
     nome: String(cliente.nome || '').trim(),
@@ -168,11 +181,20 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       dicas.push('A coluna user_id continua nula. Se a policy depender dela, aplique alter table public.clientes alter column user_id set default auth.uid();');
     }
 
-    console.error(`[Casa Melo Decor] Falha em ${origem}.`, {
+    const erroDetalhado = {
       ...detalhes,
+      error: resumirErroSupabase(detalhes?.error),
       auth: resumoAuth,
       dicas
-    });
+    };
+
+    ultimoErro = {
+      origem,
+      ...erroDetalhado
+    };
+
+    console.error(`[Casa Melo Decor] Falha em ${origem}.`, erroDetalhado);
+    return ultimoErro;
   };
 
   const erroIndicaEstruturaIncompativel = (error) => {
@@ -257,7 +279,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       ultimoErro = null;
       return await operacao();
     } catch (error) {
-      ultimoErro = error || null;
+      ultimoErro = resumirErroSupabase(error);
 
       if (erroIndicaEstruturaIncompativel(error)) {
         supabaseDisponivel = false;
