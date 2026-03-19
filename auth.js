@@ -677,8 +677,14 @@
       const cadastroRemoto = await supabaseApi.cadastrarCliente(novoUsuario);
       if (!cadastroRemoto) {
         const erroSupabase = supabaseApi?.getLastError?.();
+        const dicasSupabase = Array.isArray(erroSupabase?.dicas) ? erroSupabase.dicas : [];
+        const exigeAuth = dicasSupabase.some((dica) => dica.includes('Supabase Auth não encontrou usuário autenticado'))
+          || dicasSupabase.some((dica) => dica.includes('INSERT foi bloqueado por RLS'));
+
         console.warn('[Casa Melo Decor] Cadastro salvo apenas neste dispositivo.', erroSupabase || 'Falha ao sincronizar com o Supabase.');
-        feedback.textContent = 'Cadastro realizado com sucesso neste dispositivo. A sincronização online está indisponível no momento.';
+        feedback.textContent = exigeAuth
+          ? 'Cadastro realizado neste dispositivo, mas o seu projeto Supabase exige autenticação antes de gravar em clientes.'
+          : 'Cadastro realizado com sucesso neste dispositivo. A sincronização online está indisponível no momento.';
         formCadastro.reset();
         trocarAba('login');
         return;
