@@ -157,6 +157,17 @@
             <input type="tel" name="login" placeholder="Celular com DDD + 9 números" required minlength="11" maxlength="15">
             <input type="password" name="senha" placeholder="Sua senha" required>
             <button type="submit" class="auth-submit">Entrar</button>
+            <button type="button" class="auth-link" id="authEsqueciSenha">Esqueci minha senha</button>
+        </form>
+
+        <form id="formRecuperacao" class="auth-form auth-form-recuperacao" hidden>
+            <p class="auth-helper">Recupere sua conta confirmando o celular e o nome do cadastro para criar uma nova senha.</p>
+            <input type="tel" name="celular" placeholder="Celular cadastrado com DDD" required minlength="11" maxlength="15">
+            <input type="text" name="nome" placeholder="Nome completo cadastrado" required>
+            <input type="password" name="novaSenha" placeholder="Nova senha" required minlength="6">
+            <button type="submit" class="auth-submit">Redefinir senha</button>
+            <a class="auth-support-link" href="https://wa.me/5538999140400?text=Ol%C3%A1!%20Esqueci%20minha%20senha%20e%20preciso%20recuperar%20minha%20conta." target="_blank" rel="noopener noreferrer">Preciso de ajuda no WhatsApp</a>
+            <button type="button" class="auth-link" id="authVoltarLogin">Voltar para o login</button>
         </form>
 
         <form id="formCadastro" class="auth-form" hidden>
