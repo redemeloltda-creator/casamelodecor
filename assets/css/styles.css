@@ -627,7 +627,7 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
   align-items: center;
   justify-content: flex-start;
   text-align: left;
-  background: linear-gradient(100deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.65) 42%, rgba(255,255,255,0.35) 100%), url("bunner.jpg") center/cover;
+  background: linear-gradient(100deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.65) 42%, rgba(255,255,255,0.35) 100%), url("../images/bunner.jpg") center/cover;
   box-shadow: var(--shadow);
   color: #171717;
 }
@@ -647,7 +647,7 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
 .hero-catalogo {
   min-height: 360px;
   margin-bottom: 10px;
-  background: linear-gradient(100deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 48%, rgba(255,255,255,0.45) 100%), url("bunner.jpg") center/cover;
+  background: linear-gradient(100deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 48%, rgba(255,255,255,0.45) 100%), url("../images/bunner.jpg") center/cover;
 }
 
 .hero-catalogo h2 {
@@ -688,7 +688,7 @@ nav a.link-ativo { color: #7d6640; font-weight: 700; }
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  background: linear-gradient(100deg, rgba(20, 20, 20, 0.78) 0%, rgba(20, 20, 20, 0.35) 55%, rgba(20, 20, 20, 0.2) 100%), url("banner.png") center/100% 100% no-repeat;
+  background: linear-gradient(100deg, rgba(20, 20, 20, 0.78) 0%, rgba(20, 20, 20, 0.35) 55%, rgba(20, 20, 20, 0.2) 100%), url("../images/banner.png") center/100% 100% no-repeat;
   box-shadow: var(--shadow);
 }
 

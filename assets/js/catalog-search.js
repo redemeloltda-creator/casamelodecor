@@ -139,7 +139,7 @@
 
   const carregarProdutos = async () => {
     try {
-      const resposta = await fetch('produtos.json');
+      const resposta = await fetch('assets/data/produtos.json');
       produtos = await resposta.json();
 
       // Criar campo de busca otimizado
