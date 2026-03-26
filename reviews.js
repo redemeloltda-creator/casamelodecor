@@ -43,7 +43,7 @@
   const mapearAvaliacaoSupabase = (avaliacao = {}) => ({
     id: String(avaliacao.id || '').trim(),
     nome: String(avaliacao.nome || '').trim(),
-    celular: normalizarCelular(avaliacao.celular || avaliacao.cliente_celular),
+    celular: normalizarCelular(avaliacao.celular),
     foto: String(avaliacao.foto || '').trim(),
     nota: Number(avaliacao.nota) || 0,
     comentario: String(avaliacao.comentario || '').trim(),
@@ -194,7 +194,7 @@
         if (celular) {
           const celularNormalizado = normalizarCelular(celular);
           if (celularNormalizado) {
-            query = query.or(`celular.eq.${celularNormalizado},cliente_celular.eq.${celularNormalizado}`);
+            query = query.or(`celular.eq.${celularNormalizado}`);
           }
         }
 

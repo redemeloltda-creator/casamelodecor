@@ -49,7 +49,7 @@ create table if not exists public.itens_carrinho (
 
 create table if not exists public.historico_compras (
   id bigint generated always as identity primary key,
-  cliente_celular varchar(20) not null,
+  celular varchar(20) not null,
   itens jsonb not null default '[]'::jsonb,
   data_compra timestamptz not null default now(),
   user_id uuid,

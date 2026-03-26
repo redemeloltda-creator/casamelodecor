@@ -84,7 +84,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const mapearComentario = (comentario = {}) => ({
     id: String(comentario.id || '').trim(),
     nome: String(comentario.nome || '').trim(),
-    celular: normalizarCelular(comentario.celular || comentario.cliente_celular),
+    celular: normalizarCelular(comentario.celular),
     foto: String(comentario.foto || '').trim(),
     nota: Number(comentario.nota) || 5,
     comentario: String(comentario.comentario || comentario.mensagem || '').trim(),
@@ -239,7 +239,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       atualizado_em: new Date().toISOString()
     };
 
-    const tentativasColunaCelular = ['celular', 'cliente_celular'];
+    const tentativasColunaCelular = ['celular'];
     let ultimoErroCarrinho = null;
 
     for (const colunaCelular of tentativasColunaCelular) {
@@ -619,9 +619,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
             .select('id')
             .eq('status', 'ativo');
 
-          return aplicarFiltroCelular(queryBase, 'celular', celularNormalizado)
-            || aplicarFiltroCelular(queryBase, 'cliente_celular', celularNormalizado)
-            || null;
+          return aplicarFiltroCelular(queryBase, 'celular', celularNormalizado) || null;
         };
 
         let carrinhoExistente = null;
@@ -651,7 +649,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           };
           const payloadsNovoCarrinho = [
             { ...payloadBaseNovoCarrinho, celular: celularNormalizado },
-            { ...payloadBaseNovoCarrinho, cliente_celular: celularNormalizado },
             payloadBaseNovoCarrinho
           ];
 
@@ -670,8 +667,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
             }
 
             erroNovoCarrinho = respostaNovoCarrinho.error || erroNovoCarrinho;
-            if (!erroColunaInexistente(respostaNovoCarrinho.error, 'celular')
-              && !erroColunaInexistente(respostaNovoCarrinho.error, 'cliente_celular')) {
+            if (!erroColunaInexistente(respostaNovoCarrinho.error, 'celular')) {
               break;
             }
           }
@@ -699,7 +695,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
 
-        for (const colunaCelular of ['celular', 'cliente_celular']) {
+        for (const colunaCelular of ['celular']) {
           const query = aplicarFiltroCelular(
             client
               .from('carrinhos')
@@ -750,7 +746,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           }
         }
 
-        const colunasCelularCarrinho = ['celular', 'cliente_celular'];
+        const colunasCelularCarrinho = ['celular'];
         const filtrosStatus = ['status', null];
 
         for (const colunaCelular of colunasCelularCarrinho) {
