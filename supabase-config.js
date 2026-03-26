@@ -570,14 +570,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           }
         }
 
-        const colunasCelularCarrinho = ['cliente_celular', 'celular'];
-        for (const colunaCelular of colunasCelularCarrinho) {
-          const query = aplicarFiltroCelular(client.from('carrinhos').select('itens'), colunaCelular, celularNormalizado);
-          if (!query) continue;
-
+        const query = aplicarFiltroCelular(
+          client.from('carrinhos').select('itens'),
+          'cliente_celular',
+          celularNormalizado
+        );
+        if (query) {
           const { data, error } = await query.maybeSingle();
           if (!error) return Array.isArray(data?.itens) ? data.itens : [];
-          if (error.code !== '42703') break;
         }
 
         return [];
