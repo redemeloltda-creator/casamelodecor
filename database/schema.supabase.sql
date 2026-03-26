@@ -19,7 +19,7 @@ create table if not exists public.clientes (
 
 create table if not exists public.carrinhos (
   id uuid primary key default gen_random_uuid(),
-  cliente_celular text,
+  celular varchar(20),
   created_at timestamp without time zone default now(),
   cliente_id uuid,
   atualizado_em timestamp without time zone,
