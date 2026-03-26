@@ -476,8 +476,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         };
 
         const tentativasColunaCelular = [
-          { coluna: 'cliente_celular', onConflict: 'cliente_celular' },
-          { coluna: 'celular', onConflict: 'celular' }
+          // Alguns projetos mais antigos usam `celular` em vez de `cliente_celular`.
+          // Tentamos primeiro o formato legado para reduzir erros 400/42703 no console.
+          { coluna: 'celular', onConflict: 'celular' },
+          { coluna: 'cliente_celular', onConflict: 'cliente_celular' }
         ];
 
         let error = null;
@@ -576,7 +578,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           }
         }
 
-        const colunasCelularCarrinho = ['cliente_celular', 'celular'];
+        const colunasCelularCarrinho = ['celular', 'cliente_celular'];
 
         for (const colunaCelular of colunasCelularCarrinho) {
           const queryCarrinhoPorCelular = aplicarFiltroCelular(
