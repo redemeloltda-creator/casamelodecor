@@ -169,7 +169,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const buscarCarrinhoAtivoMaisRecente = async (queryBase) => {
-    const colunasOrdenacao = ['created_at', 'atualizado_em', 'criado_em'];
+    const colunasOrdenacao = ['atualizado_em', 'criado_em', 'created_at'];
     let ultimoErro = null;
 
     for (const coluna of colunasOrdenacao) {
@@ -675,7 +675,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         }
 
         const colunasCelularCarrinho = ['celular', 'cliente_celular'];
-        const filtrosStatus = ['status', null];
+        const filtrosStatus = [null, 'status'];
 
         for (const colunaCelular of colunasCelularCarrinho) {
           for (const colunaStatus of filtrosStatus) {
