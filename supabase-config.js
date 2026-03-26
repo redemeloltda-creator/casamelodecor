@@ -576,33 +576,40 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           }
         }
 
-        const queryCarrinhoPorCelular = aplicarFiltroCelular(
-          client
-            .from('carrinhos')
-            .select('id')
-            .eq('status', 'ativo')
-            .order('criado_em', { ascending: false })
-            .limit(1),
-          'cliente_celular',
-          celularNormalizado
-        );
+        const colunasCelularCarrinho = ['cliente_celular', 'celular'];
 
-        if (queryCarrinhoPorCelular) {
+        for (const colunaCelular of colunasCelularCarrinho) {
+          const queryCarrinhoPorCelular = aplicarFiltroCelular(
+            client
+              .from('carrinhos')
+              .select('id')
+              .eq('status', 'ativo')
+              .order('criado_em', { ascending: false })
+              .limit(1),
+            colunaCelular,
+            celularNormalizado
+          );
+
+          if (!queryCarrinhoPorCelular) continue;
+
           const { data: carrinhoPorCelular, error: erroCarrinhoPorCelular } = await queryCarrinhoPorCelular.maybeSingle();
+          if (erroCarrinhoPorCelular?.code === '42703') continue;
           if (!erroCarrinhoPorCelular && carrinhoPorCelular?.id) {
             const itensPorCelular = await carregarItensPorCarrinhoId(carrinhoPorCelular.id);
             if (itensPorCelular) return itensPorCelular;
           }
         }
 
-        const query = aplicarFiltroCelular(
-          client.from('carrinhos').select('itens'),
-          'cliente_celular',
-          celularNormalizado
-        );
-        if (query) {
+        for (const colunaCelular of colunasCelularCarrinho) {
+          const query = aplicarFiltroCelular(
+            client.from('carrinhos').select('itens'),
+            colunaCelular,
+            celularNormalizado
+          );
+          if (!query) continue;
+
           const { data, error } = await query.maybeSingle();
-          if (error?.code === '42703') return [];
+          if (error?.code === '42703') continue;
           if (!error) return Array.isArray(data?.itens) ? data.itens : [];
         }
 
