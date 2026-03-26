@@ -617,20 +617,41 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const fallbackJsonCarrinho = await atualizarOuInserirCarrinhoJson(celularNormalizado, itens);
         if (fallbackJsonCarrinho.sucesso) return true;
 
-        if (!clienteId) return false;
+        const criarBuscaCarrinhoPorCelular = () => {
+          const queryBase = client
+            .from('carrinhos')
+            .select('id')
+            .eq('status', 'ativo');
 
-        const { data: carrinhoExistente } = await buscarCarrinhoAtivoMaisRecente(() => client
-          .from('carrinhos')
-          .select('id')
-          .eq('cliente_id', clienteId)
-          .eq('status', 'ativo'));
+          return aplicarFiltroCelular(queryBase, 'celular', celularNormalizado)
+            || aplicarFiltroCelular(queryBase, 'cliente_celular', celularNormalizado)
+            || null;
+        };
+
+        let carrinhoExistente = null;
+        if (clienteId) {
+          const respostaCarrinhoPorCliente = await buscarCarrinhoAtivoMaisRecente(() => client
+            .from('carrinhos')
+            .select('id')
+            .eq('cliente_id', clienteId)
+            .eq('status', 'ativo'));
+          carrinhoExistente = respostaCarrinhoPorCliente.data || null;
+        }
+
+        if (!carrinhoExistente) {
+          const queryCarrinhoPorCelular = criarBuscaCarrinhoPorCelular();
+          if (queryCarrinhoPorCelular) {
+            const respostaCarrinhoPorCelular = await buscarCarrinhoAtivoMaisRecente(() => criarBuscaCarrinhoPorCelular());
+            carrinhoExistente = respostaCarrinhoPorCelular.data || null;
+          }
+        }
 
         let carrinhoId = carrinhoExistente?.id || null;
         if (!carrinhoId) {
           const payloadBaseNovoCarrinho = {
-            cliente_id: clienteId,
             status: 'ativo',
-            atualizado_em: new Date().toISOString()
+            atualizado_em: new Date().toISOString(),
+            ...(clienteId ? { cliente_id: clienteId } : {})
           };
           const payloadsNovoCarrinho = [
             { ...payloadBaseNovoCarrinho, celular: celularNormalizado },
