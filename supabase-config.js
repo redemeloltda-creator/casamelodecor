@@ -187,6 +187,60 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return { data: null, error: ultimoErro };
   };
 
+  const erroConflitoSemConstraint = (erro) => {
+    if (!erro) return false;
+    if (erro.code === '42P10') return true;
+    const mensagem = `${erro.message || ''} ${erro.details || ''}`.toLowerCase();
+    return mensagem.includes('on conflict') && mensagem.includes('constraint');
+  };
+
+  const atualizarOuInserirCarrinhoJson = async (celular, itens = []) => {
+    const celularNormalizado = normalizarCelular(celular);
+    if (!celularNormalizado) return { sucesso: false, error: null };
+
+    const payloadBase = {
+      itens: Array.isArray(itens) ? itens : [],
+      atualizado_em: new Date().toISOString()
+    };
+
+    const tentativasColunaCelular = ['cliente_celular', 'celular'];
+    let ultimoErroCarrinho = null;
+
+    for (const colunaCelular of tentativasColunaCelular) {
+      const queryAtualizacao = aplicarFiltroCelular(
+        client.from('carrinhos').update(payloadBase).select(colunaCelular),
+        colunaCelular,
+        celularNormalizado
+      );
+
+      if (!queryAtualizacao) continue;
+
+      const { data: atualizados, error: erroAtualizacao } = await queryAtualizacao;
+      if (!erroAtualizacao && Array.isArray(atualizados) && atualizados.length > 0) {
+        return { sucesso: true, error: null };
+      }
+      if (erroColunaInexistente(erroAtualizacao, colunaCelular)) {
+        ultimoErroCarrinho = erroAtualizacao;
+        continue;
+      }
+      if (!erroAtualizacao) {
+        const { error: erroInsert } = await client.from('carrinhos').insert({
+          ...payloadBase,
+          [colunaCelular]: celularNormalizado
+        });
+        if (!erroInsert) return { sucesso: true, error: null };
+        if (erroColunaInexistente(erroInsert, colunaCelular)) {
+          ultimoErroCarrinho = erroInsert;
+          continue;
+        }
+        return { sucesso: false, error: erroInsert };
+      }
+      return { sucesso: false, error: erroAtualizacao };
+    }
+
+    return { sucesso: false, error: ultimoErroCarrinho };
+  };
+
   const obterContextoAuthDebug = async () => {
     if (!client?.auth) {
       return {
@@ -532,8 +586,16 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           error = resposta?.error || null;
 
           if (!error) return true;
-          if (error.code !== '42703') break;
+          if (erroConflitoSemConstraint(error)) {
+            break;
+          }
+          if (error.code !== '42703') {
+            return false;
+          }
         }
+
+        const fallbackJsonCarrinho = await atualizarOuInserirCarrinhoJson(celularNormalizado, itens);
+        if (fallbackJsonCarrinho.sucesso) return true;
 
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
         if (!clienteId) return false;
@@ -613,26 +675,33 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         }
 
         const colunasCelularCarrinho = ['celular', 'cliente_celular'];
+        const filtrosStatus = ['status', null];
 
         for (const colunaCelular of colunasCelularCarrinho) {
-          const criarQueryCarrinhoPorCelular = () => aplicarFiltroCelular(
-            client
-              .from('carrinhos')
-              .select('id')
-              .eq('status', 'ativo'),
-            colunaCelular,
-            celularNormalizado
-          );
+          for (const colunaStatus of filtrosStatus) {
+            const criarQueryCarrinhoPorCelular = () => {
+              let query = client
+                .from('carrinhos')
+                .select('id');
 
-          if (!criarQueryCarrinhoPorCelular()) continue;
+              if (colunaStatus) {
+                query = query.eq(colunaStatus, 'ativo');
+              }
 
-          const { data: carrinhoPorCelular, error: erroCarrinhoPorCelular } = await buscarCarrinhoAtivoMaisRecente(
-            criarQueryCarrinhoPorCelular
-          );
-          if (erroColunaInexistente(erroCarrinhoPorCelular, colunaCelular)) continue;
-          if (!erroCarrinhoPorCelular && carrinhoPorCelular?.id) {
-            const itensPorCelular = await carregarItensPorCarrinhoId(carrinhoPorCelular.id);
-            if (itensPorCelular) return itensPorCelular;
+              return aplicarFiltroCelular(query, colunaCelular, celularNormalizado);
+            };
+
+            if (!criarQueryCarrinhoPorCelular()) continue;
+
+            const { data: carrinhoPorCelular, error: erroCarrinhoPorCelular } = await buscarCarrinhoAtivoMaisRecente(
+              criarQueryCarrinhoPorCelular
+            );
+            if (erroColunaInexistente(erroCarrinhoPorCelular, colunaCelular)) break;
+            if (colunaStatus && erroColunaInexistente(erroCarrinhoPorCelular, colunaStatus)) continue;
+            if (!erroCarrinhoPorCelular && carrinhoPorCelular?.id) {
+              const itensPorCelular = await carregarItensPorCarrinhoId(carrinhoPorCelular.id);
+              if (itensPorCelular) return itensPorCelular;
+            }
           }
         }
 
