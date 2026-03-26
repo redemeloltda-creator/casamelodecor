@@ -541,6 +541,24 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
 
+        const mapearItensCarrinho = (itensCarrinho = []) => itensCarrinho.map((item) => ({
+          id: item.produto_id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          produto_id: item.produto_id || null,
+          nome: 'Produto',
+          preco: Number(item.preco_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+          quantidade: Math.max(1, Number(item.quantidade) || 1)
+        }));
+
+        const carregarItensPorCarrinhoId = async (carrinhoId) => {
+          if (!carrinhoId) return null;
+          const { data: itensCarrinho, error: erroItens } = await client
+            .from('itens_carrinho')
+            .select('produto_id, quantidade, preco_unitario')
+            .eq('carrinho_id', carrinhoId);
+          if (erroItens || !Array.isArray(itensCarrinho)) return null;
+          return mapearItensCarrinho(itensCarrinho);
+        };
+
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
         if (clienteId) {
           const { data: carrinhoAtivo, error: erroCarrinho } = await client
@@ -553,20 +571,27 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
             .maybeSingle();
 
           if (!erroCarrinho && carrinhoAtivo?.id) {
-            const { data: itensCarrinho, error: erroItens } = await client
-              .from('itens_carrinho')
-              .select('produto_id, quantidade, preco_unitario')
-              .eq('carrinho_id', carrinhoAtivo.id);
+            const itensAtivos = await carregarItensPorCarrinhoId(carrinhoAtivo.id);
+            if (itensAtivos) return itensAtivos;
+          }
+        }
 
-            if (!erroItens && Array.isArray(itensCarrinho)) {
-              return itensCarrinho.map((item) => ({
-                id: item.produto_id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                produto_id: item.produto_id || null,
-                nome: 'Produto',
-                preco: Number(item.preco_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-                quantidade: Math.max(1, Number(item.quantidade) || 1)
-              }));
-            }
+        const queryCarrinhoPorCelular = aplicarFiltroCelular(
+          client
+            .from('carrinhos')
+            .select('id')
+            .eq('status', 'ativo')
+            .order('criado_em', { ascending: false })
+            .limit(1),
+          'cliente_celular',
+          celularNormalizado
+        );
+
+        if (queryCarrinhoPorCelular) {
+          const { data: carrinhoPorCelular, error: erroCarrinhoPorCelular } = await queryCarrinhoPorCelular.maybeSingle();
+          if (!erroCarrinhoPorCelular && carrinhoPorCelular?.id) {
+            const itensPorCelular = await carregarItensPorCarrinhoId(carrinhoPorCelular.id);
+            if (itensPorCelular) return itensPorCelular;
           }
         }
 
@@ -577,6 +602,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         );
         if (query) {
           const { data, error } = await query.maybeSingle();
+          if (error?.code === '42703') return [];
           if (!error) return Array.isArray(data?.itens) ? data.itens : [];
         }
 
