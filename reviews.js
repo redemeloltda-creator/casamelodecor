@@ -36,6 +36,17 @@
 
   const normalizarStringComparacao = (valor) => String(valor || '').trim();
 
+  const ehUuid = (valor) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(valor || '').trim());
+
+  const gerarIdAvaliacao = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  };
+
   const normalizarListaAvaliacoes = (valor) => {
     if (!Array.isArray(valor)) return [];
 
@@ -193,15 +204,51 @@
     return null;
   };
 
-  const excluirAvaliacaoRemota = async (idAvaliacao, celular) => {
+  const excluirAvaliacaoRemota = async (avaliacao, celular) => {
     if (supabaseAtivo && supabase) {
       try {
-        let query = supabase.from('comentarios').delete().eq('id', idAvaliacao);
-        const celularNormalizado = normalizarCelular(celular);
-        if (celularNormalizado) query = query.eq('celular', celularNormalizado);
+        const celularNormalizado = normalizarCelular(celular || avaliacao?.celular);
+        const idAvaliacao = String(avaliacao?.id || '').trim();
+        const comentario = obterComentarioTexto(avaliacao);
+        const nome = String(avaliacao?.nome || '').trim();
+        const nota = Number(avaliacao?.nota) || 0;
+        const tentativas = [];
 
-        const { error } = await query;
-        return !error;
+        if (ehUuid(idAvaliacao)) {
+          tentativas.push(() => {
+            let query = supabase.from('comentarios').delete().eq('id', idAvaliacao);
+            if (celularNormalizado) query = query.eq('celular', celularNormalizado);
+            return query;
+          });
+        }
+
+        if (comentario && celularNormalizado) {
+          tentativas.push(() =>
+            supabase
+              .from('comentarios')
+              .delete()
+              .eq('celular', celularNormalizado)
+              .eq('comentario', comentario)
+              .eq('nome', nome)
+              .eq('nota', nota)
+          );
+
+          tentativas.push(() =>
+            supabase
+              .from('comentarios')
+              .delete()
+              .eq('celular', celularNormalizado)
+              .eq('mensagem', comentario)
+              .eq('nome', nome)
+          );
+        }
+
+        for (const criarQuery of tentativas) {
+          const { error } = await criarQuery();
+          if (!error) return true;
+        }
+
+        return false;
       } catch (erro) {
         return false;
       }
@@ -353,7 +400,7 @@
       return;
     }
 
-    const excluiuRemoto = await excluirAvaliacaoRemota(idAvaliacao, celularUsuario);
+    const excluiuRemoto = await excluirAvaliacaoRemota(avaliacao, celularUsuario);
     const proximaLista = avaliacoesCache.filter((item) => String(item.id) !== idAvaliacao);
     const { listaFinal } = await salvarAvaliacoes(proximaLista);
     avaliacoesCache = listaFinal;
@@ -419,7 +466,7 @@
     }
 
     const novaAvaliacao = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      id: gerarIdAvaliacao(),
       nome: usuario.nome || 'Cliente',
       celular: usuario.celular || '',
       foto: usuario.foto || '',
