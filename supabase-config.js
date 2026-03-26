@@ -900,7 +900,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
             ...(userId ? { user_id: userId } : {})
           },
           {
-            id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
             nome,
             celular: celular || null,
             foto: String(avaliacao?.foto || '').trim() || null,
