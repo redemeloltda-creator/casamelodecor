@@ -219,7 +219,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       atualizado_em: new Date().toISOString()
     };
 
-    const tentativasColunaCelular = ['cliente_celular', 'celular'];
+    const tentativasColunaCelular = ['celular', 'cliente_celular'];
     let ultimoErroCarrinho = null;
 
     for (const colunaCelular of tentativasColunaCelular) {
@@ -584,14 +584,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
 
         const payloadBase = {
-          itens,
+          status: 'ativo',
           atualizado_em: new Date().toISOString(),
           ...(clienteId ? { cliente_id: clienteId } : {})
         };
 
         const tentativasColunaCelular = [
-          // Alguns projetos mais antigos usam `celular` em vez de `cliente_celular`.
-          // Tentamos primeiro o formato legado para reduzir erros 400/42703 no console.
+          // Estrutura atual da tabela `carrinhos` usa `celular`.
+          // Mantemos `cliente_celular` apenas como fallback para projetos antigos.
           { coluna: 'celular', onConflict: 'celular' },
           { coluna: 'cliente_celular', onConflict: 'cliente_celular' }
         ];

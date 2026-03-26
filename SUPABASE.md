@@ -173,7 +173,7 @@ Esse erro quase sempre significa que o banco do Supabase **não está com a mesm
 
 O front-end desta loja consulta exatamente estas tabelas:
 - `public.clientes` (`id`, `nome`, `celular`, `senha_hash`/`senha`, `foto`, `receber_novidades`, `ultimo_acesso`);
-- `public.carrinhos` (`id`, `cliente_id`, `cliente_celular`, `status`, `atualizado_em`);
+- `public.carrinhos` (`id`, `cliente_id`, `celular`, `status`, `atualizado_em`);
 - `public.itens_carrinho` (`carrinho_id`, `produto_id`, `quantidade`, `preco_unitario`);
 - `public.historico_compras` (`cliente_celular`, `cliente_id`, `itens`, `data_compra`);
 - `public.comentarios` em formato `created_at` ou `data_avaliacao`.
