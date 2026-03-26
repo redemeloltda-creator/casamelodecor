@@ -156,7 +156,6 @@
       try {
         const instanteCriacao = avaliacao?.dataAvaliacao || new Date().toISOString();
         const payloadBase = {
-          id: String(avaliacao?.id || `${Date.now()}`),
           nome: String(avaliacao?.nome || '').trim(),
           celular: normalizarCelular(avaliacao?.celular),
           foto: String(avaliacao?.foto || '').trim() || null,
@@ -166,7 +165,6 @@
         };
         const payloads = [
           {
-            id: payloadBase.id,
             nome: payloadBase.nome,
             mensagem: payloadBase.mensagem,
             created_at: instanteCriacao
@@ -199,13 +197,8 @@
     if (supabaseAtivo && supabase) {
       try {
         let query = supabase.from('comentarios').delete().eq('id', idAvaliacao);
-
-        if (celular) {
-          const celularNormalizado = normalizarCelular(celular);
-          if (celularNormalizado) {
-            query = query.or(`celular.eq.${celularNormalizado}`);
-          }
-        }
+        const celularNormalizado = normalizarCelular(celular);
+        if (celularNormalizado) query = query.eq('celular', celularNormalizado);
 
         const { error } = await query;
         return !error;
