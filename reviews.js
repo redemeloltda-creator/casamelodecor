@@ -30,8 +30,14 @@
     const idOriginal = String(avaliacao?.id || '').trim();
     if (idOriginal) return idOriginal;
 
+    const nome = normalizarStringComparacao(avaliacao?.nome).toLowerCase();
+    const nota = Number(avaliacao?.nota) || 0;
     const celular = normalizarCelular(avaliacao?.celular);
-    return `${celular}-${obterComentarioTexto(avaliacao)}`;
+    const comentario = obterComentarioTexto(avaliacao);
+
+    if (celular && comentario) return `${celular}-${comentario}`;
+    if (nome && comentario) return `${nome}-${nota}-${comentario}`;
+    return comentario;
   };
 
   const normalizarStringComparacao = (valor) => String(valor || '').trim();
@@ -175,14 +181,14 @@
           mensagem: obterComentarioTexto(avaliacao)
         };
         const payloads = [
+          { ...payloadBase, created_at: instanteCriacao },
+          { ...payloadBase, data_avaliacao: instanteCriacao },
+          { ...payloadBase, created_at: instanteCriacao, data_avaliacao: instanteCriacao },
           {
             nome: payloadBase.nome,
             mensagem: payloadBase.mensagem,
             created_at: instanteCriacao
-          },
-          { ...payloadBase, created_at: instanteCriacao },
-          { ...payloadBase, data_avaliacao: instanteCriacao },
-          { ...payloadBase, created_at: instanteCriacao, data_avaliacao: instanteCriacao }
+          }
         ];
 
         for (const payload of payloads) {
@@ -479,7 +485,19 @@
 
     try {
       const avaliacaoRemota = await adicionarAvaliacaoRemota(novaAvaliacao);
-      const proximaLista = [...avaliacoesCache, avaliacaoRemota || novaAvaliacao];
+      const avaliacaoPersistida = avaliacaoRemota
+        ? {
+            ...novaAvaliacao,
+            ...avaliacaoRemota,
+            id: avaliacaoRemota.id || novaAvaliacao.id,
+            celular: avaliacaoRemota.celular || novaAvaliacao.celular,
+            nome: avaliacaoRemota.nome || novaAvaliacao.nome,
+            comentario: avaliacaoRemota.comentario || novaAvaliacao.comentario,
+            nota: Number(avaliacaoRemota.nota || novaAvaliacao.nota) || 0,
+            dataAvaliacao: avaliacaoRemota.dataAvaliacao || novaAvaliacao.dataAvaliacao
+          }
+        : novaAvaliacao;
+      const proximaLista = [...avaliacoesCache, avaliacaoPersistida];
       const { listaFinal } = await salvarAvaliacoes(proximaLista);
       avaliacoesCache = listaFinal;
 
