@@ -157,6 +157,22 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return data.id;
   };
 
+  const obterUsuarioAuthAtual = async () => {
+    if (!client?.auth) return null;
+
+    const { data, error } = await client.auth.getUser();
+    if (error || !data?.user?.id) return null;
+    return data.user;
+  };
+
+  const obterUserIdSessao = async () => {
+    const userAuth = await obterUsuarioAuthAtual();
+    if (userAuth?.id) return userAuth.id;
+
+    const sessaoLocal = obterSessaoLocal();
+    return sessaoLocal?.user_id || sessaoLocal?.userId || null;
+  };
+
   const parsePrecoNumerico = (preco) => {
     const valor = String(preco ?? '')
       .replace(/\s/g, '')
@@ -465,20 +481,22 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async cadastrarCliente(clienteCadastro) {
       return executarConsulta('cadastrarCliente', null, async () => {
+        const userId = await obterUserIdSessao();
         const registroPadrao = {
           nome: String(clienteCadastro?.nome || '').trim(),
           celular: normalizarCelular(clienteCadastro?.celular),
-          senha: String(clienteCadastro?.senha || ''),
+          senha_hash: String(clienteCadastro?.senha || ''),
           foto: String(clienteCadastro?.foto || '').trim(),
           receber_novidades: Boolean(clienteCadastro?.receberNovidades),
-          ultimo_acesso: new Date().toISOString()
+          ultimo_acesso: new Date().toISOString(),
+          ...(userId ? { user_id: userId } : {})
         };
 
         const payloads = [
           registroPadrao,
           {
             ...registroPadrao,
-            senha_hash: registroPadrao.senha
+            senha: registroPadrao.senha_hash
           }
         ];
 
@@ -563,10 +581,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       return executarConsulta('salvarCarrinho', false, async () => {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return false;
+        const clienteId = await obterClienteIdPorCelular(celularNormalizado);
 
         const payloadBase = {
           itens,
-          atualizado_em: new Date().toISOString()
+          atualizado_em: new Date().toISOString(),
+          ...(clienteId ? { cliente_id: clienteId } : {})
         };
 
         const tentativasColunaCelular = [
@@ -597,7 +617,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const fallbackJsonCarrinho = await atualizarOuInserirCarrinhoJson(celularNormalizado, itens);
         if (fallbackJsonCarrinho.sucesso) return true;
 
-        const clienteId = await obterClienteIdPorCelular(celularNormalizado);
         if (!clienteId) return false;
 
         const { data: carrinhoExistente } = await buscarCarrinhoAtivoMaisRecente(() => client
@@ -608,16 +627,37 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         let carrinhoId = carrinhoExistente?.id || null;
         if (!carrinhoId) {
-          const { data: novoCarrinho, error: erroNovoCarrinho } = await client
-            .from('carrinhos')
-            .insert({
-              cliente_id: clienteId,
-              cliente_celular: celularNormalizado,
-              status: 'ativo',
-              atualizado_em: new Date().toISOString()
-            })
-            .select('id')
-            .single();
+          const payloadBaseNovoCarrinho = {
+            cliente_id: clienteId,
+            status: 'ativo',
+            atualizado_em: new Date().toISOString()
+          };
+          const payloadsNovoCarrinho = [
+            { ...payloadBaseNovoCarrinho, celular: celularNormalizado },
+            { ...payloadBaseNovoCarrinho, cliente_celular: celularNormalizado },
+            payloadBaseNovoCarrinho
+          ];
+
+          let novoCarrinho = null;
+          let erroNovoCarrinho = null;
+          for (const payloadNovoCarrinho of payloadsNovoCarrinho) {
+            const respostaNovoCarrinho = await client
+              .from('carrinhos')
+              .insert(payloadNovoCarrinho)
+              .select('id')
+              .maybeSingle();
+
+            if (!respostaNovoCarrinho.error && respostaNovoCarrinho.data?.id) {
+              novoCarrinho = respostaNovoCarrinho.data;
+              break;
+            }
+
+            erroNovoCarrinho = respostaNovoCarrinho.error || erroNovoCarrinho;
+            if (!erroColunaInexistente(respostaNovoCarrinho.error, 'celular')
+              && !erroColunaInexistente(respostaNovoCarrinho.error, 'cliente_celular')) {
+              break;
+            }
+          }
 
           if (erroNovoCarrinho || !novoCarrinho?.id) return false;
           carrinhoId = novoCarrinho.id;
@@ -733,11 +773,15 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       return executarConsulta('registrarCompra', false, async () => {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado || !Array.isArray(itens) || !itens.length) return false;
+        const clienteId = await obterClienteIdPorCelular(celularNormalizado);
+        const userId = await obterUserIdSessao();
 
         const { error } = await client.from('historico_compras').insert({
           cliente_celular: celularNormalizado,
           itens,
-          data_compra: new Date().toISOString()
+          data_compra: new Date().toISOString(),
+          ...(clienteId ? { cliente_id: clienteId } : {}),
+          ...(userId ? { user_id: userId } : {})
         });
 
         return !error;
@@ -747,18 +791,36 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       return executarConsulta('listarHistorico', [], async () => {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
+        const clienteId = await obterClienteIdPorCelular(celularNormalizado);
 
-        const query = aplicarFiltroCelular(
-          client
+        let data = null;
+        let error = null;
+
+        if (clienteId) {
+          const respostaPorCliente = await client
             .from('historico_compras')
-            .select('*'),
-          'cliente_celular',
-          celularNormalizado
-        );
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('data_compra', { ascending: false });
 
-        if (!query) return [];
+          data = respostaPorCliente.data;
+          error = respostaPorCliente.error;
+        }
 
-        const { data, error } = await query.order('data_compra', { ascending: false });
+        if (error || !Array.isArray(data)) {
+          const query = aplicarFiltroCelular(
+            client
+              .from('historico_compras')
+              .select('*'),
+            'cliente_celular',
+            celularNormalizado
+          );
+          if (!query) return [];
+
+          const respostaPorCelular = await query.order('data_compra', { ascending: false });
+          data = respostaPorCelular.data;
+          error = respostaPorCelular.error;
+        }
 
         if (error || !Array.isArray(data)) return [];
 
@@ -794,23 +856,16 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (!comentario || !nome || !nota) return null;
 
 
-        const payload = {
-          id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
-          nome,
-          comentario,
-          nota,
-          celular: celular || null,
-          foto: String(avaliacao?.foto || '').trim() || null,
-          data_avaliacao: avaliacao?.dataAvaliacao || new Date().toISOString()
-        };
-
+        const clienteId = avaliacao?.cliente_id || await obterClienteIdPorCelular(celular);
+        const userId = await obterUserIdSessao();
         const instanteCriacao = avaliacao?.dataAvaliacao || avaliacao?.createdAt || new Date().toISOString();
         const payloads = [
           {
             nome,
             mensagem: comentario,
             created_at: instanteCriacao,
-            ...(avaliacao?.cliente_id ? { cliente_id: avaliacao.cliente_id } : {})
+            ...(clienteId ? { cliente_id: clienteId } : {}),
+            ...(userId ? { user_id: userId } : {})
           },
           {
             id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
