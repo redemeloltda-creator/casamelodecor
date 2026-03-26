@@ -171,36 +171,18 @@
   const adicionarAvaliacaoRemota = async (avaliacao) => {
     if (supabaseAtivo && supabase) {
       try {
-        const instanteCriacao = avaliacao?.dataAvaliacao || new Date().toISOString();
-        const payloadBase = {
+        const payload = {
           nome: String(avaliacao?.nome || '').trim(),
           celular: normalizarCelular(avaliacao?.celular),
-          foto: String(avaliacao?.foto || '').trim() || null,
-          nota: Number(avaliacao?.nota) || 0,
-          comentario: obterComentarioTexto(avaliacao),
           mensagem: obterComentarioTexto(avaliacao)
         };
-        const payloads = [
-          { ...payloadBase, created_at: instanteCriacao },
-          { ...payloadBase, data_avaliacao: instanteCriacao },
-          { ...payloadBase, created_at: instanteCriacao, data_avaliacao: instanteCriacao },
-          {
-            nome: payloadBase.nome,
-            mensagem: payloadBase.mensagem,
-            created_at: instanteCriacao
-          }
-        ];
+        const { data, error } = await supabase
+          .from('comentarios')
+          .insert(payload)
+          .select('*')
+          .single();
 
-        for (const payload of payloads) {
-          const { data, error } = await supabase
-            .from('comentarios')
-            .insert(payload)
-            .select('*')
-            .single();
-
-          if (!error && data) return mapearAvaliacaoSupabase(data);
-        }
-
+        if (!error && data) return mapearAvaliacaoSupabase(data);
         return null;
       } catch (erro) {
         return null;
