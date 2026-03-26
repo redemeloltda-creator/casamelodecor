@@ -85,7 +85,12 @@ create table if not exists public.pedidos (
 create table if not exists public.comentarios (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
+  celular varchar(20),
+  foto text,
+  nota smallint not null default 5,
+  comentario text,
   created_at timestamptz default now(),
+  data_avaliacao timestamptz,
   user_id uuid not null default gen_random_uuid(),
   cliente_id uuid,
   atualizado_em timestamp without time zone,
@@ -93,6 +98,31 @@ create table if not exists public.comentarios (
   criado_em timestamp without time zone default now(),
   constraint fk_comentarios_cliente foreign key (cliente_id) references public.clientes(id)
 );
+
+alter table public.comentarios
+  add column if not exists celular varchar(20),
+  add column if not exists foto text,
+  add column if not exists nota smallint not null default 5,
+  add column if not exists comentario text,
+  add column if not exists data_avaliacao timestamptz;
+
+update public.comentarios
+set
+  comentario = coalesce(nullif(comentario, ''), nullif(mensagem, ''), 'Comentário'),
+  mensagem = coalesce(nullif(mensagem, ''), nullif(comentario, ''), 'Comentário'),
+  nota = coalesce(nota, 5),
+  data_avaliacao = coalesce(data_avaliacao, created_at, criado_em, now())
+where true;
+
+alter table public.comentarios
+  alter column comentario set not null,
+  alter column data_avaliacao set not null;
+
+alter table public.comentarios
+  drop constraint if exists comentarios_nota_check;
+
+alter table public.comentarios
+  add constraint comentarios_nota_check check (nota between 1 and 5);
 
 create index if not exists idx_clientes_celular on public.clientes(celular);
 create index if not exists idx_carrinhos_cliente_id on public.carrinhos(cliente_id);

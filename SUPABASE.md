@@ -12,7 +12,7 @@
   - `clientes`
   - `carrinhos`
   - `historico_compras`
-  - `comentarios`
+  - `comentarios` (aceita o modelo com `mensagem` e também o modelo com `comentario`, `nota` e `data_avaliacao`)
 
 ## 3. Configure o front-end
 Edite `supabase-config.js` e preencha:
