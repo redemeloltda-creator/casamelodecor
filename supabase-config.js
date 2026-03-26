@@ -924,10 +924,16 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           }
         ];
 
+        const camposProblematicos = ['id', 'cliente_id', 'user_id'];
+        const payloadsSanitizados = payloads.map((payload) => {
+          const dados = { ...payload };
+          camposProblematicos.forEach((campo) => delete dados[campo]);
+          return dados;
+        });
 
         let ultimoErro = null;
 
-        for (const payload of payloads) {
+        for (const payload of payloadsSanitizados) {
           const { data, error } = await client.from('comentarios').insert(payload).select('*').single();
           if (!error && data) return mapearComentario(data);
           ultimoErro = error || ultimoErro;
@@ -935,7 +941,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         if (ultimoErro) {
           await registrarFalhaOperacao('adicionarAvaliacao', {
-            payloads,
+            payloads: payloadsSanitizados,
             error: ultimoErro
           });
         }
