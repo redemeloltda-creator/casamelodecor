@@ -131,7 +131,15 @@ const { error } = await supabase
   .eq('celular', '38998467031');
 ```
 
-### 6.2. Buscar e criar comentários em projetos que usam `created_at`
+
+### 6.2. Exemplo pronto em arquivo separado
+Se preferir usar um cliente modular, o repositório agora inclui `supabase-client.js` com o mesmo formato:
+
+```js
+import { supabase } from './supabase-client.js';
+```
+
+### 6.3. Buscar e criar comentários em projetos que usam `created_at`
 Se o seu projeto Supabase foi criado com a tabela `comentarios` no formato mais simples (`nome`, `comentario`, `nota`, `created_at`), você pode usar consultas como estas:
 
 ```js
