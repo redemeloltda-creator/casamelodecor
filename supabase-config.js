@@ -73,7 +73,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     id: cliente.id || null,
     nome: String(cliente.nome || '').trim(),
     celular: normalizarCelular(cliente.celular),
-    senha: String(cliente.senha || ''),
+    senha: String(cliente.senha || cliente.senha_hash || ''),
     foto: String(cliente.foto || '').trim(),
     receberNovidades: Boolean(cliente.receber_novidades ?? cliente.receberNovidades),
     ultimoAcesso: cliente.ultimo_acesso || cliente.ultimoAcesso || null,
@@ -86,8 +86,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     nome: String(comentario.nome || '').trim(),
     celular: normalizarCelular(comentario.celular || comentario.cliente_celular),
     foto: String(comentario.foto || '').trim(),
-    nota: Number(comentario.nota) || 0,
-    comentario: String(comentario.comentario || '').trim(),
+    nota: Number(comentario.nota) || 5,
+    comentario: String(comentario.comentario || comentario.mensagem || '').trim(),
     dataAvaliacao: comentario.data_avaliacao || comentario.dataAvaliacao || comentario.created_at || comentario.criado_em || null
   });
 
@@ -117,6 +117,26 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const identificarCliente = (celular) => {
     const query = aplicarFiltroCelular(client.from('clientes').select('*'), 'celular', celular);
     return query ? query.maybeSingle() : Promise.resolve({ data: null, error: null });
+  };
+
+  const obterClienteIdPorCelular = async (celular) => {
+    const query = aplicarFiltroCelular(client.from('clientes').select('id'), 'celular', celular);
+    if (!query) return null;
+
+    const { data, error } = await query.maybeSingle();
+    if (error || !data?.id) return null;
+    return data.id;
+  };
+
+  const parsePrecoNumerico = (preco) => {
+    const valor = String(preco ?? '')
+      .replace(/\s/g, '')
+      .replace(/[R$r$\u00A0]/g, '')
+      .replace(/\./g, '')
+      .replace(',', '.')
+      .replace(/[^\d.-]/g, '');
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : 0;
   };
 
   const obterContextoAuthDebug = async () => {
@@ -343,7 +363,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async cadastrarCliente(clienteCadastro) {
       return executarConsulta('cadastrarCliente', null, async () => {
-        const registro = {
+        const registroPadrao = {
           nome: String(clienteCadastro?.nome || '').trim(),
           celular: normalizarCelular(clienteCadastro?.celular),
           senha: String(clienteCadastro?.senha || ''),
@@ -352,12 +372,25 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           ultimo_acesso: new Date().toISOString()
         };
 
-        const { data, error } = await client.from('clientes').insert(registro).select('*').single();
-        if (error || !data) {
-          if (error) await registrarFalhaOperacao('cadastrarCliente', { payload: registro, data, error });
-          return null;
+        const payloads = [
+          registroPadrao,
+          {
+            ...registroPadrao,
+            senha_hash: registroPadrao.senha
+          }
+        ];
+
+        let ultimoErroCadastro = null;
+        for (const payload of payloads) {
+          const { data, error } = await client.from('clientes').insert(payload).select('*').single();
+          if (!error && data) return mapearCliente(data);
+          ultimoErroCadastro = error || ultimoErroCadastro;
         }
-        return mapearCliente(data);
+
+        if (ultimoErroCadastro) {
+          await registrarFalhaOperacao('cadastrarCliente', { payloads, error: ultimoErroCadastro });
+        }
+        return null;
       });
     },
     async autenticarCliente(celular, senha) {
@@ -366,14 +399,22 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const senhaNormalizada = String(senha || '');
         if (!celularNormalizado || !senhaNormalizada) return null;
 
-        const { data, error } = await client
-          .from('clientes')
-          .select('*')
-          .eq('celular', celularNormalizado)
-          .eq('senha', senhaNormalizada)
-          .maybeSingle();
+        const consultas = ['senha', 'senha_hash'];
+        let data = null;
+        for (const colunaSenha of consultas) {
+          const resposta = await client
+            .from('clientes')
+            .select('*')
+            .eq('celular', celularNormalizado)
+            .eq(colunaSenha, senhaNormalizada)
+            .maybeSingle();
 
-        if (error || !data) return null;
+          if (!resposta.error && resposta.data) {
+            data = resposta.data;
+            break;
+          }
+        }
+        if (!data) return null;
 
         await client.from('clientes').update({ ultimo_acesso: new Date().toISOString() }).eq('celular', celularNormalizado);
 
@@ -387,7 +428,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         const payload = {};
         if (Object.hasOwn(campos, 'nome')) payload.nome = String(campos.nome || '').trim();
-        if (Object.hasOwn(campos, 'senha')) payload.senha = String(campos.senha || '');
+        if (Object.hasOwn(campos, 'senha')) {
+          const senha = String(campos.senha || '');
+          payload.senha = senha;
+          payload.senha_hash = senha;
+        }
         if (Object.hasOwn(campos, 'foto')) payload.foto = String(campos.foto || '').trim();
         if (Object.hasOwn(campos, 'receberNovidades')) payload.receber_novidades = Boolean(campos.receberNovidades);
         if (Object.hasOwn(campos, 'ultimoAcesso')) payload.ultimo_acesso = campos.ultimoAcesso;
@@ -424,7 +469,49 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         };
 
         const { error } = await client.from('carrinhos').upsert(payload, { onConflict: 'cliente_celular' });
-        return !error;
+        if (!error) return true;
+
+        const clienteId = await obterClienteIdPorCelular(celularNormalizado);
+        if (!clienteId) return false;
+
+        const { data: carrinhoExistente } = await client
+          .from('carrinhos')
+          .select('id')
+          .eq('cliente_id', clienteId)
+          .eq('status', 'ativo')
+          .order('criado_em', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        let carrinhoId = carrinhoExistente?.id || null;
+        if (!carrinhoId) {
+          const { data: novoCarrinho, error: erroNovoCarrinho } = await client
+            .from('carrinhos')
+            .insert({
+              cliente_id: clienteId,
+              cliente_celular: celularNormalizado,
+              status: 'ativo',
+              atualizado_em: new Date().toISOString()
+            })
+            .select('id')
+            .single();
+
+          if (erroNovoCarrinho || !novoCarrinho?.id) return false;
+          carrinhoId = novoCarrinho.id;
+        }
+
+        await client.from('itens_carrinho').delete().eq('carrinho_id', carrinhoId);
+        if (!Array.isArray(itens) || !itens.length) return true;
+
+        const itensNormalizados = itens.map((item) => ({
+          carrinho_id: carrinhoId,
+          produto_id: item?.produto_id || item?.produtoId || item?.id || null,
+          quantidade: Math.max(1, Number(item?.quantidade) || 1),
+          preco_unitario: parsePrecoNumerico(item?.preco_unitario ?? item?.preco)
+        }));
+
+        const { error: erroItens } = await client.from('itens_carrinho').insert(itensNormalizados);
+        return !erroItens;
       });
     },
     async carregarCarrinho(celular) {
@@ -433,11 +520,39 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (!celularNormalizado) return [];
 
         const query = aplicarFiltroCelular(client.from('carrinhos').select('itens'), 'cliente_celular', celularNormalizado);
-        if (!query) return [];
+        if (query) {
+          const { data, error } = await query.maybeSingle();
+          if (!error) return Array.isArray(data?.itens) ? data.itens : [];
+        }
 
-        const { data, error } = await query.maybeSingle();
-        if (error) return [];
-        return Array.isArray(data?.itens) ? data.itens : [];
+        const clienteId = await obterClienteIdPorCelular(celularNormalizado);
+        if (!clienteId) return [];
+
+        const { data: carrinhoAtivo, error: erroCarrinho } = await client
+          .from('carrinhos')
+          .select('id')
+          .eq('cliente_id', clienteId)
+          .eq('status', 'ativo')
+          .order('criado_em', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (erroCarrinho || !carrinhoAtivo?.id) return [];
+
+        const { data: itensCarrinho, error: erroItens } = await client
+          .from('itens_carrinho')
+          .select('produto_id, quantidade, preco_unitario')
+          .eq('carrinho_id', carrinhoAtivo.id);
+
+        if (erroItens || !Array.isArray(itensCarrinho)) return [];
+
+        return itensCarrinho.map((item) => ({
+          id: item.produto_id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          produto_id: item.produto_id || null,
+          nome: 'Produto',
+          preco: Number(item.preco_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+          quantidade: Math.max(1, Number(item.quantidade) || 1)
+        }));
       });
     },
     async sincronizarSessaoComCarrinho() {
@@ -525,6 +640,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         const instanteCriacao = avaliacao?.dataAvaliacao || avaliacao?.createdAt || new Date().toISOString();
         const payloads = [
+          {
+            nome,
+            mensagem: comentario,
+            created_at: instanteCriacao,
+            ...(avaliacao?.cliente_id ? { cliente_id: avaliacao.cliente_id } : {})
+          },
           {
             id: String(avaliacao?.id || `${celular || 'anonimo'}-${Date.now()}`),
             nome,
