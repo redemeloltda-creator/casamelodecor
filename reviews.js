@@ -24,12 +24,14 @@
 
   const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
 
+  const obterComentarioTexto = (avaliacao) => String(avaliacao?.comentario || avaliacao?.mensagem || '').trim();
+
   const obterIdAvaliacao = (avaliacao) => {
     const idOriginal = String(avaliacao?.id || '').trim();
     if (idOriginal) return idOriginal;
 
     const celular = normalizarCelular(avaliacao?.celular);
-    return `${celular}-${String(avaliacao?.comentario || '').trim()}`;
+    return `${celular}-${obterComentarioTexto(avaliacao)}`;
   };
 
   const normalizarStringComparacao = (valor) => String(valor || '').trim();
@@ -37,7 +39,7 @@
   const normalizarListaAvaliacoes = (valor) => {
     if (!Array.isArray(valor)) return [];
 
-    return valor.filter((item) => item && typeof item === 'object' && item.comentario);
+    return valor.filter((item) => item && typeof item === 'object' && obterComentarioTexto(item));
   };
 
   const mapearAvaliacaoSupabase = (avaliacao = {}) => ({
@@ -46,7 +48,7 @@
     celular: normalizarCelular(avaliacao.celular),
     foto: String(avaliacao.foto || '').trim(),
     nota: Number(avaliacao.nota) || 0,
-    comentario: String(avaliacao.comentario || '').trim(),
+    comentario: obterComentarioTexto(avaliacao),
     dataAvaliacao: avaliacao.created_at || avaliacao.data_avaliacao || avaliacao.criado_em || null
   });
 
@@ -159,9 +161,16 @@
           celular: normalizarCelular(avaliacao?.celular),
           foto: String(avaliacao?.foto || '').trim() || null,
           nota: Number(avaliacao?.nota) || 0,
-          comentario: String(avaliacao?.comentario || '').trim()
+          comentario: obterComentarioTexto(avaliacao),
+          mensagem: obterComentarioTexto(avaliacao)
         };
         const payloads = [
+          {
+            id: payloadBase.id,
+            nome: payloadBase.nome,
+            mensagem: payloadBase.mensagem,
+            created_at: instanteCriacao
+          },
           { ...payloadBase, created_at: instanteCriacao },
           { ...payloadBase, data_avaliacao: instanteCriacao },
           { ...payloadBase, created_at: instanteCriacao, data_avaliacao: instanteCriacao }
