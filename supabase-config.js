@@ -184,6 +184,33 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return Number.isFinite(numero) ? numero : 0;
   };
 
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const isUuid = (valor) => UUID_REGEX.test(String(valor || '').trim());
+
+  const normalizarItensCarrinhoJson = (itens = []) => {
+    if (!Array.isArray(itens)) return [];
+
+    return itens.map((item = {}) => ({
+      id: String(item.id || item.produto_id || item.produtoId || '').trim() || null,
+      produto_id: isUuid(item.produto_id || item.produtoId || item.id) ? String(item.produto_id || item.produtoId || item.id).trim() : null,
+      nome: String(item.nome || 'Produto').trim(),
+      preco: String(item.preco || '').trim(),
+      imagem: String(item.imagem || '').trim(),
+      pagina: String(item.pagina || '').trim(),
+      linkCompra: String(item.linkCompra || item.link_compra || '').trim(),
+      quantidade: Math.max(1, Number(item.quantidade) || 1),
+      criadoEm: item.criadoEm || item.adicionadoEm || item.criado_em || new Date().toISOString(),
+      atualizadoEm: item.atualizadoEm || item.atualizado_em || new Date().toISOString()
+    }));
+  };
+
+  const normalizarItensCarrinhoTabela = (carrinhoId, itens = []) => normalizarItensCarrinhoJson(itens).map((item) => ({
+    carrinho_id: carrinhoId,
+    produto_id: item.produto_id,
+    quantidade: item.quantidade,
+    preco_unitario: parsePrecoNumerico(item.preco)
+  }));
+
   const buscarCarrinhoAtivoMaisRecente = async (queryBase) => {
     const colunasOrdenacao = ['created_at', 'atualizado_em', 'criado_em'];
     let ultimoErro = null;
@@ -201,13 +228,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     }
 
     return { data: null, error: ultimoErro };
-  };
-
-  const erroConflitoSemConstraint = (erro) => {
-    if (!erro) return false;
-    if (erro.code === '42P10') return true;
-    const mensagem = `${erro.message || ''} ${erro.details || ''}`.toLowerCase();
-    return mensagem.includes('on conflict') && mensagem.includes('constraint');
   };
 
   const atualizarOuInserirCarrinhoJson = async (celular, itens = []) => {
@@ -581,6 +601,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       return executarConsulta('salvarCarrinho', false, async () => {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return false;
+        const itensNormalizadosJson = normalizarItensCarrinhoJson(itens);
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
 
         const payloadBase = {
@@ -589,32 +610,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           ...(clienteId ? { cliente_id: clienteId } : {})
         };
 
-        const tentativasColunaCelular = [
-          // Estrutura atual da tabela `carrinhos` usa `celular`.
-          // Mantemos `cliente_celular` apenas como fallback para projetos antigos.
-          { coluna: 'celular', onConflict: 'celular' },
-          { coluna: 'cliente_celular', onConflict: 'cliente_celular' }
-        ];
-
-        let error = null;
-        for (const tentativa of tentativasColunaCelular) {
-          const payload = {
-            ...payloadBase,
-            [tentativa.coluna]: celularNormalizado
-          };
-          const resposta = await client.from('carrinhos').upsert(payload, { onConflict: tentativa.onConflict });
-          error = resposta?.error || null;
-
-          if (!error) return true;
-          if (erroConflitoSemConstraint(error)) {
-            break;
-          }
-          if (error.code !== '42703') {
-            return false;
-          }
-        }
-
-        const fallbackJsonCarrinho = await atualizarOuInserirCarrinhoJson(celularNormalizado, itens);
+        const fallbackJsonCarrinho = await atualizarOuInserirCarrinhoJson(celularNormalizado, itensNormalizadosJson);
         if (fallbackJsonCarrinho.sucesso) return true;
 
         const criarBuscaCarrinhoPorCelular = () => {
@@ -682,17 +678,17 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
           if (erroNovoCarrinho || !novoCarrinho?.id) return false;
           carrinhoId = novoCarrinho.id;
+        } else {
+          await client
+            .from('carrinhos')
+            .update(payloadBase)
+            .eq('id', carrinhoId);
         }
 
         await client.from('itens_carrinho').delete().eq('carrinho_id', carrinhoId);
-        if (!Array.isArray(itens) || !itens.length) return true;
+        if (!itensNormalizadosJson.length) return true;
 
-        const itensNormalizados = itens.map((item) => ({
-          carrinho_id: carrinhoId,
-          produto_id: item?.produto_id || item?.produtoId || item?.id || null,
-          quantidade: Math.max(1, Number(item?.quantidade) || 1),
-          preco_unitario: parsePrecoNumerico(item?.preco_unitario ?? item?.preco)
-        }));
+        const itensNormalizados = normalizarItensCarrinhoTabela(carrinhoId, itensNormalizadosJson);
 
         const { error: erroItens } = await client.from('itens_carrinho').insert(itensNormalizados);
         return !erroItens;
@@ -703,8 +699,27 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
 
-        const mapearItensCarrinho = (itensCarrinho = []) => itensCarrinho.map((item) => ({
-          id: item.produto_id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        for (const colunaCelular of ['celular', 'cliente_celular']) {
+          const query = aplicarFiltroCelular(
+            client
+              .from('carrinhos')
+              .select('itens, atualizado_em, criado_em')
+              .order('atualizado_em', { ascending: false })
+              .limit(1),
+            colunaCelular,
+            celularNormalizado
+          );
+          if (!query) continue;
+
+          const { data, error } = await query.maybeSingle();
+          if (erroColunaInexistente(error, colunaCelular) || erroColunaInexistente(error, 'itens')) continue;
+          if (!error && Array.isArray(data?.itens)) {
+            return normalizarItensCarrinhoJson(data.itens);
+          }
+        }
+
+        const mapearItensCarrinho = (itensCarrinho = []) => itensCarrinho.map((item, index) => ({
+          id: item.produto_id || `item-${index + 1}`,
           produto_id: item.produto_id || null,
           nome: 'Produto',
           preco: Number(item.preco_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
