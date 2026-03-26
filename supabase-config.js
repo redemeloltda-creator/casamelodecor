@@ -798,7 +798,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const userId = await obterUserIdSessao();
 
         const { error } = await client.from('historico_compras').insert({
-          cliente_celular: celularNormalizado,
+          celular: celularNormalizado,
           itens,
           data_compra: new Date().toISOString(),
           ...(clienteId ? { cliente_id: clienteId } : {}),
@@ -833,7 +833,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
             client
               .from('historico_compras')
               .select('*'),
-            'cliente_celular',
+            'celular',
             celularNormalizado
           );
           if (!query) return [];
@@ -846,7 +846,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (error || !Array.isArray(data)) return [];
 
         return data.map((item) => ({
-          celular: item.cliente_celular,
+          celular: item.celular,
           itens: Array.isArray(item.itens) ? item.itens : [],
           data: item.data_compra
         }));
