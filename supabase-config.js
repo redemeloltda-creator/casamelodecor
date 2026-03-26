@@ -160,6 +160,25 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return Number.isFinite(numero) ? numero : 0;
   };
 
+  const buscarCarrinhoAtivoMaisRecente = async (queryBase) => {
+    const colunasOrdenacao = ['criado_em', 'created_at', 'atualizado_em'];
+    let ultimoErro = null;
+
+    for (const coluna of colunasOrdenacao) {
+      const { data, error } = await queryBase()
+        .order(coluna, { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error) return { data, error: null };
+      ultimoErro = error;
+      if (erroColunaInexistente(error, coluna)) continue;
+      return { data: null, error };
+    }
+
+    return { data: null, error: ultimoErro };
+  };
+
   const obterContextoAuthDebug = async () => {
     if (!client?.auth) {
       return {
@@ -511,14 +530,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
         if (!clienteId) return false;
 
-        const { data: carrinhoExistente } = await client
+        const { data: carrinhoExistente } = await buscarCarrinhoAtivoMaisRecente(() => client
           .from('carrinhos')
           .select('id')
           .eq('cliente_id', clienteId)
-          .eq('status', 'ativo')
-          .order('criado_em', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .eq('status', 'ativo'));
 
         let carrinhoId = carrinhoExistente?.id || null;
         if (!carrinhoId) {
@@ -576,14 +592,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
         if (clienteId) {
-          const { data: carrinhoAtivo, error: erroCarrinho } = await client
+          const { data: carrinhoAtivo, error: erroCarrinho } = await buscarCarrinhoAtivoMaisRecente(() => client
             .from('carrinhos')
             .select('id')
             .eq('cliente_id', clienteId)
-            .eq('status', 'ativo')
-            .order('criado_em', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .eq('status', 'ativo'));
 
           if (!erroCarrinho && carrinhoAtivo?.id) {
             const itensAtivos = await carregarItensPorCarrinhoId(carrinhoAtivo.id);
@@ -594,20 +607,20 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const colunasCelularCarrinho = ['celular', 'cliente_celular'];
 
         for (const colunaCelular of colunasCelularCarrinho) {
-          const queryCarrinhoPorCelular = aplicarFiltroCelular(
+          const criarQueryCarrinhoPorCelular = () => aplicarFiltroCelular(
             client
               .from('carrinhos')
               .select('id')
-              .eq('status', 'ativo')
-              .order('criado_em', { ascending: false })
-              .limit(1),
+              .eq('status', 'ativo'),
             colunaCelular,
             celularNormalizado
           );
 
-          if (!queryCarrinhoPorCelular) continue;
+          if (!criarQueryCarrinhoPorCelular()) continue;
 
-          const { data: carrinhoPorCelular, error: erroCarrinhoPorCelular } = await queryCarrinhoPorCelular.maybeSingle();
+          const { data: carrinhoPorCelular, error: erroCarrinhoPorCelular } = await buscarCarrinhoAtivoMaisRecente(
+            criarQueryCarrinhoPorCelular
+          );
           if (erroColunaInexistente(erroCarrinhoPorCelular, colunaCelular)) continue;
           if (!erroCarrinhoPorCelular && carrinhoPorCelular?.id) {
             const itensPorCelular = await carregarItensPorCarrinhoId(carrinhoPorCelular.id);
