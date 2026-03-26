@@ -128,7 +128,15 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
     const mensagem = `${erro.message || ''} ${erro.details || ''} ${erro.hint || ''}`.toLowerCase();
     if (!mensagem) return false;
-    return mensagem.includes(`'${String(coluna).toLowerCase()}'`) && (
+    const colunaNormalizada = String(coluna).toLowerCase();
+    const referenciaColuna = (
+      mensagem.includes(`'${colunaNormalizada}'`)
+      || mensagem.includes(`.${colunaNormalizada}`)
+      || mensagem.includes(` ${colunaNormalizada} `)
+      || mensagem.endsWith(colunaNormalizada)
+    );
+
+    return referenciaColuna && (
       mensagem.includes('does not exist')
       || mensagem.includes('could not find the')
       || mensagem.includes('schema cache')
@@ -161,7 +169,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const buscarCarrinhoAtivoMaisRecente = async (queryBase) => {
-    const colunasOrdenacao = ['criado_em', 'created_at', 'atualizado_em'];
+    const colunasOrdenacao = ['created_at', 'atualizado_em', 'criado_em'];
     let ultimoErro = null;
 
     for (const coluna of colunasOrdenacao) {
