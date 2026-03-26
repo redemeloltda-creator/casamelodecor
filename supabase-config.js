@@ -882,7 +882,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     async adicionarAvaliacao(avaliacao = {}) {
       return executarConsulta('adicionarAvaliacao', null, async () => {
         const celular = normalizarCelular(avaliacao?.celular);
-        const comentario = String(avaliacao?.comentario || '').trim();
+        const comentario = String(avaliacao?.comentario || avaliacao?.mensagem || '').trim();
         const nome = String(avaliacao?.nome || '').trim();
         const nota = Math.max(1, Math.min(5, Number(avaliacao?.nota) || 0));
         if (!comentario || !nome || !nota) return null;
