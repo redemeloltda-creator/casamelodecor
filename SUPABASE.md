@@ -163,11 +163,12 @@ Para produção, o ideal é evoluir depois para um modelo com:
 ## 7. Erro comum: 404 ao acessar `/rest/v1/clientes`
 Esse erro quase sempre significa que o banco do Supabase **não está com a mesma estrutura esperada pelo site**.
 
-O front-end desta loja consulta exatamente estas tabelas e colunas:
-- `public.clientes` com `nome`, `celular`, `senha`, `foto`, `receber_novidades`, `ultimo_acesso`;
-- `public.carrinhos` com `cliente_celular`, `itens`, `atualizado_em`;
-- `public.historico_compras` com `cliente_celular`, `itens`, `data_compra`;
-- `public.comentarios` com `id`, `nome`, `celular`, `foto`, `nota`, `comentario`, `data_avaliacao`.
+O front-end desta loja consulta exatamente estas tabelas:
+- `public.clientes` (`id`, `nome`, `celular`, `senha_hash`/`senha`, `foto`, `receber_novidades`, `ultimo_acesso`);
+- `public.carrinhos` (`id`, `cliente_id`, `cliente_celular`, `status`, `atualizado_em`);
+- `public.itens_carrinho` (`carrinho_id`, `produto_id`, `quantidade`, `preco_unitario`);
+- `public.historico_compras` (`cliente_celular`, `cliente_id`, `itens`, `data_compra`);
+- `public.comentarios` em formato `created_at` ou `data_avaliacao`.
 
 Se no painel do Supabase você vê tabelas como `usuarios` e uma `comentarios` com `user_id` / `created_at`, isso é **outro modelo de banco** e o site não consegue consultar esses endpoints. Nesse caso:
 1. execute `database/supabase-compat.sql` para adaptar a estrutura; ou
