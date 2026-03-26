@@ -115,7 +115,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       return query.eq(coluna, valores[0]);
     }
 
-    return query.or(valores.map((valor) => `${coluna}.eq.${valor}`).join(','));
+    return query.in(coluna, valores);
   };
 
   const identificarCliente = (celular) => {
