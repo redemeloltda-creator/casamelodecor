@@ -122,6 +122,19 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return query.or(filtroOr);
   };
 
+  const erroColunaInexistente = (erro, coluna) => {
+    if (!erro) return false;
+    if (erro.code === '42703' || erro.code === 'PGRST204') return true;
+
+    const mensagem = `${erro.message || ''} ${erro.details || ''} ${erro.hint || ''}`.toLowerCase();
+    if (!mensagem) return false;
+    return mensagem.includes(`'${String(coluna).toLowerCase()}'`) && (
+      mensagem.includes('does not exist')
+      || mensagem.includes('could not find the')
+      || mensagem.includes('schema cache')
+    );
+  };
+
   const identificarCliente = (celular) => {
     const query = aplicarFiltroCelular(client.from('clientes').select('*'), 'celular', celular);
     return query ? query.maybeSingle() : Promise.resolve({ data: null, error: null });
@@ -595,7 +608,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           if (!queryCarrinhoPorCelular) continue;
 
           const { data: carrinhoPorCelular, error: erroCarrinhoPorCelular } = await queryCarrinhoPorCelular.maybeSingle();
-          if (erroCarrinhoPorCelular?.code === '42703') continue;
+          if (erroColunaInexistente(erroCarrinhoPorCelular, colunaCelular)) continue;
           if (!erroCarrinhoPorCelular && carrinhoPorCelular?.id) {
             const itensPorCelular = await carregarItensPorCarrinhoId(carrinhoPorCelular.id);
             if (itensPorCelular) return itensPorCelular;
@@ -611,7 +624,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           if (!query) continue;
 
           const { data, error } = await query.maybeSingle();
-          if (error?.code === '42703') continue;
+          if (erroColunaInexistente(error, colunaCelular)) continue;
           if (!error) return Array.isArray(data?.itens) ? data.itens : [];
         }
 
