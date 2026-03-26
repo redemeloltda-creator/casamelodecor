@@ -470,14 +470,28 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return false;
 
-        const payload = {
-          cliente_celular: celularNormalizado,
+        const payloadBase = {
           itens,
           atualizado_em: new Date().toISOString()
         };
 
-        const { error } = await client.from('carrinhos').upsert(payload, { onConflict: 'cliente_celular' });
-        if (!error) return true;
+        const tentativasColunaCelular = [
+          { coluna: 'cliente_celular', onConflict: 'cliente_celular' },
+          { coluna: 'celular', onConflict: 'celular' }
+        ];
+
+        let error = null;
+        for (const tentativa of tentativasColunaCelular) {
+          const payload = {
+            ...payloadBase,
+            [tentativa.coluna]: celularNormalizado
+          };
+          const resposta = await client.from('carrinhos').upsert(payload, { onConflict: tentativa.onConflict });
+          error = resposta?.error || null;
+
+          if (!error) return true;
+          if (error.code !== '42703') break;
+        }
 
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
         if (!clienteId) return false;
@@ -527,10 +541,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
 
-        const query = aplicarFiltroCelular(client.from('carrinhos').select('itens'), 'cliente_celular', celularNormalizado);
-        if (query) {
+        const colunasCelularCarrinho = ['cliente_celular', 'celular'];
+        for (const colunaCelular of colunasCelularCarrinho) {
+          const query = aplicarFiltroCelular(client.from('carrinhos').select('itens'), colunaCelular, celularNormalizado);
+          if (!query) continue;
+
           const { data, error } = await query.maybeSingle();
           if (!error) return Array.isArray(data?.itens) ? data.itens : [];
+          if (error.code !== '42703') break;
         }
 
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
