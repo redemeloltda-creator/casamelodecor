@@ -1,59 +1,16 @@
+import { cartStore } from './cart-store.js';
+
 (function () {
-  const CHAVE_CARRINHO = 'casaMeloCarrinho';
-  const supabaseApi = window.CASAMELO_SUPABASE || null;
-  const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
-
-  const lerSessao = () => {
-    try {
-      return JSON.parse(localStorage.getItem('casamelo_usuario_logado') || 'null');
-    } catch (erro) {
-      return null;
-    }
-  };
-
-  const sincronizarCarrinhoRemoto = async (itens) => {
-    if (!supabaseAtivo) return;
-
-    const usuario = lerSessao();
-    const celular = supabaseApi.normalizarCelular(usuario?.celular);
-    if (!celular) return;
-
-    await supabaseApi.salvarCarrinho(celular, itens);
-  };
-
-  const lerCarrinho = () => {
-    try {
-      const dados = JSON.parse(localStorage.getItem(CHAVE_CARRINHO));
-      return Array.isArray(dados) ? dados : [];
-    } catch (erro) {
-      return [];
-    }
-  };
-
-  const salvarCarrinho = (itens) => {
-    localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(itens));
-    document.dispatchEvent(new Event('casamelo-cart-change'));
-    sincronizarCarrinhoRemoto(itens);
-  };
-
-  const adicionarItem = (produto) => {
-    const carrinho = lerCarrinho();
-    carrinho.push({ ...produto, quantidade: 1, adicionadoEm: new Date().toISOString() });
-    salvarCarrinho(carrinho);
-  };
-
-  const mostrarConfirmacao = (nomeProduto) => {
+  const mostrarConfirmacao = (nomeProduto, quantidadeAtual) => {
     const avisoAnterior = document.querySelector('.cart-toast');
     if (avisoAnterior) avisoAnterior.remove();
 
     const toast = document.createElement('div');
     toast.className = 'cart-toast';
-    toast.textContent = `${nomeProduto} adicionado ao carrinho.`;
+    toast.textContent = `${nomeProduto} no carrinho (x${quantidadeAtual}).`;
     document.body.appendChild(toast);
 
-    setTimeout(() => {
-      toast.classList.add('visivel');
-    }, 10);
+    setTimeout(() => toast.classList.add('visivel'), 10);
 
     setTimeout(() => {
       toast.classList.remove('visivel');
@@ -75,8 +32,10 @@
     botao.textContent = 'Adicionar ao carrinho';
 
     botao.addEventListener('click', () => {
-      adicionarItem({ nome, preco, imagem, pagina: window.location.pathname, linkCompra });
-      mostrarConfirmacao(nome);
+      const itens = cartStore.adicionarItem({ nome, preco, imagem, pagina: window.location.pathname, linkCompra });
+      const id = cartStore.criarIdProduto({ nome, preco, linkCompra, pagina: window.location.pathname });
+      const item = itens.find((linha) => linha.id === id);
+      mostrarConfirmacao(nome, item?.quantidade || 1);
     });
 
     return botao;
