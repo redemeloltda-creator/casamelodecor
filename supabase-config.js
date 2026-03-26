@@ -111,7 +111,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const aplicarFiltroCelular = (query, coluna, celular) => {
     const valores = valoresFiltroCelular(celular);
     if (!valores.length) return null;
-    return valores.length === 1 ? query.eq(coluna, valores[0]) : query.in(coluna, valores);
+    if (valores.length === 1) {
+      return query.eq(coluna, valores[0]);
+    }
+
+    const valoresEscapados = valores.map((valor) => `"${String(valor).replace(/"/g, '\\"')}"`);
+    return query.filter(coluna, 'in', `(${valoresEscapados.join(',')})`);
   };
 
   const identificarCliente = (celular) => {
