@@ -183,3 +183,33 @@ Se no painel do Supabase você vê tabelas como `usuarios` e uma `comentarios` c
 2. recrie do zero com `database/schema.supabase.sql`.
 
 Depois disso, recarregue o site. O arquivo `supabase-config.js` agora também registra um erro mais claro no console quando detecta essa incompatibilidade.
+
+
+## 8. Erro comum: "Envie TODOS os campos obrigatórios"
+Se você recebeu uma mensagem como:
+
+```json
+{
+  "nome": "Carlos",
+  "celular": "38998467031"
+}
+```
+
+normalmente o problema é que o endpoint de cadastro/login também exige **senha** (e em alguns fluxos, `receberNovidades` é opcional).
+
+Use este payload mínimo para cadastro:
+
+```json
+{
+  "nome": "Carlos",
+  "celular": "38998467031",
+  "senha": "123456"
+}
+```
+
+Checklist rápido:
+- `nome`: texto não vazio;
+- `celular`: DDD + 9 números (11 dígitos, com ou sem máscara);
+- `senha`: pelo menos 6 caracteres.
+
+No código atual, o front-end normaliza o celular e só aceita cadastro quando os três campos são válidos no `auth.js`.
