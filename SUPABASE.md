@@ -167,6 +167,47 @@ Para produção, o ideal é evoluir depois para um modelo com:
 - senhas com hash;
 - Storage para fotos em vez de Data URL.
 
+### 6.4. Fluxo direto com Supabase Auth + `clientes`
+Se você já está usando Supabase Auth e quer seguir exatamente o fluxo de criar conta, login e depois criar o registro em `clientes`, pode usar:
+
+```js
+// 1) Criar conta
+const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+  email,
+  password
+});
+if (signUpError) throw signUpError;
+
+// 2) Login
+const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+  email,
+  password
+});
+if (signInError) throw signInError;
+
+// 3) Criar cliente
+const { data: userData, error: userError } = await supabase.auth.getUser();
+if (userError) throw userError;
+
+const user = userData.user;
+if (!user) throw new Error('Usuário não autenticado');
+
+const { data: cliente, error: clienteError } = await supabase
+  .from('clientes')
+  .insert({
+    user_id: user.id,
+    nome: 'Carlos',
+    celular: '38998467031'
+  })
+  .select()
+  .single();
+
+if (clienteError) throw clienteError;
+console.log(cliente);
+```
+
+Se preferir, já existem helpers prontos no arquivo `supabase-client.js`: `criarConta`, `loginComEmail` e `criarCliente`.
+
 
 ## 7. Erro comum: 404 ao acessar `/rest/v1/clientes`
 Esse erro quase sempre significa que o banco do Supabase **não está com a mesma estrutura esperada pelo site**.
