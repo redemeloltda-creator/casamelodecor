@@ -528,7 +528,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         let ultimoErroCadastro = null;
         for (const payload of payloads) {
-          const { data, error } = await client.from('clientes').insert(payload).select('*').single();
+          const dados = { ...payload };
+          console.log('[Casa Melo Decor] cadastrarCliente dados para insert:', JSON.stringify(dados, null, 2));
+
+          const { data, error } = await client.from('clientes').insert(dados).select('*').single();
           if (!error && data) return mapearCliente(data);
           ultimoErroCadastro = error || ultimoErroCadastro;
         }
