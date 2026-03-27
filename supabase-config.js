@@ -184,6 +184,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return Number.isFinite(numero) ? numero : 0;
   };
 
+  const calcularTotalItens = (itens = []) => itens.reduce((acumulador, item) => {
+    const preco = parsePrecoNumerico(item?.preco ?? item?.preco_unitario ?? item?.precoUnitario ?? 0);
+    const quantidade = Math.max(1, Number(item?.quantidade) || 1);
+    return acumulador + (preco * quantidade);
+  }, 0);
+
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const isUuid = (valor) => UUID_REGEX.test(String(valor || '').trim());
 
@@ -807,6 +813,65 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (!celularNormalizado || !Array.isArray(itens) || !itens.length) return false;
         const clienteId = await obterClienteIdPorCelular(celularNormalizado);
         const userId = await obterUserIdSessao();
+
+        const finalizarPedidoAuth = async () => {
+          const usuarioAuth = await obterUsuarioAuthAtual();
+          if (!usuarioAuth?.id) return false;
+
+          const { data: carrinhoAtivo, error: erroCarrinhoAtivo } = await client
+            .from('carrinhos')
+            .select('*')
+            .eq('user_id', usuarioAuth.id)
+            .eq('status', 'ativo')
+            .single();
+          if (erroCarrinhoAtivo || !carrinhoAtivo?.id) return false;
+
+          const { data: itensCarrinho, error: erroItensCarrinho } = await client
+            .from('carrinho_itens')
+            .select('*')
+            .eq('carrinho_id', carrinhoAtivo.id);
+          if (erroItensCarrinho || !Array.isArray(itensCarrinho) || !itensCarrinho.length) return false;
+
+          const totalPedido = calcularTotalItens(itensCarrinho);
+
+          const { data: pedidoCriado, error: erroPedido } = await client
+            .from('pedidos')
+            .insert({
+              user_id: usuarioAuth.id,
+              total: totalPedido
+            })
+            .select()
+            .single();
+          if (erroPedido || !pedidoCriado?.id) return false;
+
+          const itensPedido = itensCarrinho.map((item = {}) => ({
+            pedido_id: pedidoCriado.id,
+            produto_id: item.produto_id || null,
+            nome: String(item.nome || 'Produto').trim(),
+            preco: Number(item.preco ?? item.preco_unitario ?? 0) || 0,
+            quantidade: Math.max(1, Number(item.quantidade) || 1)
+          }));
+
+          const { error: erroItensPedido } = await client.from('pedido_itens').insert(itensPedido);
+          if (erroItensPedido) return false;
+
+          const { error: erroLimparCarrinho } = await client
+            .from('carrinho_itens')
+            .delete()
+            .eq('carrinho_id', carrinhoAtivo.id);
+          if (erroLimparCarrinho) return false;
+
+          const { error: erroFinalizarCarrinho } = await client
+            .from('carrinhos')
+            .update({ status: 'finalizado' })
+            .eq('id', carrinhoAtivo.id);
+          if (erroFinalizarCarrinho) return false;
+
+          return true;
+        };
+
+        const pedidoFinalizado = await finalizarPedidoAuth();
+        if (pedidoFinalizado) return true;
 
         const { error } = await client.from('historico_compras').insert({
           celular: celularNormalizado,
