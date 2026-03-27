@@ -197,7 +197,8 @@ const { data: cliente, error: clienteError } = await supabase
   .insert({
     user_id: user.id,
     nome: 'Carlos',
-    celular: '38998467031'
+    celular: '38998467031',
+    email: user.email
   })
   .select()
   .single();

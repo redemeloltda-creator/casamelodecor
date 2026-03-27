@@ -39,7 +39,8 @@ export async function criarCliente({ nome, celular }) {
     .insert({
       user_id: user.id,
       nome,
-      celular
+      celular,
+      email: user.email
     })
     .select()
     .single();
