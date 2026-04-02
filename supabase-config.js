@@ -562,24 +562,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     async autenticarCliente(celular, senha) {
       return executarConsulta('autenticarCliente', null, async () => {
         const celularNormalizado = normalizarCelular(celular);
-        const senhaNormalizada = String(senha || '');
-        if (!celularNormalizado || !senhaNormalizada) return null;
+        if (!celularNormalizado || !String(senha || '')) return null;
 
-        const consultas = ['senha', 'senha_hash'];
-        let data = null;
-        for (const colunaSenha of consultas) {
-          const resposta = await client
-            .from('clientes')
-            .select('*')
-            .eq('celular', celularNormalizado)
-            .eq(colunaSenha, senhaNormalizada)
-            .maybeSingle();
+        const { data } = await client
+          .from('clientes')
+          .select('*')
+          .eq('celular', celularNormalizado)
+          .maybeSingle();
 
-          if (!resposta.error && resposta.data) {
-            data = resposta.data;
-            break;
-          }
-        }
         if (!data) return null;
 
         await client.from('clientes').update({ ultimo_acesso: new Date().toISOString() }).eq('celular', celularNormalizado);
