@@ -197,8 +197,7 @@ const { data: cliente, error: clienteError } = await supabase
   .insert({
     user_id: user.id,
     nome: 'Carlos',
-    celular: '38998467031',
-    email: user.email
+    celular: '38998467031'
   })
   .select()
   .single();
@@ -208,6 +207,41 @@ console.log(cliente);
 ```
 
 Se preferir, já existem helpers prontos no arquivo `supabase-client.js`: `criarConta`, `loginComEmail` e `criarCliente`.
+
+### 6.5. Comandos corretos para `clientes`
+Use estes exemplos como base quando a tabela `public.clientes` estiver no schema deste repositório (`id`, `nome`, `celular`, `user_id`, sem coluna `email`):
+
+```js
+// Buscar cliente por celular
+const { data, error } = await supabase
+  .from('clientes')
+  .select('*')
+  .eq('celular', '38998467031')
+  .maybeSingle();
+
+// Inserir cliente (sem campo email)
+const { data: novoCliente, error: erroNovoCliente } = await supabase
+  .from('clientes')
+  .insert({
+    nome: 'Carlos',
+    celular: '38998467031',
+    user_id: user.id
+  })
+  .select()
+  .single();
+
+// Atualizar cliente por celular
+const { data: clienteAtualizado, error: erroAtualizacao } = await supabase
+  .from('clientes')
+  .update({
+    nome: 'Carlos Souza',
+    receber_novidades: true,
+    ultimo_acesso: new Date().toISOString()
+  })
+  .eq('celular', '38998467031')
+  .select()
+  .single();
+```
 
 
 ## 7. Erro comum: 404 ao acessar `/rest/v1/clientes`
