@@ -125,12 +125,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     if (valores.length === 1) {
       return query.eq(coluna, valores[0]);
     }
-
-    const filtroOr = valores
-      .map((valor) => `${coluna}.eq.${valor}`)
-      .join(',');
-
-    return query.or(filtroOr);
+    return query.in(coluna, valores);
   };
 
   const erroColunaInexistente = (erro, coluna) => {
