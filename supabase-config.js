@@ -535,15 +535,36 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         };
 
         let ultimoErroCadastro = null;
-        const dados = { ...registroPadrao };
-        console.log('[Casa Melo Decor] cadastrarCliente dados para insert:', JSON.stringify(dados, null, 2));
+        const dadosBase = { ...registroPadrao };
+        const tentativasCampos = [
+          ['nome', 'celular', 'senha', 'foto', 'receber_novidades', 'ultimo_acesso', 'user_id'],
+          ['nome', 'celular', 'foto', 'receber_novidades', 'ultimo_acesso', 'user_id'],
+          ['nome', 'celular', 'user_id']
+        ];
 
-        const { data, error } = await client.from('clientes').insert(dados).select('*').single();
-        if (!error && data) return mapearCliente(data);
-        ultimoErroCadastro = error || ultimoErroCadastro;
+        for (const campos of tentativasCampos) {
+          const dados = Object.fromEntries(
+            Object.entries(dadosBase).filter(([chave]) => campos.includes(chave))
+          );
+
+          console.log('[Casa Melo Decor] cadastrarCliente dados para insert:', JSON.stringify(dados, null, 2));
+          const { data, error } = await client.from('clientes').insert(dados).select('*').single();
+
+          if (!error && data) return mapearCliente(data);
+          ultimoErroCadastro = error || ultimoErroCadastro;
+
+          if (!error) continue;
+          const erroColuna = erroColunaInexistente(error, 'senha')
+            || erroColunaInexistente(error, 'senha_hash')
+            || erroColunaInexistente(error, 'foto')
+            || erroColunaInexistente(error, 'receber_novidades')
+            || erroColunaInexistente(error, 'ultimo_acesso');
+
+          if (!erroColuna) break;
+        }
 
         if (ultimoErroCadastro) {
-          await registrarFalhaOperacao('cadastrarCliente', { payload: dados, error: ultimoErroCadastro });
+          await registrarFalhaOperacao('cadastrarCliente', { payload: dadosBase, error: ultimoErroCadastro });
         }
         return null;
       });
