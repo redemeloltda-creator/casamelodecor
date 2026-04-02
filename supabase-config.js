@@ -540,40 +540,45 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async cadastrarCliente(clienteCadastro) {
       return executarConsulta('cadastrarCliente', null, async () => {
-        const userAuth = await validarUsuarioAutenticado('cadastrarCliente');
-        if (!userAuth?.id) return null;
-
-        const dadosLimpos = {
+        const userAuth = await obterUsuarioAuthAtual();
+        const dadosBase = {
           nome: String(clienteCadastro?.nome || '').trim(),
-          celular: normalizarCelular(clienteCadastro?.celular)
+          celular: normalizarCelular(clienteCadastro?.celular),
+          senha: String(clienteCadastro?.senha || ''),
+          senha_hash: String(clienteCadastro?.senha || ''),
+          foto: String(clienteCadastro?.foto || '').trim(),
+          receber_novidades: Boolean(clienteCadastro?.receberNovidades),
+          ultimo_acesso: null
         };
 
-        let ultimoErroCadastro = null;
-        const tentativasPayload = [
-          dadosLimpos,
-          { ...dadosLimpos, user_id: userAuth.id }
-        ];
+        let payloadTentativa = {
+          ...dadosBase,
+          ...(userAuth?.id ? { user_id: userAuth.id } : {})
+        };
+        let ultimaResposta = { data: null, error: null };
 
-        for (const dados of tentativasPayload) {
-          console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO:', JSON.stringify(dados, null, 2));
-          const { data, error } = await client.from('clientes').insert(dados).select('*').single();
+        while (Object.keys(payloadTentativa).length) {
+          console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO:', JSON.stringify(payloadTentativa, null, 2));
+          const { data, error } = await client.from('clientes').insert(payloadTentativa).select('*').single();
 
           if (!error && data) return mapearCliente(data);
-          ultimoErroCadastro = error || ultimoErroCadastro;
+          ultimaResposta = { data, error };
 
-          if (!error) continue;
-          const erroColuna = erroColunaInexistente(error, 'user_id')
-            || erroColunaInexistente(error, 'senha')
-            || erroColunaInexistente(error, 'senha_hash')
-            || erroColunaInexistente(error, 'foto')
-            || erroColunaInexistente(error, 'receber_novidades')
-            || erroColunaInexistente(error, 'ultimo_acesso');
+          if (!error) break;
 
-          if (!erroColuna) break;
+          const colunaInexistente = Object.keys(payloadTentativa)
+            .find((coluna) => erroColunaInexistente(error, coluna));
+
+          if (!colunaInexistente) break;
+          delete payloadTentativa[colunaInexistente];
         }
 
-        if (ultimoErroCadastro) {
-          await registrarFalhaOperacao('cadastrarCliente', { payload: dadosLimpos, error: ultimoErroCadastro });
+        if (ultimaResposta.error) {
+          await registrarFalhaOperacao('cadastrarCliente', {
+            payload: dadosBase,
+            payloadTentativa,
+            error: ultimaResposta.error
+          });
         }
         return null;
       });
@@ -604,6 +609,21 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         }
 
         if (!data) return null;
+
+        const senhaTexto = String(senha || '');
+        const senhaRemota = String(data.senha || data.senha_hash || '').trim();
+        if (!senhaRemota || senhaRemota !== senhaTexto) {
+          await registrarFalhaOperacao('autenticarCliente', {
+            celular: celularNormalizado,
+            payload: { senhaInformada: '***' },
+            error: {
+              message: 'Senha inválida ou indisponível na tabela clientes.',
+              details: 'A autenticação remota foi bloqueada para evitar login sem validar senha.',
+              hint: 'Garanta que a coluna senha/senha_hash esteja preenchida ou use Supabase Auth no fluxo de login.'
+            }
+          });
+          return null;
+        }
 
         for (const colunaCelular of obterColunasCelularClientes()) {
           const { error } = await client
