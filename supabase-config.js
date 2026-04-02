@@ -173,6 +173,20 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return sessaoLocal?.user_id || sessaoLocal?.userId || null;
   };
 
+  const validarUsuarioAutenticado = async (origemOperacao) => {
+    const userAuth = await obterUsuarioAuthAtual();
+    if (userAuth?.id) return userAuth;
+
+    await registrarFalhaOperacao(origemOperacao, {
+      error: {
+        message: 'Supabase Auth sem usuário autenticado.',
+        details: 'client.auth.getUser() retornou user null antes da operação.',
+        hint: 'Faça login via supabase.auth.signInWithPassword/signInWithOtp antes de gravar em public.clientes.'
+      }
+    });
+    return null;
+  };
+
   const parsePrecoNumerico = (preco) => {
     const valor = String(preco ?? '')
       .replace(/\s/g, '')
@@ -507,37 +521,29 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async cadastrarCliente(clienteCadastro) {
       return executarConsulta('cadastrarCliente', null, async () => {
-        const userId = await obterUserIdSessao();
+        const userAuth = await validarUsuarioAutenticado('cadastrarCliente');
+        if (!userAuth?.id) return null;
+
         const registroPadrao = {
           nome: String(clienteCadastro?.nome || '').trim(),
           celular: normalizarCelular(clienteCadastro?.celular),
-          senha_hash: String(clienteCadastro?.senha || ''),
+          senha: String(clienteCadastro?.senha || ''),
           foto: String(clienteCadastro?.foto || '').trim(),
           receber_novidades: Boolean(clienteCadastro?.receberNovidades),
           ultimo_acesso: new Date().toISOString(),
-          ...(userId ? { user_id: userId } : {})
+          user_id: userAuth.id
         };
 
-        const payloads = [
-          registroPadrao,
-          {
-            ...registroPadrao,
-            senha: registroPadrao.senha_hash
-          }
-        ];
-
         let ultimoErroCadastro = null;
-        for (const payload of payloads) {
-          const dados = { ...payload };
-          console.log('[Casa Melo Decor] cadastrarCliente dados para insert:', JSON.stringify(dados, null, 2));
+        const dados = { ...registroPadrao };
+        console.log('[Casa Melo Decor] cadastrarCliente dados para insert:', JSON.stringify(dados, null, 2));
 
-          const { data, error } = await client.from('clientes').insert(dados).select('*').single();
-          if (!error && data) return mapearCliente(data);
-          ultimoErroCadastro = error || ultimoErroCadastro;
-        }
+        const { data, error } = await client.from('clientes').insert(dados).select('*').single();
+        if (!error && data) return mapearCliente(data);
+        ultimoErroCadastro = error || ultimoErroCadastro;
 
         if (ultimoErroCadastro) {
-          await registrarFalhaOperacao('cadastrarCliente', { payloads, error: ultimoErroCadastro });
+          await registrarFalhaOperacao('cadastrarCliente', { payload: dados, error: ultimoErroCadastro });
         }
         return null;
       });
@@ -580,7 +586,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (Object.hasOwn(campos, 'senha')) {
           const senha = String(campos.senha || '');
           payload.senha = senha;
-          payload.senha_hash = senha;
         }
         if (Object.hasOwn(campos, 'foto')) payload.foto = String(campos.foto || '').trim();
         if (Object.hasOwn(campos, 'receberNovidades')) payload.receber_novidades = Boolean(campos.receberNovidades);
