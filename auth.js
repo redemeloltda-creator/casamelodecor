@@ -758,8 +758,6 @@
     ));
 
     salvarUsuarios(usuariosAtualizados);
-    await sincronizarClienteRemoto(celular, { senha: novaSenha });
-
     feedback.textContent = 'Senha redefinida com sucesso. Agora você já pode fazer login.';
     formRecuperacao.reset();
     trocarAba('login');
@@ -926,7 +924,6 @@
 
       usuarios[indiceUsuario].senha = String(novaSenha);
       salvarUsuarios(usuarios);
-      sincronizarClienteRemoto(celular, { senha: String(novaSenha) });
       feedback.textContent = 'Senha alterada com sucesso.';
     });
   }
