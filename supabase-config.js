@@ -108,7 +108,16 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       : [celularNormalizado];
   };
 
-  const colunasCelularClientes = ['celular', 'telefone', 'contato'];
+  const colunasCelularClientesBase = ['celular', 'telefone', 'contato'];
+  const colunasCelularIndisponiveis = new Set();
+
+  const obterColunasCelularClientes = () => colunasCelularClientesBase
+    .filter((coluna) => !colunasCelularIndisponiveis.has(coluna));
+
+  const marcarColunaCelularIndisponivel = (coluna) => {
+    if (!coluna) return;
+    colunasCelularIndisponiveis.add(String(coluna));
+  };
 
   const aplicarFiltroCelular = (query, coluna, celular) => {
     const valores = valoresFiltroCelular(celular);
@@ -146,25 +155,27 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const identificarCliente = async (celular) => {
-    for (const colunaCelular of colunasCelularClientes) {
+    for (const colunaCelular of obterColunasCelularClientes()) {
       const query = aplicarFiltroCelular(client.from('clientes').select('*'), colunaCelular, celular);
       if (!query) return { data: null, error: null };
 
       const resposta = await query.maybeSingle();
       if (!resposta.error || !erroColunaInexistente(resposta.error, colunaCelular)) return resposta;
+      marcarColunaCelularIndisponivel(colunaCelular);
     }
 
     return { data: null, error: null };
   };
 
   const obterClienteIdPorCelular = async (celular) => {
-    for (const colunaCelular of colunasCelularClientes) {
+    for (const colunaCelular of obterColunasCelularClientes()) {
       const query = aplicarFiltroCelular(client.from('clientes').select('id'), colunaCelular, celular);
       if (!query) return null;
 
       const { data, error } = await query.maybeSingle();
       if (!error && data?.id) return data.id;
       if (error && !erroColunaInexistente(error, colunaCelular)) return null;
+      if (error) marcarColunaCelularIndisponivel(colunaCelular);
     }
 
     return null;
@@ -578,7 +589,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (!celularNormalizado || !String(senha || '')) return null;
 
         let data = null;
-        for (const colunaCelular of colunasCelularClientes) {
+        for (const colunaCelular of obterColunasCelularClientes()) {
           const resposta = await client
             .from('clientes')
             .select('*')
@@ -593,17 +604,20 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           if (resposta.error && !erroColunaInexistente(resposta.error, colunaCelular)) {
             break;
           }
+
+          if (resposta.error) marcarColunaCelularIndisponivel(colunaCelular);
         }
 
         if (!data) return null;
 
-        for (const colunaCelular of colunasCelularClientes) {
+        for (const colunaCelular of obterColunasCelularClientes()) {
           const { error } = await client
             .from('clientes')
             .update({ ultimo_acesso: new Date().toISOString() })
             .eq(colunaCelular, celularNormalizado);
 
           if (!error || !erroColunaInexistente(error, colunaCelular)) break;
+          marcarColunaCelularIndisponivel(colunaCelular);
         }
 
         return mapearCliente(data);
@@ -634,7 +648,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         while (Object.keys(payloadTentativa).length) {
           let houveErroColunaFiltro = false;
 
-          for (const colunaCelular of colunasCelularClientes) {
+          for (const colunaCelular of obterColunasCelularClientes()) {
             const { data, error } = await client
               .from('clientes')
               .update(payloadTentativa)
@@ -646,6 +660,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
             if (!error && data) return mapearCliente(data);
             if (!error) return null;
             if (erroColunaInexistente(error, colunaCelular)) {
+              marcarColunaCelularIndisponivel(colunaCelular);
               houveErroColunaFiltro = true;
               continue;
             }
@@ -679,10 +694,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return false;
 
-        for (const colunaCelular of colunasCelularClientes) {
+        for (const colunaCelular of obterColunasCelularClientes()) {
           const { error } = await client.from('clientes').delete().eq(colunaCelular, celularNormalizado);
           if (!error) return true;
           if (!erroColunaInexistente(error, colunaCelular)) return false;
+          marcarColunaCelularIndisponivel(colunaCelular);
         }
 
         return false;
