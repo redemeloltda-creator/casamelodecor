@@ -524,37 +524,27 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const userAuth = await validarUsuarioAutenticado('cadastrarCliente');
         if (!userAuth?.id) return null;
 
-        const registroPadrao = {
+        const dadosLimpos = {
           nome: String(clienteCadastro?.nome || '').trim(),
-          celular: normalizarCelular(clienteCadastro?.celular),
-          senha: String(clienteCadastro?.senha || ''),
-          foto: String(clienteCadastro?.foto || '').trim(),
-          receber_novidades: Boolean(clienteCadastro?.receberNovidades),
-          ultimo_acesso: new Date().toISOString(),
-          user_id: userAuth.id
+          celular: normalizarCelular(clienteCadastro?.celular)
         };
 
         let ultimoErroCadastro = null;
-        const dadosBase = { ...registroPadrao };
-        const tentativasCampos = [
-          ['nome', 'celular', 'senha', 'foto', 'receber_novidades', 'ultimo_acesso', 'user_id'],
-          ['nome', 'celular', 'foto', 'receber_novidades', 'ultimo_acesso', 'user_id'],
-          ['nome', 'celular', 'user_id']
+        const tentativasPayload = [
+          dadosLimpos,
+          { ...dadosLimpos, user_id: userAuth.id }
         ];
 
-        for (const campos of tentativasCampos) {
-          const dados = Object.fromEntries(
-            Object.entries(dadosBase).filter(([chave]) => campos.includes(chave))
-          );
-
-          console.log('[Casa Melo Decor] cadastrarCliente dados para insert:', JSON.stringify(dados, null, 2));
+        for (const dados of tentativasPayload) {
+          console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO:', JSON.stringify(dados, null, 2));
           const { data, error } = await client.from('clientes').insert(dados).select('*').single();
 
           if (!error && data) return mapearCliente(data);
           ultimoErroCadastro = error || ultimoErroCadastro;
 
           if (!error) continue;
-          const erroColuna = erroColunaInexistente(error, 'senha')
+          const erroColuna = erroColunaInexistente(error, 'user_id')
+            || erroColunaInexistente(error, 'senha')
             || erroColunaInexistente(error, 'senha_hash')
             || erroColunaInexistente(error, 'foto')
             || erroColunaInexistente(error, 'receber_novidades')
@@ -564,7 +554,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         }
 
         if (ultimoErroCadastro) {
-          await registrarFalhaOperacao('cadastrarCliente', { payload: dadosBase, error: ultimoErroCadastro });
+          await registrarFalhaOperacao('cadastrarCliente', { payload: dadosLimpos, error: ultimoErroCadastro });
         }
         return null;
       });

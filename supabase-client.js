@@ -34,14 +34,16 @@ export async function criarCliente({ nome, celular }) {
   const user = authData?.user;
   if (!user) throw new Error('Usuário não autenticado.');
 
+  const dadosLimpos = {
+    nome,
+    celular
+  };
+
+  console.log('[Casa Melo Decor] criarCliente ENVIANDO:', dadosLimpos);
+
   const { data, error } = await supabase
     .from('clientes')
-    .insert({
-      user_id: user.id,
-      nome,
-      celular,
-      email: user.email
-    })
+    .insert(dadosLimpos)
     .select()
     .single();
 
