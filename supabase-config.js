@@ -592,15 +592,38 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (Object.hasOwn(campos, 'receberNovidades')) payload.receber_novidades = Boolean(campos.receberNovidades);
         if (Object.hasOwn(campos, 'ultimoAcesso')) payload.ultimo_acesso = campos.ultimoAcesso;
 
-        const { data, error } = await client
-          .from('clientes')
-          .update(payload)
-          .eq('celular', celularNormalizado)
-          .select('*')
-          .maybeSingle();
+        let payloadTentativa = { ...payload };
+        let ultimaResposta = { data: null, error: null };
 
-        if (error || !data) return null;
-        return mapearCliente(data);
+        while (Object.keys(payloadTentativa).length) {
+          const { data, error } = await client
+            .from('clientes')
+            .update(payloadTentativa)
+            .eq('celular', celularNormalizado)
+            .select('*')
+            .maybeSingle();
+
+          ultimaResposta = { data, error };
+          if (!error && data) return mapearCliente(data);
+          if (!error) break;
+
+          const colunaInexistente = Object.keys(payloadTentativa)
+            .find((coluna) => erroColunaInexistente(error, coluna));
+
+          if (!colunaInexistente) break;
+          delete payloadTentativa[colunaInexistente];
+        }
+
+        if (ultimaResposta.error) {
+          await registrarFalhaOperacao('atualizarCliente', {
+            payload,
+            payloadTentativa,
+            celular: celularNormalizado,
+            error: ultimaResposta.error
+          });
+        }
+
+        return null;
       });
     },
     async excluirCliente(celular) {
