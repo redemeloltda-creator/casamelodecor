@@ -584,13 +584,17 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         const payload = {};
         if (Object.hasOwn(campos, 'nome')) payload.nome = String(campos.nome || '').trim();
-        if (Object.hasOwn(campos, 'senha')) {
-          const senha = String(campos.senha || '');
-          payload.senha = senha;
-        }
         if (Object.hasOwn(campos, 'foto')) payload.foto = String(campos.foto || '').trim();
         if (Object.hasOwn(campos, 'receberNovidades')) payload.receber_novidades = Boolean(campos.receberNovidades);
         if (Object.hasOwn(campos, 'ultimoAcesso')) payload.ultimo_acesso = campos.ultimoAcesso;
+        if (Object.hasOwn(campos, 'senha') || Object.hasOwn(campos, 'senha_hash')) {
+          console.warn('[Casa Melo Decor] atualizarCliente ignorou campos de senha para evitar PGRST204.', {
+            camposRecebidos: Object.keys(campos || {})
+          });
+        }
+
+        console.log('[Casa Melo Decor] atualizarCliente ENVIANDO:', JSON.stringify(payload, null, 2));
+        if (!Object.keys(payload).length) return null;
 
         let payloadTentativa = { ...payload };
         let ultimaResposta = { data: null, error: null };
