@@ -263,7 +263,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const isUuid = (valor) => UUID_REGEX.test(String(valor || '').trim());
-  const COLUNAS_CLIENTES_VALIDAS = new Set([
+  const CAMPOS_VALIDOS = [
     'id',
     'nome',
     'celular',
@@ -274,7 +274,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     'criado_em',
     'atualizado_em',
     'user_id'
-  ]);
+  ];
+  const COLUNAS_CLIENTES_VALIDAS = new Set(CAMPOS_VALIDOS);
 
   const removerCamposNulosOuIndefinidos = (obj = {}) => Object.entries(obj).reduce((acumulador, [chave, valor]) => {
     if (valor === undefined || valor === null) return acumulador;
@@ -282,13 +283,17 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return acumulador;
   }, {});
 
+  const limparPayload = (obj = {}) => removerCamposNulosOuIndefinidos(obj);
+
+  const filtrarCamposValidos = (obj = {}) => Object.entries(obj).reduce((acumulador, [chave, valor]) => {
+    if (!COLUNAS_CLIENTES_VALIDAS.has(chave)) return acumulador;
+    acumulador[chave] = valor;
+    return acumulador;
+  }, {});
+
   const sanitizarPayloadCliente = (payload = {}) => {
-    const semNulos = removerCamposNulosOuIndefinidos(payload);
-    const permitido = Object.entries(semNulos).reduce((acumulador, [chave, valor]) => {
-      if (!COLUNAS_CLIENTES_VALIDAS.has(chave)) return acumulador;
-      acumulador[chave] = valor;
-      return acumulador;
-    }, {});
+    const semNulos = limparPayload(payload);
+    const permitido = filtrarCamposValidos(semNulos);
 
     if (typeof permitido.nome === 'string') permitido.nome = permitido.nome.trim();
     if (typeof permitido.celular === 'string') permitido.celular = normalizarCelular(permitido.celular);
@@ -304,7 +309,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const sanitizarPayloadClientes = sanitizarPayloadCliente;
-  const limparPayload = (obj = {}) => sanitizarPayloadCliente(obj);
 
   const validarPayloadCadastroCliente = (payload = {}) => {
     const erros = [];
@@ -689,7 +693,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         if (userAuth?.id) payloadBruto.user_id = userAuth.id;
 
-        const payloadTentativa = limparPayload(payloadBruto);
+        const payloadTentativa = sanitizarPayloadCliente(payloadBruto);
         const validacao = validarPayloadCadastroCliente(payloadTentativa);
         if (!validacao.ok) {
           await registrarFalhaOperacao('cadastrarCliente', {
@@ -804,13 +808,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           });
         }
 
-        const payloadTentativa = limparPayload(payload);
-        console.log('[Casa Melo Decor] atualizarCliente ENVIANDO payload sanitizado:', JSON.stringify(payloadTentativa, null, 2));
-        if (!Object.keys(payloadTentativa).length) return null;
+        const payloadTentativa = filtrarCamposValidos(limparPayload(payload));
+        const payloadSanitizado = sanitizarPayloadCliente(payloadTentativa);
+        console.log('[Casa Melo Decor] atualizarCliente ENVIANDO payload sanitizado:', JSON.stringify(payloadSanitizado, null, 2));
+        if (!Object.keys(payloadSanitizado).length) return null;
 
         const { data, error } = await client
           .from('clientes')
-          .update(payloadTentativa)
+          .update(payloadSanitizado)
           .eq(COLUNA_TELEFONE, celularNormalizado)
           .select('*')
           .maybeSingle();
@@ -818,7 +823,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (error) {
           await registrarFalhaOperacao('atualizarCliente', {
             payload,
-            payloadTentativa,
+            payloadTentativa: payloadSanitizado,
             celular: celularNormalizado,
             error: resumirErroSupabase(error)
           });
