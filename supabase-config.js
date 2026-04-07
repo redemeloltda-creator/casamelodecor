@@ -140,7 +140,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const COLUNA_TELEFONE = 'celular';
-  const COLUNA_IDENTIFICACAO_CLIENTE = COLUNA_TELEFONE;
 
   const aplicarFiltroCelular = (query, coluna, celular) => {
     const valores = valoresFiltroCelular(celular);
@@ -182,10 +181,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return correspondencia?.[1] || null;
   };
 
-  const identificarCliente = async (celular) => {
-    const query = aplicarFiltroCelular(client.from('clientes').select('*'), COLUNA_IDENTIFICACAO_CLIENTE, celular);
-    if (!query) return { data: null, error: null };
-    return query.maybeSingle();
+  const criarFiltroClientePorCelular = (query, celular) => {
+    const celularNormalizado = normalizarCelular(celular);
+    if (!celularNormalizado) return null;
+    return query.eq(COLUNA_TELEFONE, celularNormalizado);
   };
 
   const colunasOrdenacaoClientes = ['criado_em', 'created_at', 'atualizado_em', 'updated_at'];
@@ -208,7 +207,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   };
 
   const obterClienteIdPorCelular = async (celular) => {
-    const query = aplicarFiltroCelular(client.from('clientes').select('id'), COLUNA_IDENTIFICACAO_CLIENTE, celular);
+    const query = criarFiltroClientePorCelular(client.from('clientes').select('id'), celular);
     if (!query) return null;
     const { data, error } = await query.maybeSingle();
     if (error) return null;
@@ -646,17 +645,16 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async buscarClientePorCelular(celular) {
       return executarConsulta('buscarClientePorCelular', null, async () => {
-        const celularNormalizado = normalizarCelular(celular);
-        if (!celularNormalizado) return null;
-        const { data, error } = await client
-          .from('clientes')
-          .select('*')
-          .eq(COLUNA_TELEFONE, celularNormalizado)
-          .maybeSingle();
+        const query = criarFiltroClientePorCelular(
+          client.from('clientes').select('*'),
+          celular
+        );
+        if (!query) return null;
+        const { data, error } = await query.maybeSingle();
         if (error || !data) {
           if (error) {
             await registrarFalhaOperacao('buscarClientePorCelular', {
-              celular: celularNormalizado,
+              celular: normalizarCelular(celular),
               error: resumirErroSupabase(error)
             });
           }
@@ -835,7 +833,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return false;
 
-        const { error } = await client.from('clientes').delete().eq(COLUNA_IDENTIFICACAO_CLIENTE, celularNormalizado);
+        const { error } = await client.from('clientes').delete().eq(COLUNA_TELEFONE, celularNormalizado);
         return !error;
       });
     },
