@@ -10,6 +10,7 @@
   const btnVoltarLogin = document.getElementById('authVoltarLogin');
   const tabs = document.querySelectorAll('[data-auth-tab]');
   const botoesAbrir = document.querySelectorAll('[data-auth-open]');
+  let ultimoElementoFocadoAntesModal = null;
 
   const perfilMenu = document.getElementById('perfilMenu');
   const perfilBotao = document.getElementById('perfilBotao');
@@ -632,15 +633,38 @@
   };
 
   const abrirModal = (abaInicial) => {
+    ultimoElementoFocadoAntesModal = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     modal.classList.add('aberto');
+    modal.removeAttribute('inert');
     modal.setAttribute('aria-hidden', 'false');
     trocarAba(normalizarAbaAutenticacao(abaInicial));
+
+    const primeiroCampo = modal.querySelector('input, button, [href], select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (primeiroCampo instanceof HTMLElement) {
+      window.requestAnimationFrame(() => {
+        primeiroCampo.focus();
+      });
+    }
   };
 
   const fecharModal = () => {
+    const focoAtual = document.activeElement;
+    if (focoAtual instanceof HTMLElement && modal.contains(focoAtual)) {
+      focoAtual.blur();
+    }
+
     modal.classList.remove('aberto');
+    modal.setAttribute('inert', '');
     modal.setAttribute('aria-hidden', 'true');
+
+    if (ultimoElementoFocadoAntesModal instanceof HTMLElement && document.contains(ultimoElementoFocadoAntesModal)) {
+      ultimoElementoFocadoAntesModal.focus();
+    }
   };
+
+  modal.setAttribute('inert', '');
 
   botoesAbrir.forEach((botao) => {
     botao.addEventListener('click', () => abrirModal(botao.dataset.authOpen));
