@@ -285,6 +285,76 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const isUuid = (valor) => UUID_REGEX.test(String(valor || '').trim());
+  const COLUNAS_CLIENTES_VALIDAS = new Set([
+    'id',
+    'nome',
+    'celular',
+    'senha_hash',
+    'foto',
+    'receber_novidades',
+    'ultimo_acesso',
+    'criado_em',
+    'atualizado_em',
+    'user_id'
+  ]);
+
+  const removerCamposNulosOuIndefinidos = (obj = {}) => Object.entries(obj).reduce((acumulador, [chave, valor]) => {
+    if (valor === undefined || valor === null) return acumulador;
+    acumulador[chave] = valor;
+    return acumulador;
+  }, {});
+
+  const sanitizarPayloadClientes = (payload = {}) => {
+    const semNulos = removerCamposNulosOuIndefinidos(payload);
+    const permitido = Object.entries(semNulos).reduce((acumulador, [chave, valor]) => {
+      if (!COLUNAS_CLIENTES_VALIDAS.has(chave)) return acumulador;
+      acumulador[chave] = valor;
+      return acumulador;
+    }, {});
+
+    if (typeof permitido.nome === 'string') permitido.nome = permitido.nome.trim();
+    if (typeof permitido.celular === 'string') permitido.celular = normalizarCelular(permitido.celular);
+    if (typeof permitido.foto === 'string') permitido.foto = permitido.foto.trim();
+    if (typeof permitido.senha_hash === 'string') permitido.senha_hash = permitido.senha_hash.trim();
+    if (Object.hasOwn(permitido, 'receber_novidades')) permitido.receber_novidades = Boolean(permitido.receber_novidades);
+    if (typeof permitido.user_id === 'string') permitido.user_id = permitido.user_id.trim();
+
+    if (permitido.foto === '') delete permitido.foto;
+    if (permitido.senha_hash === '') delete permitido.senha_hash;
+
+    return permitido;
+  };
+
+  const validarPayloadCadastroCliente = (payload = {}) => {
+    const erros = [];
+
+    if (!payload.nome || String(payload.nome).trim().length < 2) {
+      erros.push('Campo "nome" é obrigatório e deve ter pelo menos 2 caracteres.');
+    }
+
+    if (!payload.celular) {
+      erros.push('Campo "celular" é obrigatório.');
+    } else {
+      const celular = normalizarCelular(payload.celular);
+      if (celular.length < 10 || celular.length > 13) {
+        erros.push('Campo "celular" deve ter DDD + número (10 a 13 dígitos contando país).');
+      }
+    }
+
+    if (Object.hasOwn(payload, 'user_id') && payload.user_id && !isUuid(payload.user_id)) {
+      erros.push('Campo "user_id" precisa ser UUID válido quando informado.');
+    }
+
+    if (Object.hasOwn(payload, 'ultimo_acesso') && payload.ultimo_acesso) {
+      const data = new Date(payload.ultimo_acesso);
+      if (Number.isNaN(data.getTime())) erros.push('Campo "ultimo_acesso" precisa ser uma data ISO válida.');
+    }
+
+    return {
+      ok: erros.length === 0,
+      erros
+    };
+  };
 
   const normalizarItensCarrinhoJson = (itens = []) => {
     if (!Array.isArray(itens)) return [];
@@ -603,32 +673,41 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const userAuth = await obterUsuarioAuthAtual();
         const dadosBase = {
           nome: String(clienteCadastro?.nome || '').trim(),
-          email: String(clienteCadastro?.email || '').trim(),
           celular: normalizarCelular(clienteCadastro?.celular || clienteCadastro?.telefone || clienteCadastro?.contato),
-          telefone: normalizarCelular(clienteCadastro?.telefone || clienteCadastro?.celular || clienteCadastro?.contato),
-          contato: normalizarCelular(clienteCadastro?.contato || clienteCadastro?.celular || clienteCadastro?.telefone),
-          senha: String(clienteCadastro?.senha || ''),
-          senha_hash: String(clienteCadastro?.senha || ''),
+          senha_hash: String(clienteCadastro?.senha_hash || clienteCadastro?.senha || '').trim(),
           foto: String(clienteCadastro?.foto || '').trim(),
           receber_novidades: Boolean(clienteCadastro?.receber_novidades ?? clienteCadastro?.receberNovidades),
           ultimo_acesso: null
         };
 
-        const payloadTentativa = {
+        const payloadBruto = {
           nome: dadosBase.nome,
           celular: dadosBase.celular,
-          senha: dadosBase.senha,
-          telefone: dadosBase.telefone || dadosBase.celular,
-          contato: dadosBase.contato || dadosBase.celular,
           receber_novidades: dadosBase.receber_novidades,
           senha_hash: dadosBase.senha_hash,
-          email: dadosBase.email,
           foto: dadosBase.foto,
           ultimo_acesso: dadosBase.ultimo_acesso
         };
 
-        if (userAuth?.id) payloadTentativa.user_id = userAuth.id;
-        console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO:', JSON.stringify(payloadTentativa, null, 2));
+        if (userAuth?.id) payloadBruto.user_id = userAuth.id;
+
+        const payloadTentativa = sanitizarPayloadClientes(payloadBruto);
+        const validacao = validarPayloadCadastroCliente(payloadTentativa);
+        if (!validacao.ok) {
+          await registrarFalhaOperacao('cadastrarCliente', {
+            payload: dadosBase,
+            payloadTentativa,
+            validacao,
+            error: {
+              message: 'Payload inválido para INSERT em public.clientes.',
+              details: validacao.erros.join(' | '),
+              hint: 'Preencha nome/celular corretamente e envie apenas colunas existentes na tabela.'
+            }
+          });
+          return null;
+        }
+
+        console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO payload sanitizado:', JSON.stringify(payloadTentativa, null, 2));
         const ultimaResposta = await client.from('clientes').insert([payloadTentativa]).select('*').single();
         if (!ultimaResposta.error && ultimaResposta.data) return mapearCliente(ultimaResposta.data);
 
@@ -636,7 +715,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           await registrarFalhaOperacao('cadastrarCliente', {
             payload: dadosBase,
             payloadTentativa,
-            error: ultimaResposta.error
+            error: ultimaResposta.error,
+            supabaseError: {
+              status: ultimaResposta.error.status || null,
+              code: ultimaResposta.error.code || null,
+              message: ultimaResposta.error.message || 'Erro desconhecido',
+              details: ultimaResposta.error.details || null,
+              hint: ultimaResposta.error.hint || null
+            }
           });
         }
         return null;
