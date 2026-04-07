@@ -41,6 +41,35 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return celularSemMascara;
   };
 
+  const hashSenha = async (senhaTexto) => {
+    const senhaNormalizada = String(senhaTexto || '');
+    if (!senhaNormalizada) return '';
+    if (!window.crypto?.subtle) return senhaNormalizada;
+
+    const bytes = new TextEncoder().encode(senhaNormalizada);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(hashBuffer)]
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+  };
+
+  const senhaConfere = async ({ senhaInformadaHash = '', senhaInformadaTexto = '', senhaPersistida = '' }) => {
+    const senhaSalva = String(senhaPersistida || '').trim();
+    const senhaHash = String(senhaInformadaHash || '').trim();
+    const senhaTexto = String(senhaInformadaTexto || '').trim();
+
+    if (!senhaSalva) return false;
+    if (senhaHash && senhaSalva === senhaHash) return true;
+    if (senhaTexto && senhaSalva === senhaTexto) return true;
+
+    if (senhaTexto && !senhaHash) {
+      const hashCalculado = await hashSenha(senhaTexto);
+      return Boolean(hashCalculado && hashCalculado === senhaSalva);
+    }
+
+    return false;
+  };
+
   const criarCliente = () => {
     if (!config.enabled || !window.supabase || !config.url || !config.anonKey) return null;
 
@@ -634,10 +663,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         });
       });
     },
-    async autenticarCliente(celular, senha) {
+    async autenticarCliente(celular, senhaHash, senhaTexto = '') {
       return executarConsulta('autenticarCliente', null, async () => {
         const celularNormalizado = normalizarCelular(celular);
-        if (!celularNormalizado || !String(senha || '')) return null;
+        if (!celularNormalizado || !String(senhaHash || senhaTexto || '')) return null;
 
         let data = null;
         for (const colunaCelular of obterColunasCelularClientes()) {
@@ -661,9 +690,13 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         if (!data) return null;
 
-        const senhaTexto = String(senha || '');
         const senhaRemota = String(data.senha || data.senha_hash || '').trim();
-        if (!senhaRemota || senhaRemota !== senhaTexto) {
+        const autenticado = await senhaConfere({
+          senhaInformadaHash: String(senhaHash || '').trim(),
+          senhaInformadaTexto: String(senhaTexto || '').trim(),
+          senhaPersistida: senhaRemota
+        });
+        if (!autenticado) {
           await registrarFalhaOperacao('autenticarCliente', {
             celular: celularNormalizado,
             payload: { senhaInformada: '***' },

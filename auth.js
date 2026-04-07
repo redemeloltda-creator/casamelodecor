@@ -197,6 +197,29 @@
     .toLowerCase()
     .replace(/\s+/g, ' ');
 
+  const hashSenha = async (senhaTexto) => {
+    const senhaNormalizada = String(senhaTexto || '');
+    if (!senhaNormalizada) return '';
+    if (!window.crypto?.subtle) return senhaNormalizada;
+
+    const bytes = new TextEncoder().encode(senhaNormalizada);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(hashBuffer)]
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+  };
+
+  const senhaConfere = async (senhaDigitada, senhaSalva) => {
+    const senhaBase = String(senhaSalva || '').trim();
+    const senhaTexto = String(senhaDigitada || '');
+
+    if (!senhaBase || !senhaTexto) return false;
+    if (senhaBase === senhaTexto) return true;
+
+    const senhaHash = await hashSenha(senhaTexto);
+    return senhaHash && senhaHash === senhaBase;
+  };
+
 
   const carregarUsuarios = () => {
     try {
@@ -718,7 +741,8 @@
       return;
     }
 
-    const novoUsuario = criarUsuarioNormalizado({ nome, celular, senha, foto: '' });
+    const senhaHash = await hashSenha(senha);
+    const novoUsuario = criarUsuarioNormalizado({ nome, celular, senha: senhaHash, foto: '' });
     usuarios.push(novoUsuario);
     salvarUsuarios(usuarios);
 
@@ -775,9 +799,10 @@
       return;
     }
 
-    const usuariosAtualizados = mesclarUsuarios(usuarios, [{ ...usuario, senha: novaSenha }]).map((item) => (
+    const novaSenhaHash = await hashSenha(novaSenha);
+    const usuariosAtualizados = mesclarUsuarios(usuarios, [{ ...usuario, senha: novaSenhaHash }]).map((item) => (
       normalizarCelular(item.celular) === celular
-        ? criarUsuarioNormalizado({ ...item, senha: novaSenha })
+        ? criarUsuarioNormalizado({ ...item, senha: novaSenhaHash })
         : item
     ));
 
@@ -802,8 +827,10 @@
 
     let usuario = null;
 
+    const senhaHashLogin = await hashSenha(senha);
+
     if (supabaseDisponivel()) {
-      usuario = await supabaseApi.autenticarCliente(celularLogin, senha);
+      usuario = await supabaseApi.autenticarCliente(celularLogin, senhaHashLogin, senha);
       if (usuario) {
         const usuariosAtualizados = mesclarUsuarios(carregarUsuarios(), [usuario]);
         salvarUsuarios(usuariosAtualizados);
@@ -812,7 +839,13 @@
 
     if (!usuario) {
       const usuarios = carregarUsuarios();
-      usuario = usuarios.find((item) => normalizarCelular(item.celular) === celularLogin && item.senha === senha);
+      for (const item of usuarios) {
+        if (normalizarCelular(item.celular) !== celularLogin) continue;
+        if (await senhaConfere(senha, item.senha)) {
+          usuario = item;
+          break;
+        }
+      }
     }
 
     if (!usuario) {
@@ -921,7 +954,7 @@
   }
 
   if (perfilAlterarSenha) {
-    perfilAlterarSenha.addEventListener('click', () => {
+    perfilAlterarSenha.addEventListener('click', async () => {
       const usuario = carregarSessao();
       const celular = normalizarCelular(usuario?.celular);
 
@@ -933,7 +966,7 @@
       const usuarios = carregarUsuarios();
       const indiceUsuario = usuarios.findIndex((item) => normalizarCelular(item.celular) === celular);
 
-      if (indiceUsuario === -1 || usuarios[indiceUsuario].senha !== senhaAtual) {
+      if (indiceUsuario === -1 || !(await senhaConfere(senhaAtual, usuarios[indiceUsuario].senha))) {
         feedback.textContent = 'Não foi possível confirmar sua senha atual.';
         return;
       }
@@ -946,7 +979,7 @@
         return;
       }
 
-      usuarios[indiceUsuario].senha = String(novaSenha);
+      usuarios[indiceUsuario].senha = await hashSenha(novaSenha);
       salvarUsuarios(usuarios);
       feedback.textContent = 'Senha alterada com sucesso.';
     });
