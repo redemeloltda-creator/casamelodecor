@@ -191,9 +191,9 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       if (!query) return null;
 
       const { data, error } = await query.maybeSingle();
-      if (!error && data?.id) return data.id;
-      if (error && !erroColunaInexistente(error, colunaCelular)) return null;
-      if (error) marcarColunaCelularIndisponivel(colunaCelular);
+      if (!error) return data?.id || null;
+      if (!erroColunaInexistente(error, colunaCelular)) return null;
+      marcarColunaCelularIndisponivel(colunaCelular);
     }
 
     return null;
