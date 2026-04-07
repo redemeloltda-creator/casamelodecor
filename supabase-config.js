@@ -153,6 +153,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     );
   };
 
+  const extrairColunaInexistente = (erro) => {
+    const mensagem = `${erro?.message || ''} ${erro?.details || ''} ${erro?.hint || ''}`;
+    if (!mensagem) return null;
+
+    const correspondencia = mensagem.match(/['"]([a-zA-Z_][a-zA-Z0-9_]*)['"]/);
+    return correspondencia?.[1] || null;
+  };
+
   const identificarCliente = async (celular) => {
     for (const colunaCelular of obterColunasCelularClientes()) {
       const query = aplicarFiltroCelular(client.from('clientes').select('*'), colunaCelular, celular);
@@ -577,15 +585,30 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           ultimo_acesso: null
         };
 
+        const colunasOpcionais = ['email', 'telefone', 'contato', 'foto', 'receber_novidades', 'ultimo_acesso', 'user_id'];
+        const payloadEssencial = {
+          nome: dadosBase.nome,
+          celular: dadosBase.celular,
+          senha: dadosBase.senha,
+          senha_hash: dadosBase.senha_hash
+        };
+
+        colunasOpcionais.forEach((coluna) => {
+          if (dadosBase[coluna] !== '' && dadosBase[coluna] !== null && dadosBase[coluna] !== undefined) {
+            payloadEssencial[coluna] = dadosBase[coluna];
+          }
+        });
+
+        if (userAuth?.id) payloadEssencial.user_id = userAuth.id;
+
         let payloadTentativa = {
-          ...dadosBase,
-          ...(userAuth?.id ? { user_id: userAuth.id } : {})
+          ...payloadEssencial
         };
         let ultimaResposta = { data: null, error: null };
 
         while (Object.keys(payloadTentativa).length) {
           console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO:', JSON.stringify(payloadTentativa, null, 2));
-          const { data, error } = await client.from('clientes').insert(payloadTentativa).select('*').single();
+          const { data, error } = await client.from('clientes').insert([payloadTentativa]).select('*').single();
 
           if (!error && data) return mapearCliente(data);
           ultimaResposta = { data, error };
@@ -595,8 +618,18 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           const colunaInexistente = Object.keys(payloadTentativa)
             .find((coluna) => erroColunaInexistente(error, coluna));
 
-          if (!colunaInexistente) break;
-          delete payloadTentativa[colunaInexistente];
+          if (colunaInexistente) {
+            delete payloadTentativa[colunaInexistente];
+            continue;
+          }
+
+          const colunaExtraida = extrairColunaInexistente(error);
+          if (colunaExtraida && Object.hasOwn(payloadTentativa, colunaExtraida)) {
+            delete payloadTentativa[colunaExtraida];
+            continue;
+          }
+
+          break;
         }
 
         if (ultimaResposta.error) {
