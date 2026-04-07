@@ -581,29 +581,24 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           senha: String(clienteCadastro?.senha || ''),
           senha_hash: String(clienteCadastro?.senha || ''),
           foto: String(clienteCadastro?.foto || '').trim(),
-          receber_novidades: Boolean(clienteCadastro?.receberNovidades),
+          receber_novidades: Boolean(clienteCadastro?.receber_novidades ?? clienteCadastro?.receberNovidades),
           ultimo_acesso: null
         };
 
-        const colunasOpcionais = ['email', 'telefone', 'contato', 'foto', 'receber_novidades', 'ultimo_acesso', 'user_id'];
-        const payloadEssencial = {
+        const payloadTentativa = {
           nome: dadosBase.nome,
           celular: dadosBase.celular,
           senha: dadosBase.senha,
-          senha_hash: dadosBase.senha_hash
+          telefone: dadosBase.telefone || dadosBase.celular,
+          contato: dadosBase.contato || dadosBase.celular,
+          receber_novidades: dadosBase.receber_novidades,
+          senha_hash: dadosBase.senha_hash,
+          email: dadosBase.email,
+          foto: dadosBase.foto,
+          ultimo_acesso: dadosBase.ultimo_acesso
         };
 
-        colunasOpcionais.forEach((coluna) => {
-          if (dadosBase[coluna] !== '' && dadosBase[coluna] !== null && dadosBase[coluna] !== undefined) {
-            payloadEssencial[coluna] = dadosBase[coluna];
-          }
-        });
-
-        if (userAuth?.id) payloadEssencial.user_id = userAuth.id;
-
-        const payloadTentativa = {
-          ...payloadEssencial
-        };
+        if (userAuth?.id) payloadTentativa.user_id = userAuth.id;
         console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO:', JSON.stringify(payloadTentativa, null, 2));
         const ultimaResposta = await client.from('clientes').insert([payloadTentativa]).select('*').single();
         if (!ultimaResposta.error && ultimaResposta.data) return mapearCliente(ultimaResposta.data);
