@@ -72,13 +72,15 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const mapearCliente = (cliente = {}) => ({
     id: cliente.id || null,
     nome: String(cliente.nome || '').trim(),
+    email: String(cliente.email || '').trim(),
     celular: normalizarCelular(cliente.celular || cliente.telefone || cliente.contato),
     senha: String(cliente.senha || cliente.senha_hash || ''),
     foto: String(cliente.foto || '').trim(),
     receberNovidades: Boolean(cliente.receber_novidades ?? cliente.receberNovidades),
     ultimoAcesso: cliente.ultimo_acesso || cliente.ultimoAcesso || null,
-    criadoEm: cliente.criado_em || cliente.criadoEm || null,
-    atualizadoEm: cliente.atualizado_em || cliente.atualizadoEm || null
+    criadoEm: cliente.criado_em || cliente.created_at || cliente.criadoEm || null,
+    atualizadoEm: cliente.atualizado_em || cliente.updated_at || cliente.atualizadoEm || null,
+    userId: cliente.user_id || cliente.userId || null
   });
 
   const mapearComentario = (comentario = {}) => ({
@@ -162,6 +164,25 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     }
 
     return { data: null, error: null };
+  };
+
+  const colunasOrdenacaoClientes = ['criado_em', 'created_at', 'atualizado_em', 'updated_at'];
+
+  const buscarTodosClientes = async () => {
+    let ultimaResposta = { data: [], error: null };
+
+    for (const colunaOrdenacao of colunasOrdenacaoClientes) {
+      const resposta = await client.from('clientes').select('*').order(colunaOrdenacao, { ascending: true });
+      if (!resposta.error) return resposta;
+
+      ultimaResposta = resposta;
+      if (erroColunaInexistente(resposta.error, colunaOrdenacao)) continue;
+      break;
+    }
+
+    const fallbackSemOrdenacao = await client.from('clientes').select('*');
+    if (!fallbackSemOrdenacao.error) return fallbackSemOrdenacao;
+    return ultimaResposta;
   };
 
   const obterClienteIdPorCelular = async (celular) => {
@@ -528,7 +549,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     normalizarCelular,
     async listarClientes() {
       return executarConsulta('listarClientes', [], async () => {
-        const { data, error } = await client.from('clientes').select('*').order('criado_em', { ascending: true });
+        const { data, error } = await buscarTodosClientes();
         if (error || !Array.isArray(data)) return [];
         return data.map(mapearCliente);
       });
@@ -545,7 +566,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const userAuth = await obterUsuarioAuthAtual();
         const dadosBase = {
           nome: String(clienteCadastro?.nome || '').trim(),
-          celular: normalizarCelular(clienteCadastro?.celular),
+          email: String(clienteCadastro?.email || '').trim(),
+          celular: normalizarCelular(clienteCadastro?.celular || clienteCadastro?.telefone || clienteCadastro?.contato),
+          telefone: normalizarCelular(clienteCadastro?.telefone || clienteCadastro?.celular || clienteCadastro?.contato),
+          contato: normalizarCelular(clienteCadastro?.contato || clienteCadastro?.celular || clienteCadastro?.telefone),
           senha: String(clienteCadastro?.senha || ''),
           senha_hash: String(clienteCadastro?.senha || ''),
           foto: String(clienteCadastro?.foto || '').trim(),
@@ -583,6 +607,27 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           });
         }
         return null;
+      });
+    },
+
+    async salvarOuAtualizarCliente(clienteCadastro = {}) {
+      return executarConsulta('salvarOuAtualizarCliente', null, async () => {
+        const celular = normalizarCelular(clienteCadastro?.celular || clienteCadastro?.telefone || clienteCadastro?.contato);
+        if (!celular) return null;
+
+        const clienteAtual = await api.buscarClientePorCelular(celular);
+        if (!clienteAtual) {
+          return api.cadastrarCliente({ ...clienteCadastro, celular });
+        }
+
+        return api.atualizarCliente(celular, {
+          nome: Object.hasOwn(clienteCadastro, 'nome') ? clienteCadastro.nome : clienteAtual.nome,
+          foto: Object.hasOwn(clienteCadastro, 'foto') ? clienteCadastro.foto : clienteAtual.foto,
+          receberNovidades: Object.hasOwn(clienteCadastro, 'receberNovidades')
+            ? clienteCadastro.receberNovidades
+            : clienteAtual.receberNovidades,
+          ultimoAcesso: new Date().toISOString()
+        });
       });
     },
     async autenticarCliente(celular, senha) {
@@ -647,6 +692,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         const payload = {};
         if (Object.hasOwn(campos, 'nome')) payload.nome = String(campos.nome || '').trim();
+        if (Object.hasOwn(campos, 'email')) payload.email = String(campos.email || '').trim();
         if (Object.hasOwn(campos, 'foto')) payload.foto = String(campos.foto || '').trim();
         if (Object.hasOwn(campos, 'receberNovidades')) payload.receber_novidades = Boolean(campos.receberNovidades);
         if (Object.hasOwn(campos, 'ultimoAcesso')) payload.ultimo_acesso = campos.ultimoAcesso;

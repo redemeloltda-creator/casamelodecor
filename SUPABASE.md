@@ -167,7 +167,21 @@ Para produção, o ideal é evoluir depois para um modelo com:
 - senhas com hash;
 - Storage para fotos em vez de Data URL.
 
-### 6.4. Fluxo direto com Supabase Auth + `clientes`
+### 6.4. Helper para salvar/atualizar cliente automaticamente
+Se o seu SQL da tabela `clientes` muda entre projetos (`celular`, `telefone`, `contato`; `criado_em` vs `created_at`), você pode usar o helper novo:
+
+```js
+await window.CASAMELO_SUPABASE.salvarOuAtualizarCliente({
+  nome: 'Carlos',
+  celular: '38998467031',
+  email: 'carlos@email.com',
+  receberNovidades: true
+});
+```
+
+Ele tenta localizar por telefone/celular/contato e faz fallback automático de colunas durante insert/update.
+
+### 6.5. Fluxo direto com Supabase Auth + `clientes`
 Se você já está usando Supabase Auth e quer seguir exatamente o fluxo de criar conta, login e depois criar o registro em `clientes`, pode usar:
 
 ```js
@@ -208,7 +222,7 @@ console.log(cliente);
 
 Se preferir, já existem helpers prontos no arquivo `supabase-client.js`: `criarConta`, `loginComEmail` e `criarCliente`.
 
-### 6.5. Comandos corretos para `clientes`
+### 6.6. Comandos corretos para `clientes`
 Use estes exemplos como base quando a tabela `public.clientes` estiver no schema deste repositório (`id`, `nome`, `celular`, `user_id`, sem coluna `email`):
 
 ```js
