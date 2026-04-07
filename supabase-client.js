@@ -5,6 +5,31 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+export const CAMPOS_VALIDOS = [
+  'nome',
+  'celular',
+  'receber_novidades',
+  'senha_hash'
+];
+
+const CAMPOS_VALIDOS_SET = new Set(CAMPOS_VALIDOS);
+
+export function limparPayload(obj = {}) {
+  return Object.entries(obj).reduce((acumulador, [chave, valor]) => {
+    if (valor === undefined || valor === null) return acumulador;
+    acumulador[chave] = valor;
+    return acumulador;
+  }, {});
+}
+
+export function filtrarCamposValidos(obj = {}) {
+  return Object.entries(obj).reduce((acumulador, [chave, valor]) => {
+    if (!CAMPOS_VALIDOS_SET.has(chave)) return acumulador;
+    acumulador[chave] = valor;
+    return acumulador;
+  }, {});
+}
+
 export async function criarConta(email, password) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -27,23 +52,29 @@ export async function loginComEmail(email, password) {
   return data;
 }
 
-export async function criarCliente({ nome, celular }) {
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError) throw authError;
+export async function cadastrarCliente(cliente = {}) {
+  const payloadLimpo = limparPayload(cliente);
+  const payloadSanitizado = filtrarCamposValidos(payloadLimpo);
 
-  const user = authData?.user;
-  if (!user) throw new Error('Usuário não autenticado.');
+  if (typeof payloadSanitizado.nome === 'string') {
+    payloadSanitizado.nome = payloadSanitizado.nome.trim();
+  }
 
-  const dadosLimpos = {
-    nome,
-    celular
-  };
+  if (typeof payloadSanitizado.celular === 'string') {
+    payloadSanitizado.celular = payloadSanitizado.celular.replace(/\D/g, '');
+  }
 
-  console.log('[Casa Melo Decor] criarCliente ENVIANDO:', dadosLimpos);
+  if (typeof payloadSanitizado.senha_hash === 'string') {
+    payloadSanitizado.senha_hash = payloadSanitizado.senha_hash.trim();
+  }
+
+  if (Object.hasOwn(payloadSanitizado, 'receber_novidades')) {
+    payloadSanitizado.receber_novidades = Boolean(payloadSanitizado.receber_novidades);
+  }
 
   const { data, error } = await supabase
     .from('clientes')
-    .insert(dadosLimpos)
+    .insert(payloadSanitizado)
     .select()
     .single();
 
@@ -51,3 +82,5 @@ export async function criarCliente({ nome, celular }) {
 
   return data;
 }
+
+export const criarCliente = cadastrarCliente;
