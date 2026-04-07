@@ -601,36 +601,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         if (userAuth?.id) payloadEssencial.user_id = userAuth.id;
 
-        let payloadTentativa = {
+        const payloadTentativa = {
           ...payloadEssencial
         };
-        let ultimaResposta = { data: null, error: null };
-
-        while (Object.keys(payloadTentativa).length) {
-          console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO:', JSON.stringify(payloadTentativa, null, 2));
-          const { data, error } = await client.from('clientes').insert([payloadTentativa]).select('*').single();
-
-          if (!error && data) return mapearCliente(data);
-          ultimaResposta = { data, error };
-
-          if (!error) break;
-
-          const colunaInexistente = Object.keys(payloadTentativa)
-            .find((coluna) => erroColunaInexistente(error, coluna));
-
-          if (colunaInexistente) {
-            delete payloadTentativa[colunaInexistente];
-            continue;
-          }
-
-          const colunaExtraida = extrairColunaInexistente(error);
-          if (colunaExtraida && Object.hasOwn(payloadTentativa, colunaExtraida)) {
-            delete payloadTentativa[colunaExtraida];
-            continue;
-          }
-
-          break;
-        }
+        console.log('[Casa Melo Decor] cadastrarCliente ENVIANDO:', JSON.stringify(payloadTentativa, null, 2));
+        const ultimaResposta = await client.from('clientes').insert([payloadTentativa]).select('*').single();
+        if (!ultimaResposta.error && ultimaResposta.data) return mapearCliente(ultimaResposta.data);
 
         if (ultimaResposta.error) {
           await registrarFalhaOperacao('cadastrarCliente', {
@@ -738,39 +714,26 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         console.log('[Casa Melo Decor] atualizarCliente ENVIANDO:', JSON.stringify(payload, null, 2));
         if (!Object.keys(payload).length) return null;
 
-        let payloadTentativa = { ...payload };
+        const payloadTentativa = { ...payload };
         let ultimaResposta = { data: null, error: null };
 
-        while (Object.keys(payloadTentativa).length) {
-          let houveErroColunaFiltro = false;
+        for (const colunaCelular of obterColunasCelularClientes()) {
+          const { data, error } = await client
+            .from('clientes')
+            .update(payloadTentativa)
+            .eq(colunaCelular, celularNormalizado)
+            .select('*')
+            .maybeSingle();
 
-          for (const colunaCelular of obterColunasCelularClientes()) {
-            const { data, error } = await client
-              .from('clientes')
-              .update(payloadTentativa)
-              .eq(colunaCelular, celularNormalizado)
-              .select('*')
-              .maybeSingle();
-
-            ultimaResposta = { data, error };
-            if (!error && data) return mapearCliente(data);
-            if (!error) return null;
-            if (erroColunaInexistente(error, colunaCelular)) {
-              marcarColunaCelularIndisponivel(colunaCelular);
-              houveErroColunaFiltro = true;
-              continue;
-            }
-
-            const colunaInexistente = Object.keys(payloadTentativa)
-              .find((coluna) => erroColunaInexistente(error, coluna));
-
-            if (!colunaInexistente) return null;
-            delete payloadTentativa[colunaInexistente];
-            houveErroColunaFiltro = false;
-            break;
+          ultimaResposta = { data, error };
+          if (!error && data) return mapearCliente(data);
+          if (!error) return null;
+          if (erroColunaInexistente(error, colunaCelular)) {
+            marcarColunaCelularIndisponivel(colunaCelular);
+            continue;
           }
 
-          if (houveErroColunaFiltro) break;
+          break;
         }
 
         if (ultimaResposta.error) {
@@ -1186,16 +1149,9 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           }
         ];
 
-        const camposProblematicos = ['id', 'cliente_id', 'user_id'];
-        const payloadsSanitizados = payloads.map((payload) => {
-          const dados = { ...payload };
-          camposProblematicos.forEach((campo) => delete dados[campo]);
-          return dados;
-        });
-
         let ultimoErro = null;
 
-        for (const payload of payloadsSanitizados) {
+        for (const payload of payloads) {
           const { data, error } = await client.from('comentarios').insert(payload).select('*').single();
           if (!error && data) return mapearComentario(data);
           ultimoErro = error || ultimoErro;
@@ -1203,7 +1159,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         if (ultimoErro) {
           await registrarFalhaOperacao('adicionarAvaliacao', {
-            payloads: payloadsSanitizados,
+            payloads,
             error: ultimoErro
           });
         }
