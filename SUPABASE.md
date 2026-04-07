@@ -288,4 +288,53 @@ Checklist rápido:
 - `celular`: DDD + 9 números (11 dígitos, com ou sem máscara);
 - `senha`: pelo menos 6 caracteres.
 
+## 9. Erro comum: `PGRST204` (400 Bad Request)
+Quando o PostgREST retorna `PGRST204`, o problema costuma estar no formato da chamada para `public.clientes`.
+
+### Causa mais comum
+Você tentou usar:
+
+```http
+POST /rest/v1/clientes?select=*
+```
+
+mas sem um body válido para inserção, ou com colunas que não existem no schema.
+
+### Regra prática (método HTTP)
+- **GET**: buscar dados;
+- **POST**: inserir dados;
+- **PATCH**: atualizar;
+- **DELETE**: remover.
+
+### Exemplo correto para buscar
+```http
+GET /rest/v1/clientes?select=*
+```
+
+### Exemplo correto para inserir e retornar a linha
+```js
+const { data, error } = await supabase
+  .from('clientes')
+  .insert([
+    {
+      nome: 'Carlos',
+      celular: '38998467031'
+    }
+  ])
+  .select();
+```
+
+### Checklist quando der `400`
+1. **Body vazio ou inválido** no `POST`;
+2. **Campo inexistente** (ex.: enviar `telefone` quando a tabela usa `celular`);
+3. **RLS bloqueando** a operação (ver seção 6 para políticas).
+
+### Sobre o header `Accept`
+Evite `application/vnd.pgrst.object+json` em consultas que podem retornar 0 ou mais de 1 linha.
+Esse formato só aceita exatamente um registro. Para resposta comum, prefira:
+
+```http
+Accept: application/json
+```
+
 No código atual, o front-end normaliza o celular e só aceita cadastro quando os três campos são válidos no `auth.js`.
