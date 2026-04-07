@@ -139,7 +139,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       : [celularNormalizado];
   };
 
-  const COLUNA_IDENTIFICACAO_CLIENTE = 'celular';
+  const COLUNA_TELEFONE = 'celular';
+  const COLUNA_IDENTIFICACAO_CLIENTE = COLUNA_TELEFONE;
 
   const aplicarFiltroCelular = (query, coluna, celular) => {
     const valores = valoresFiltroCelular(celular);
@@ -282,7 +283,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return acumulador;
   }, {});
 
-  const sanitizarPayloadClientes = (payload = {}) => {
+  const sanitizarPayloadCliente = (payload = {}) => {
     const semNulos = removerCamposNulosOuIndefinidos(payload);
     const permitido = Object.entries(semNulos).reduce((acumulador, [chave, valor]) => {
       if (!COLUNAS_CLIENTES_VALIDAS.has(chave)) return acumulador;
@@ -303,7 +304,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return permitido;
   };
 
-  const limparPayload = (obj = {}) => sanitizarPayloadClientes(obj);
+  const sanitizarPayloadClientes = sanitizarPayloadCliente;
+  const limparPayload = (obj = {}) => sanitizarPayloadCliente(obj);
 
   const validarPayloadCadastroCliente = (payload = {}) => {
     const erros = [];
@@ -649,7 +651,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const { data, error } = await client
           .from('clientes')
           .select('*')
-          .eq(COLUNA_IDENTIFICACAO_CLIENTE, celularNormalizado)
+          .eq(COLUNA_TELEFONE, celularNormalizado)
           .maybeSingle();
         if (error || !data) {
           if (error) {
@@ -755,7 +757,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const { data } = await client
           .from('clientes')
           .select('*')
-          .eq(COLUNA_IDENTIFICACAO_CLIENTE, celularNormalizado)
+          .eq(COLUNA_TELEFONE, celularNormalizado)
           .maybeSingle();
 
         if (!data) return null;
@@ -782,7 +784,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         await client
           .from('clientes')
           .update({ ultimo_acesso: new Date().toISOString() })
-          .eq(COLUNA_IDENTIFICACAO_CLIENTE, celularNormalizado);
+          .eq(COLUNA_TELEFONE, celularNormalizado);
 
         return mapearCliente(data);
       });
@@ -811,7 +813,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const { data, error } = await client
           .from('clientes')
           .update(payloadTentativa)
-          .eq(COLUNA_IDENTIFICACAO_CLIENTE, celularNormalizado)
+          .eq(COLUNA_TELEFONE, celularNormalizado)
           .select('*')
           .maybeSingle();
 
