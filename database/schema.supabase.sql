@@ -155,27 +155,98 @@ alter table public.pedidos enable row level security;
 alter table public.comentarios enable row level security;
 alter table public.produtos enable row level security;
 
--- Políticas abertas para manter o site estático funcional com chave anon.
+-- Políticas: leitura pública onde necessário + escrita protegida por auth.
 drop policy if exists "clientes_public_access" on public.clientes;
-create policy "clientes_public_access" on public.clientes for all using (true) with check (true);
+drop policy if exists "clientes_auth_select" on public.clientes;
+drop policy if exists "clientes_auth_insert" on public.clientes;
+drop policy if exists "clientes_auth_update" on public.clientes;
+drop policy if exists "clientes_auth_delete" on public.clientes;
+create policy "clientes_auth_select" on public.clientes for select using (auth.uid() = user_id);
+create policy "clientes_auth_insert" on public.clientes for insert with check (auth.uid() = user_id);
+create policy "clientes_auth_update" on public.clientes for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "clientes_auth_delete" on public.clientes for delete using (auth.uid() = user_id);
 
 drop policy if exists "carrinhos_public_access" on public.carrinhos;
-create policy "carrinhos_public_access" on public.carrinhos for all using (true) with check (true);
+drop policy if exists "carrinhos_auth_access" on public.carrinhos;
+create policy "carrinhos_auth_access" on public.carrinhos
+for all
+using (
+  exists (
+    select 1 from public.clientes c
+    where c.id = carrinhos.cliente_id and c.user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1 from public.clientes c
+    where c.id = carrinhos.cliente_id and c.user_id = auth.uid()
+  )
+);
 
 drop policy if exists "itens_carrinho_public_access" on public.itens_carrinho;
-create policy "itens_carrinho_public_access" on public.itens_carrinho for all using (true) with check (true);
+drop policy if exists "itens_carrinho_auth_access" on public.itens_carrinho;
+create policy "itens_carrinho_auth_access" on public.itens_carrinho
+for all
+using (
+  exists (
+    select 1
+    from public.carrinhos ca
+    join public.clientes c on c.id = ca.cliente_id
+    where ca.id = itens_carrinho.carrinho_id
+      and c.user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.carrinhos ca
+    join public.clientes c on c.id = ca.cliente_id
+    where ca.id = itens_carrinho.carrinho_id
+      and c.user_id = auth.uid()
+  )
+);
 
 drop policy if exists "historico_public_access" on public.historico_compras;
-create policy "historico_public_access" on public.historico_compras for all using (true) with check (true);
+drop policy if exists "historico_auth_access" on public.historico_compras;
+create policy "historico_auth_access" on public.historico_compras
+for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
 
 drop policy if exists "itens_pedido_public_access" on public.itens_pedido;
-create policy "itens_pedido_public_access" on public.itens_pedido for all using (true) with check (true);
+drop policy if exists "itens_pedido_auth_access" on public.itens_pedido;
+create policy "itens_pedido_auth_access" on public.itens_pedido
+for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
 
 drop policy if exists "pedidos_public_access" on public.pedidos;
-create policy "pedidos_public_access" on public.pedidos for all using (true) with check (true);
+drop policy if exists "pedidos_auth_access" on public.pedidos;
+create policy "pedidos_auth_access" on public.pedidos
+for all
+using (
+  exists (
+    select 1 from public.clientes c
+    where c.id = pedidos.cliente_id and c.user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1 from public.clientes c
+    where c.id = pedidos.cliente_id and c.user_id = auth.uid()
+  )
+);
 
 drop policy if exists "comentarios_public_access" on public.comentarios;
-create policy "comentarios_public_access" on public.comentarios for all using (true) with check (true);
+drop policy if exists "comentarios_public_select" on public.comentarios;
+drop policy if exists "comentarios_auth_insert" on public.comentarios;
+drop policy if exists "comentarios_auth_update" on public.comentarios;
+drop policy if exists "comentarios_auth_delete" on public.comentarios;
+create policy "comentarios_public_select" on public.comentarios for select using (true);
+create policy "comentarios_auth_insert" on public.comentarios for insert with check (auth.uid() = user_id);
+create policy "comentarios_auth_update" on public.comentarios for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "comentarios_auth_delete" on public.comentarios for delete using (auth.uid() = user_id);
 
 drop policy if exists "produtos_public_access" on public.produtos;
-create policy "produtos_public_access" on public.produtos for all using (true) with check (true);
+drop policy if exists "produtos_public_select" on public.produtos;
+create policy "produtos_public_select" on public.produtos for select using (true);
