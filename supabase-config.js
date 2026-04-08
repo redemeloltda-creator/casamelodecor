@@ -101,9 +101,13 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const mapearCliente = (cliente = {}) => ({
     id: cliente.id || null,
     nome: String(cliente.nome || '').trim(),
+    email: String(cliente.email || '').trim().toLowerCase(),
     celular: normalizarCelular(cliente.celular),
+    senha: String(cliente.senha || cliente.senha_hash || '').trim(),
     foto: String(cliente.foto || '').trim(),
+    ativo: Object.hasOwn(cliente, 'ativo') ? Boolean(cliente.ativo) : true,
     receberNovidades: Boolean(cliente.receber_novidades),
+    publicToken: String(cliente.public_token || '').trim(),
     criadoEm: cliente.criado_em || null,
     atualizadoEm: cliente.atualizado_em || null,
     userId: cliente.user_id || null
@@ -265,8 +269,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const isUuid = (valor) => UUID_REGEX.test(String(valor || '').trim());
   const CAMPOS_VALIDOS = [
     'nome',
+    'email',
+    'senha',
     'celular',
     'foto',
+    'ativo',
     'receber_novidades',
     'user_id'
   ];
@@ -292,8 +299,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     const permitido = filtrarCampos(semNulos);
 
     if (typeof permitido.nome === 'string') permitido.nome = permitido.nome.trim();
+    if (typeof permitido.email === 'string') permitido.email = permitido.email.trim().toLowerCase();
+    if (typeof permitido.senha === 'string') permitido.senha = permitido.senha.trim();
     if (typeof permitido.celular === 'string') permitido.celular = normalizarCelular(permitido.celular);
     if (typeof permitido.foto === 'string') permitido.foto = permitido.foto.trim();
+    if (Object.hasOwn(permitido, 'ativo')) permitido.ativo = Boolean(permitido.ativo);
     if (Object.hasOwn(permitido, 'receber_novidades')) permitido.receber_novidades = Boolean(permitido.receber_novidades);
     if (typeof permitido.user_id === 'string') permitido.user_id = permitido.user_id.trim();
 
@@ -318,6 +328,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       if (celular.length < 10 || celular.length > 13) {
         erros.push('Campo "celular" deve ter DDD + número (10 a 13 dígitos contando país).');
       }
+    }
+
+    if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(payload.email))) {
+      erros.push('Campo "email" deve ser válido.');
+    }
+
+    if (Object.hasOwn(payload, 'senha') && String(payload.senha || '').trim().length < 6) {
+      erros.push('Campo "senha" deve ter pelo menos 6 caracteres.');
     }
 
     if (Object.hasOwn(payload, 'user_id') && payload.user_id && !isUuid(payload.user_id)) {
@@ -705,14 +723,20 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const userAuth = await obterUsuarioAuthAtual();
         const dadosBase = {
           nome: String(clienteCadastro?.nome || '').trim(),
+          email: String(clienteCadastro?.email || '').trim().toLowerCase(),
+          senha: String(clienteCadastro?.senha || '').trim(),
           celular: String(normalizarCelular(clienteCadastro?.celular || '')),
           foto: String(clienteCadastro?.foto || '').trim(),
+          ativo: Object.hasOwn(clienteCadastro || {}, 'ativo') ? Boolean(clienteCadastro?.ativo) : true,
           receber_novidades: Boolean(clienteCadastro?.receber_novidades ?? clienteCadastro?.receberNovidades)
         };
 
         const payloadBruto = {
           nome: dadosBase.nome,
+          email: dadosBase.email,
+          senha: dadosBase.senha,
           celular: dadosBase.celular,
+          ativo: dadosBase.ativo,
           receber_novidades: dadosBase.receber_novidades,
           foto: dadosBase.foto
         };
@@ -818,7 +842,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
         const payload = {};
         if (Object.hasOwn(campos, 'nome')) payload.nome = String(campos.nome || '').trim();
+        if (Object.hasOwn(campos, 'email')) payload.email = String(campos.email || '').trim().toLowerCase();
+        if (Object.hasOwn(campos, 'senha')) payload.senha = String(campos.senha || '').trim();
         if (Object.hasOwn(campos, 'foto')) payload.foto = String(campos.foto || '').trim();
+        if (Object.hasOwn(campos, 'ativo')) payload.ativo = Boolean(campos.ativo);
         if (Object.hasOwn(campos, 'receberNovidades')) payload.receber_novidades = Boolean(campos.receberNovidades);
         if (Object.hasOwn(campos, 'celular')) payload.celular = String(normalizarCelular(campos.celular || ''));
 
