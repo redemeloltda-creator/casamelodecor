@@ -355,7 +355,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   }));
 
   const buscarCarrinhoAtivoMaisRecente = async (queryBase) => {
-    const colunasOrdenacao = ['created_at', 'atualizado_em', 'criado_em'];
+    const colunasOrdenacao = ['atualizado_em', 'criado_em', 'created_at'];
     let ultimoErro = null;
 
     for (const coluna of colunasOrdenacao) {
@@ -1188,7 +1188,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     async listarAvaliacoes() {
       return executarConsulta('listarAvaliacoes', [], async () => {
 
-        const consultasOrdenacao = ['created_at', 'data_avaliacao', 'criado_em'];
+        const consultasOrdenacao = ['data_avaliacao', 'criado_em', 'created_at'];
 
         for (const colunaData of consultasOrdenacao) {
           const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: false });
