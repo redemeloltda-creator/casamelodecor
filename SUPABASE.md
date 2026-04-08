@@ -352,3 +352,87 @@ Accept: application/json
 ```
 
 No código atual, o front-end normaliza o celular e só aceita cadastro quando os três campos são válidos no `auth.js`.
+
+## 10. Correção direta para erro `401 Unauthorized` + `42501` em `/clientes`
+Se você está em **site estático** usando **anon key**, este é o fluxo mais simples para resolver de ponta a ponta.
+
+### 10.1 Código correto de `insert` (sem `?columns=`)
+No `supabase-js`, não use `?columns=` manualmente na URL. Faça assim:
+
+```js
+const payload = {
+  nome: 'Carlos',
+  celular: '38998467031',
+  senha_hash: 'hash-ou-placeholder',
+  receber_novidades: true
+};
+
+const { data, error } = await supabase
+  .from('clientes')
+  .insert(payload)
+  .select()
+  .single();
+
+if (error) {
+  console.error('Falha ao inserir cliente:', error);
+  throw error;
+}
+
+console.log('Cliente criado:', data);
+```
+
+> Regra prática: com `supabase-js`, deixe o cliente montar a request. Evite construir URL REST manual (`/rest/v1/clientes?...`).
+
+### 10.2 SQL completo de policies para `anon` (SELECT, INSERT, UPDATE)
+Execute o arquivo `database/supabase-anon-clientes-policies.sql` no SQL Editor do Supabase.
+
+Se preferir colar direto, use o mesmo conteúdo:
+
+```sql
+alter table if exists public.clientes enable row level security;
+
+drop policy if exists "clientes_public_access" on public.clientes;
+drop policy if exists "clientes_auth_select" on public.clientes;
+drop policy if exists "clientes_auth_insert" on public.clientes;
+drop policy if exists "clientes_auth_update" on public.clientes;
+drop policy if exists "clientes_auth_delete" on public.clientes;
+drop policy if exists "clientes_anon_select" on public.clientes;
+drop policy if exists "clientes_anon_insert" on public.clientes;
+drop policy if exists "clientes_anon_update" on public.clientes;
+
+create policy "clientes_anon_select"
+on public.clientes
+for select
+to anon
+using (true);
+
+create policy "clientes_anon_insert"
+on public.clientes
+for insert
+to anon
+with check (true);
+
+create policy "clientes_anon_update"
+on public.clientes
+for update
+to anon
+using (true)
+with check (true);
+
+grant usage on schema public to anon;
+grant select, insert, update on table public.clientes to anon;
+```
+
+### 10.3 Passo a passo (ordem recomendada)
+1. Abra Supabase → SQL Editor.
+2. Rode `database/supabase-anon-clientes-policies.sql`.
+3. No front-end, troque chamadas REST manuais por `supabase.from('clientes').insert(...)`.
+4. Garanta que não existe nenhuma concatenação de URL com `?columns=`.
+5. Teste no console do browser:
+   - `select`: `supabase.from('clientes').select('*').limit(1)`
+   - `insert`: snippet da seção 10.1
+   - `update`: `supabase.from('clientes').update({ nome: 'Novo Nome' }).eq('celular', '38998467031').select()`
+6. Se ainda vier `401`, valide URL e `anon key` do projeto correto no `supabase-config.js`.
+7. Se vier `42501`, a policy/grant não foi aplicada no projeto atual (ou foi aplicada em outro schema/projeto).
+
+Com isso, o fluxo funciona em site estático usando apenas `anon key`.
