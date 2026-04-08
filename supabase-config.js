@@ -136,7 +136,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       : [celularNormalizado];
   };
 
-  const COLUNA_TELEFONE = 'celular';
+  const COLUNAS_TELEFONE = ['celular', 'telefone', 'contato'];
+  const COLUNA_TELEFONE = COLUNAS_TELEFONE[0];
 
   const aplicarFiltroCelular = (query, coluna, celular) => {
     const valores = valoresFiltroCelular(celular);
@@ -178,23 +179,39 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return correspondencia?.[1] || null;
   };
 
-  const criarFiltroClientePorCelular = (query, celular) => {
+  const criarFiltroClientePorCelular = (query, celular, coluna = COLUNA_TELEFONE) => {
     const celularNormalizado = normalizarCelular(celular);
     if (!celularNormalizado) return null;
-    return query.eq(COLUNA_TELEFONE, celularNormalizado);
+    return query.eq(coluna, celularNormalizado);
   };
 
-  const buscarTodosClientes = async () => client
-    .from('clientes')
-    .select('*')
-    .order('criado_em', { ascending: true });
+  const buscarTodosClientes = async () => {
+    const colunasOrdenacao = ['criado_em', 'created_at', 'atualizado_em'];
+    let ultimoErro = null;
+
+    for (const coluna of colunasOrdenacao) {
+      const resposta = await client
+        .from('clientes')
+        .select('*')
+        .order(coluna, { ascending: true });
+      if (!resposta.error) return resposta;
+      ultimoErro = resposta.error;
+      if (erroColunaInexistente(resposta.error, coluna)) continue;
+      return resposta;
+    }
+
+    return { data: [], error: ultimoErro };
+  };
 
   const obterClienteIdPorCelular = async (celular) => {
-    const query = criarFiltroClientePorCelular(client.from('clientes').select('id'), celular);
-    if (!query) return null;
-    const { data, error } = await query.maybeSingle();
-    if (error) return null;
-    return data?.id || null;
+    for (const colunaTelefone of COLUNAS_TELEFONE) {
+      const query = criarFiltroClientePorCelular(client.from('clientes').select('id'), celular, colunaTelefone);
+      if (!query) return null;
+      const { data, error } = await query.maybeSingle();
+      if (!error && data?.id) return data.id;
+      if (erroColunaInexistente(error, colunaTelefone)) continue;
+    }
+    return null;
   };
 
   const obterUsuarioAuthAtual = async () => {
@@ -365,7 +382,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       atualizado_em: new Date().toISOString()
     };
 
-    const tentativasColunaCelular = ['celular'];
+    const tentativasColunaCelular = [...COLUNAS_TELEFONE];
     let ultimoErroCarrinho = null;
 
     for (const colunaCelular of tentativasColunaCelular) {
@@ -628,22 +645,29 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async buscarClientePorCelular(celular) {
       return executarConsulta('buscarClientePorCelular', null, async () => {
-        const query = criarFiltroClientePorCelular(
-          client.from('clientes').select('*'),
-          celular
-        );
-        if (!query) return null;
-        const { data, error } = await query.maybeSingle();
-        if (error || !data) {
-          if (error) {
-            await registrarFalhaOperacao('buscarClientePorCelular', {
-              celular: normalizarCelular(celular),
-              error: resumirErroSupabase(error)
-            });
-          }
-          return null;
+        let ultimoErro = null;
+
+        for (const colunaTelefone of COLUNAS_TELEFONE) {
+          const query = criarFiltroClientePorCelular(
+            client.from('clientes').select('*'),
+            celular,
+            colunaTelefone
+          );
+          if (!query) return null;
+
+          const { data, error } = await query.maybeSingle();
+          if (!error && data) return mapearCliente(data);
+          ultimoErro = error || ultimoErro;
+          if (erroColunaInexistente(error, colunaTelefone)) continue;
         }
-        return mapearCliente(data);
+
+        if (ultimoErro) {
+          await registrarFalhaOperacao('buscarClientePorCelular', {
+            celular: normalizarCelular(celular),
+            error: resumirErroSupabase(ultimoErro)
+          });
+        }
+        return null;
       });
     },
     async buscarCliente(celular) {
@@ -786,14 +810,29 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           return null;
         }
 
-        const { data, error } = await client
-          .from('clientes')
-          .update(payloadSanitizado)
-          .eq(COLUNA_TELEFONE, celularNormalizado)
-          .select('*')
-          .maybeSingle();
+        let data = null;
+        let error = null;
 
-        if (error) {
+        for (const colunaTelefone of COLUNAS_TELEFONE) {
+          const resposta = await client
+            .from('clientes')
+            .update(payloadSanitizado)
+            .eq(colunaTelefone, celularNormalizado)
+            .select('*')
+            .maybeSingle();
+
+          if (!resposta.error && resposta.data) {
+            data = resposta.data;
+            error = null;
+            break;
+          }
+
+          error = resposta.error || error;
+          if (erroColunaInexistente(resposta.error, colunaTelefone)) continue;
+          break;
+        }
+
+        if (error && !data) {
           await registrarFalhaOperacao('atualizarCliente', {
             payload,
             payloadSanitizado,
@@ -811,8 +850,14 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return false;
 
-        const { error } = await client.from('clientes').delete().eq(COLUNA_TELEFONE, celularNormalizado);
-        return !error;
+        for (const colunaTelefone of COLUNAS_TELEFONE) {
+          const { error } = await client.from('clientes').delete().eq(colunaTelefone, celularNormalizado);
+          if (!error) return true;
+          if (erroColunaInexistente(error, colunaTelefone)) continue;
+          return false;
+        }
+
+        return false;
       });
     },
     async salvarCarrinho(celular, itens = []) {
@@ -913,7 +958,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const celularNormalizado = normalizarCelular(celular);
         if (!celularNormalizado) return [];
 
-        for (const colunaCelular of ['celular']) {
+        for (const colunaCelular of COLUNAS_TELEFONE) {
           const query = aplicarFiltroCelular(
             client
               .from('carrinhos')
@@ -964,7 +1009,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           }
         }
 
-        const colunasCelularCarrinho = ['celular'];
+        const colunasCelularCarrinho = [...COLUNAS_TELEFONE];
         const filtrosStatus = ['status', null];
 
         for (const colunaCelular of colunasCelularCarrinho) {
