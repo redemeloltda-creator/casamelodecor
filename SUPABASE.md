@@ -524,7 +524,20 @@ alter table public.clientes enable row level security;
 3. No front-end, troque chamadas REST manuais por `supabase.from('clientes').insert(...)`.
 4. Garanta que não existe nenhuma concatenação de URL com `?columns=`.
 5. Teste no console do browser:
-   - `select`: `supabase.from('clientes').select('*').limit(1)`
+   - `select` (produção, exigindo login):
+  ```js
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    console.log('não logado');
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('clientes')
+    .select('*')
+    .limit(1);
+  ```
    - `insert`: snippet da seção 10.1
    - `update`: `supabase.from('clientes').update({ nome: 'Novo Nome' }).eq('celular', '38998467031').select()`
 6. Se ainda vier `401`, valide URL e `anon key` do projeto correto no `supabase-config.js`.
