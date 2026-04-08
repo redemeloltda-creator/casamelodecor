@@ -461,6 +461,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       dicas.push('O INSERT foi bloqueado por RLS. Revise as policies da tabela e, se usar user_id, confirme se a coluna recebe auth.uid() por default.');
     }
 
+    if (detalhes?.error?.status === 401 || detalhes?.error?.code === '42501' || mensagemErro.includes('permission denied')) {
+      dicas.push('O projeto retornou 401/42501 (anon sem permissão). No SQL Editor do Supabase, execute database/supabase-anon-clientes-policies.sql para liberar SELECT/INSERT/UPDATE em public.clientes para a role anon.');
+      dicas.push('Se a sua intenção é exigir login, troque o fluxo para supabase.auth.signInWithPassword antes do insert e use as policies de database/supabase-auth-clientes.sql.');
+    }
+
     if (mensagemErro.includes('null value') && mensagemErro.includes('user_id')) {
       dicas.push('A coluna user_id continua nula. Se a policy depender dela, aplique alter table public.clientes alter column user_id set default auth.uid();');
     }
