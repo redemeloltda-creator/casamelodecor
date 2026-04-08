@@ -382,6 +382,86 @@ console.log('Cliente criado:', data);
 
 > Regra prática: com `supabase-js`, deixe o cliente montar a request. Evite construir URL REST manual (`/rest/v1/clientes?...`).
 
+### 10.1.1 Funções simples e previsíveis para `clientes`
+Use este exemplo completo quando sua tabela tiver apenas `nome`, `celular` e `email`:
+
+```js
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+export const CAMPOS_VALIDOS = ['nome', 'celular', 'email'];
+const CAMPOS_VALIDOS_SET = new Set(CAMPOS_VALIDOS);
+
+export function limparPayload(obj = {}) {
+  return Object.entries(obj).reduce((acc, [chave, valor]) => {
+    if (valor === undefined || valor === null) return acc;
+    acc[chave] = valor;
+    return acc;
+  }, {});
+}
+
+export function filtrarCampos(obj = {}) {
+  return Object.entries(obj).reduce((acc, [chave, valor]) => {
+    if (!CAMPOS_VALIDOS_SET.has(chave)) return acc;
+    acc[chave] = valor;
+    return acc;
+  }, {});
+}
+
+function prepararPayloadCliente(dados = {}) {
+  const payload = filtrarCampos(limparPayload(dados));
+
+  if (typeof payload.nome === 'string') payload.nome = payload.nome.trim();
+  if (typeof payload.celular === 'string') payload.celular = payload.celular.replace(/\D/g, '');
+  if (typeof payload.email === 'string') payload.email = payload.email.trim().toLowerCase();
+
+  return limparPayload(payload);
+}
+
+export async function cadastrarCliente(dados = {}) {
+  const payload = prepararPayloadCliente(dados);
+
+  if (!payload.nome || !payload.celular) {
+    throw new Error('Payload inválido: informe nome e celular.');
+  }
+
+  const { data, error } = await supabase
+    .from('clientes')
+    .insert(payload)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function atualizarCliente(dados = {}) {
+  const payload = prepararPayloadCliente(dados);
+  const celular = String(payload.celular || '').replace(/\D/g, '');
+
+  if (!celular) {
+    throw new Error('Campo obrigatório para UPDATE: celular.');
+  }
+
+  delete payload.celular;
+
+  if (!Object.keys(payload).length) {
+    throw new Error('Payload inválido para UPDATE: nada para atualizar.');
+  }
+
+  const { data, error } = await supabase
+    .from('clientes')
+    .update(payload)
+    .eq('celular', celular)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+```
+
 ### 10.2 SQL completo de policies para `anon` (SELECT, INSERT, UPDATE)
 Execute o arquivo `database/supabase-anon-clientes-policies.sql` no SQL Editor do Supabase.
 
@@ -398,20 +478,23 @@ drop policy if exists "clientes_auth_delete" on public.clientes;
 drop policy if exists "clientes_anon_select" on public.clientes;
 drop policy if exists "clientes_anon_insert" on public.clientes;
 drop policy if exists "clientes_anon_update" on public.clientes;
+drop policy if exists "select publico clientes" on public.clientes;
+drop policy if exists "insert publico clientes" on public.clientes;
+drop policy if exists "update publico clientes" on public.clientes;
 
-create policy "clientes_anon_select"
+create policy "select publico clientes"
 on public.clientes
 for select
 to anon
 using (true);
 
-create policy "clientes_anon_insert"
+create policy "insert publico clientes"
 on public.clientes
 for insert
 to anon
 with check (true);
 
-create policy "clientes_anon_update"
+create policy "update publico clientes"
 on public.clientes
 for update
 to anon
@@ -420,6 +503,19 @@ with check (true);
 
 grant usage on schema public to anon;
 grant select, insert, update on table public.clientes to anon;
+```
+
+### 10.2.1 Debug temporário (apenas diagnóstico)
+Se quiser confirmar rapidamente que o bloqueio vem de RLS, execute temporariamente:
+
+```sql
+alter table public.clientes disable row level security;
+```
+
+Depois do teste, reative com:
+
+```sql
+alter table public.clientes enable row level security;
 ```
 
 ### 10.3 Passo a passo (ordem recomendada)
