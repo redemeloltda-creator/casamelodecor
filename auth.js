@@ -747,7 +747,12 @@
     salvarUsuarios(usuarios);
 
     if (supabaseDisponivel()) {
-      const cadastroRemoto = await supabaseApi.cadastrarCliente(novoUsuario);
+      const cadastroRemoto = await supabaseApi.cadastrarCliente({
+        nome: novoUsuario.nome,
+        celular: novoUsuario.celular,
+        foto: novoUsuario.foto,
+        receber_novidades: false
+      });
       if (!cadastroRemoto) {
         const erroSupabase = supabaseApi?.getLastError?.();
         const dicasSupabase = Array.isArray(erroSupabase?.dicas) ? erroSupabase.dicas : [];

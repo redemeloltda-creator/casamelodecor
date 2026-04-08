@@ -247,13 +247,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const isUuid = (valor) => UUID_REGEX.test(String(valor || '').trim());
   const CAMPOS_VALIDOS = [
-    'id',
     'nome',
     'celular',
     'foto',
     'receber_novidades',
-    'criado_em',
-    'atualizado_em',
     'user_id'
   ];
   const COLUNAS_CLIENTES_VALIDAS = new Set(CAMPOS_VALIDOS);
