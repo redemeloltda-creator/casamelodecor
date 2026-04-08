@@ -8,8 +8,9 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 export const CAMPOS_VALIDOS = [
   'nome',
   'celular',
+  'foto',
   'receber_novidades',
-  'senha_hash'
+  'user_id'
 ];
 
 const CAMPOS_VALIDOS_SET = new Set(CAMPOS_VALIDOS);
@@ -22,7 +23,7 @@ export function limparPayload(obj = {}) {
   }, {});
 }
 
-export function filtrarCamposValidos(obj = {}) {
+export function filtrarCampos(obj = {}) {
   return Object.entries(obj).reduce((acumulador, [chave, valor]) => {
     if (!CAMPOS_VALIDOS_SET.has(chave)) return acumulador;
     acumulador[chave] = valor;
@@ -30,9 +31,11 @@ export function filtrarCamposValidos(obj = {}) {
   }, {});
 }
 
+export const filtrarCamposValidos = filtrarCampos;
+
 export function prepararPayloadCliente(cliente = {}) {
   const payloadLimpo = limparPayload(cliente);
-  const payload = filtrarCamposValidos(payloadLimpo);
+  const payload = filtrarCampos(payloadLimpo);
 
   if (typeof payload.nome === 'string') {
     payload.nome = payload.nome.trim();
@@ -42,8 +45,12 @@ export function prepararPayloadCliente(cliente = {}) {
     payload.celular = payload.celular.replace(/\D/g, '');
   }
 
-  if (typeof payload.senha_hash === 'string') {
-    payload.senha_hash = payload.senha_hash.trim();
+  if (typeof payload.foto === 'string') {
+    payload.foto = payload.foto.trim();
+  }
+
+  if (typeof payload.user_id === 'string') {
+    payload.user_id = payload.user_id.trim();
   }
 
   if (Object.hasOwn(payload, 'receber_novidades')) {
@@ -84,7 +91,32 @@ export async function cadastrarCliente(cliente = {}) {
 
   const { data, error } = await supabase
     .from('clientes')
-    .insert(payload)
+    .insert([payload])
+    .select('*')
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function atualizarCliente(celular, campos = {}) {
+  const celularNormalizado = String(celular || '').replace(/\D/g, '');
+  if (!celularNormalizado) {
+    throw new Error('Celular é obrigatório para UPDATE.');
+  }
+
+  const payload = prepararPayloadCliente(campos);
+  delete payload.celular;
+
+  if (Object.keys(payload).length === 0) {
+    throw new Error('Payload de cliente sem campos válidos para UPDATE.');
+  }
+
+  const { data, error } = await supabase
+    .from('clientes')
+    .update(payload)
+    .eq('celular', celularNormalizado)
     .select('*')
     .single();
 

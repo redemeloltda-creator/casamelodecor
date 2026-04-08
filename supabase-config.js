@@ -101,15 +101,12 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const mapearCliente = (cliente = {}) => ({
     id: cliente.id || null,
     nome: String(cliente.nome || '').trim(),
-    email: String(cliente.email || '').trim(),
     celular: normalizarCelular(cliente.celular),
-    senha: String(cliente.senha || cliente.senha_hash || ''),
     foto: String(cliente.foto || '').trim(),
-    receberNovidades: Boolean(cliente.receber_novidades ?? cliente.receberNovidades),
-    ultimoAcesso: cliente.ultimo_acesso || cliente.ultimoAcesso || null,
-    criadoEm: cliente.criado_em || cliente.created_at || cliente.criadoEm || null,
-    atualizadoEm: cliente.atualizado_em || cliente.updated_at || cliente.atualizadoEm || null,
-    userId: cliente.user_id || cliente.userId || null
+    receberNovidades: Boolean(cliente.receber_novidades),
+    criadoEm: cliente.criado_em || null,
+    atualizadoEm: cliente.atualizado_em || null,
+    userId: cliente.user_id || null
   });
 
   const mapearComentario = (comentario = {}) => ({
@@ -187,24 +184,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     return query.eq(COLUNA_TELEFONE, celularNormalizado);
   };
 
-  const colunasOrdenacaoClientes = ['criado_em', 'created_at', 'atualizado_em', 'updated_at'];
-
-  const buscarTodosClientes = async () => {
-    let ultimaResposta = { data: [], error: null };
-
-    for (const colunaOrdenacao of colunasOrdenacaoClientes) {
-      const resposta = await client.from('clientes').select('*').order(colunaOrdenacao, { ascending: true });
-      if (!resposta.error) return resposta;
-
-      ultimaResposta = resposta;
-      if (erroColunaInexistente(resposta.error, colunaOrdenacao)) continue;
-      break;
-    }
-
-    const fallbackSemOrdenacao = await client.from('clientes').select('*');
-    if (!fallbackSemOrdenacao.error) return fallbackSemOrdenacao;
-    return ultimaResposta;
-  };
+  const buscarTodosClientes = async () => client
+    .from('clientes')
+    .select('*')
+    .order('criado_em', { ascending: true });
 
   const obterClienteIdPorCelular = async (celular) => {
     const query = criarFiltroClientePorCelular(client.from('clientes').select('id'), celular);
@@ -267,10 +250,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     'id',
     'nome',
     'celular',
-    'senha_hash',
     'foto',
     'receber_novidades',
-    'ultimo_acesso',
     'criado_em',
     'atualizado_em',
     'user_id'
@@ -299,12 +280,10 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     if (typeof permitido.nome === 'string') permitido.nome = permitido.nome.trim();
     if (typeof permitido.celular === 'string') permitido.celular = normalizarCelular(permitido.celular);
     if (typeof permitido.foto === 'string') permitido.foto = permitido.foto.trim();
-    if (typeof permitido.senha_hash === 'string') permitido.senha_hash = permitido.senha_hash.trim();
     if (Object.hasOwn(permitido, 'receber_novidades')) permitido.receber_novidades = Boolean(permitido.receber_novidades);
     if (typeof permitido.user_id === 'string') permitido.user_id = permitido.user_id.trim();
 
     if (permitido.foto === '') delete permitido.foto;
-    if (permitido.senha_hash === '') delete permitido.senha_hash;
 
     return permitido;
   };
@@ -329,11 +308,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
     if (Object.hasOwn(payload, 'user_id') && payload.user_id && !isUuid(payload.user_id)) {
       erros.push('Campo "user_id" precisa ser UUID válido quando informado.');
-    }
-
-    if (Object.hasOwn(payload, 'ultimo_acesso') && payload.ultimo_acesso) {
-      const data = new Date(payload.ultimo_acesso);
-      if (Number.isNaN(data.getTime())) erros.push('Campo "ultimo_acesso" precisa ser uma data ISO válida.');
     }
 
     return {
@@ -679,19 +653,15 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const dadosBase = {
           nome: String(clienteCadastro?.nome || '').trim(),
           celular: String(normalizarCelular(clienteCadastro?.celular || '')),
-          senha_hash: String(clienteCadastro?.senha_hash || clienteCadastro?.senha || '').trim(),
           foto: String(clienteCadastro?.foto || '').trim(),
-          receber_novidades: Boolean(clienteCadastro?.receber_novidades ?? clienteCadastro?.receberNovidades),
-          ultimo_acesso: null
+          receber_novidades: Boolean(clienteCadastro?.receber_novidades ?? clienteCadastro?.receberNovidades)
         };
 
         const payloadBruto = {
           nome: dadosBase.nome,
           celular: dadosBase.celular,
           receber_novidades: dadosBase.receber_novidades,
-          senha_hash: dadosBase.senha_hash,
-          foto: dadosBase.foto,
-          ultimo_acesso: dadosBase.ultimo_acesso
+          foto: dadosBase.foto
         };
 
         if (userAuth?.id) payloadBruto.user_id = userAuth.id;
@@ -750,7 +720,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           receberNovidades: Object.hasOwn(clienteCadastro, 'receberNovidades')
             ? clienteCadastro.receberNovidades
             : clienteAtual.receberNovidades,
-          ultimoAcesso: new Date().toISOString()
         });
       });
     },
@@ -786,11 +755,6 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           return null;
         }
 
-        await client
-          .from('clientes')
-          .update({ ultimo_acesso: new Date().toISOString() })
-          .eq(COLUNA_TELEFONE, celularNormalizado);
-
         return mapearCliente(data);
       });
     },
@@ -803,13 +767,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (Object.hasOwn(campos, 'nome')) payload.nome = String(campos.nome || '').trim();
         if (Object.hasOwn(campos, 'foto')) payload.foto = String(campos.foto || '').trim();
         if (Object.hasOwn(campos, 'receberNovidades')) payload.receber_novidades = Boolean(campos.receberNovidades);
-        if (Object.hasOwn(campos, 'ultimoAcesso')) payload.ultimo_acesso = campos.ultimoAcesso;
         if (Object.hasOwn(campos, 'celular')) payload.celular = String(normalizarCelular(campos.celular || ''));
-        if (Object.hasOwn(campos, 'senha') || Object.hasOwn(campos, 'senha_hash')) {
-          console.warn('[Casa Melo Decor] atualizarCliente ignorou campos de senha para evitar PGRST204.', {
-            camposRecebidos: Object.keys(campos || {})
-          });
-        }
 
         const payloadSanitizado = sanitizarPayloadCliente(payload);
         console.log('[Casa Melo Decor] atualizarCliente ENVIANDO payload sanitizado:', JSON.stringify(payloadSanitizado, null, 2));
