@@ -5,13 +5,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-export const CAMPOS_VALIDOS = [
-  'nome',
-  'celular',
-  'foto',
-  'receber_novidades',
-  'user_id'
-];
+export const CAMPOS_VALIDOS = ['nome', 'celular', 'email'];
 
 const CAMPOS_VALIDOS_SET = new Set(CAMPOS_VALIDOS);
 
@@ -31,33 +25,23 @@ export function filtrarCampos(obj = {}) {
   }, {});
 }
 
-export const filtrarCamposValidos = filtrarCampos;
+function prepararPayloadCliente(dados = {}) {
+  const limpo = limparPayload(dados);
+  const filtrado = filtrarCampos(limpo);
 
-export function prepararPayloadCliente(cliente = {}) {
-  const payloadLimpo = limparPayload(cliente);
-  const payload = filtrarCampos(payloadLimpo);
-
-  if (typeof payload.nome === 'string') {
-    payload.nome = payload.nome.trim();
+  if (typeof filtrado.nome === 'string') {
+    filtrado.nome = filtrado.nome.trim();
   }
 
-  if (typeof payload.celular === 'string') {
-    payload.celular = payload.celular.replace(/\D/g, '');
+  if (typeof filtrado.celular === 'string') {
+    filtrado.celular = filtrado.celular.replace(/\D/g, '');
   }
 
-  if (typeof payload.foto === 'string') {
-    payload.foto = payload.foto.trim();
+  if (typeof filtrado.email === 'string') {
+    filtrado.email = filtrado.email.trim().toLowerCase();
   }
 
-  if (typeof payload.user_id === 'string') {
-    payload.user_id = payload.user_id.trim();
-  }
-
-  if (Object.hasOwn(payload, 'receber_novidades')) {
-    payload.receber_novidades = Boolean(payload.receber_novidades);
-  }
-
-  return payload;
+  return limparPayload(filtrado);
 }
 
 export async function criarConta(email, password) {
@@ -82,11 +66,11 @@ export async function loginComEmail(email, password) {
   return data;
 }
 
-export async function cadastrarCliente(cliente = {}) {
-  const payload = prepararPayloadCliente(cliente);
+export async function cadastrarCliente(dados = {}) {
+  const payload = prepararPayloadCliente(dados);
 
   if (Object.keys(payload).length === 0) {
-    throw new Error('Payload de cliente sem campos válidos para INSERT.');
+    throw new Error('Payload inválido: informe nome, celular e/ou email.');
   }
 
   const { data, error } = await supabase
@@ -100,23 +84,24 @@ export async function cadastrarCliente(cliente = {}) {
   return data;
 }
 
-export async function atualizarCliente(celular, campos = {}) {
-  const celularNormalizado = String(celular || '').replace(/\D/g, '');
-  if (!celularNormalizado) {
-    throw new Error('Celular é obrigatório para UPDATE.');
+export async function atualizarCliente(dados = {}) {
+  const payload = prepararPayloadCliente(dados);
+  const celular = String(payload.celular || '').replace(/\D/g, '');
+
+  if (!celular) {
+    throw new Error('Campo obrigatório para UPDATE: celular.');
   }
 
-  const payload = prepararPayloadCliente(campos);
   delete payload.celular;
 
   if (Object.keys(payload).length === 0) {
-    throw new Error('Payload de cliente sem campos válidos para UPDATE.');
+    throw new Error('Payload inválido para UPDATE: nada para atualizar.');
   }
 
   const { data, error } = await supabase
     .from('clientes')
     .update(payload)
-    .eq('celular', celularNormalizado)
+    .eq('celular', celular)
     .select('*')
     .single();
 
