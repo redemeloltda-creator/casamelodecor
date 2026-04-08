@@ -683,6 +683,13 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     filtrarCampos,
     async listarClientes() {
       return executarConsulta('listarClientes', [], async () => {
+        const { data: { session } = { session: null } } = await client.auth.getSession();
+
+        if (!session) {
+          console.log('[Casa Melo Decor] listarClientes: usuário não logado; consulta bloqueada.');
+          return [];
+        }
+
         const { data, error } = await buscarTodosClientes();
         if (error || !Array.isArray(data)) return [];
         return data.map(mapearCliente);
