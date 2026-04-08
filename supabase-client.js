@@ -30,6 +30,29 @@ export function filtrarCamposValidos(obj = {}) {
   }, {});
 }
 
+export function prepararPayloadCliente(cliente = {}) {
+  const payloadLimpo = limparPayload(cliente);
+  const payload = filtrarCamposValidos(payloadLimpo);
+
+  if (typeof payload.nome === 'string') {
+    payload.nome = payload.nome.trim();
+  }
+
+  if (typeof payload.celular === 'string') {
+    payload.celular = payload.celular.replace(/\D/g, '');
+  }
+
+  if (typeof payload.senha_hash === 'string') {
+    payload.senha_hash = payload.senha_hash.trim();
+  }
+
+  if (Object.hasOwn(payload, 'receber_novidades')) {
+    payload.receber_novidades = Boolean(payload.receber_novidades);
+  }
+
+  return payload;
+}
+
 export async function criarConta(email, password) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -53,29 +76,16 @@ export async function loginComEmail(email, password) {
 }
 
 export async function cadastrarCliente(cliente = {}) {
-  const payloadLimpo = limparPayload(cliente);
-  const payloadSanitizado = filtrarCamposValidos(payloadLimpo);
+  const payload = prepararPayloadCliente(cliente);
 
-  if (typeof payloadSanitizado.nome === 'string') {
-    payloadSanitizado.nome = payloadSanitizado.nome.trim();
-  }
-
-  if (typeof payloadSanitizado.celular === 'string') {
-    payloadSanitizado.celular = payloadSanitizado.celular.replace(/\D/g, '');
-  }
-
-  if (typeof payloadSanitizado.senha_hash === 'string') {
-    payloadSanitizado.senha_hash = payloadSanitizado.senha_hash.trim();
-  }
-
-  if (Object.hasOwn(payloadSanitizado, 'receber_novidades')) {
-    payloadSanitizado.receber_novidades = Boolean(payloadSanitizado.receber_novidades);
+  if (Object.keys(payload).length === 0) {
+    throw new Error('Payload de cliente sem campos válidos para INSERT.');
   }
 
   const { data, error } = await supabase
     .from('clientes')
-    .insert(payloadSanitizado)
-    .select()
+    .insert(payload)
+    .select('*')
     .single();
 
   if (error) throw error;
