@@ -172,10 +172,12 @@
 
   const criarUsuarioNormalizado = (usuario = {}) => ({
     nome: String(usuario.nome || '').trim(),
+    email: String(usuario.email || '').trim().toLowerCase(),
     celular: normalizarCelular(usuario.celular),
     senha: String(usuario.senha || ''),
     foto: String(usuario.foto || '').trim(),
-    receberNovidades: Boolean(usuario.receberNovidades)
+    receberNovidades: Boolean(usuario.receberNovidades),
+    ativo: Object.hasOwn(usuario, 'ativo') ? Boolean(usuario.ativo) : true
   });
 
   const normalizarCelular = (valor) => {
@@ -253,8 +255,9 @@
 
   const montarSessaoUsuario = (usuario = {}) => ({
     nome: usuario.nome || '',
-    contato: usuario.celular || usuario.email || '',
+    contato: usuario.email || usuario.celular || '',
     celular: usuario.celular || '',
+    email: usuario.email || '',
     foto: usuario.foto || '',
     receberNovidades: Boolean(usuario.receberNovidades),
     dadosCliente: criarUsuarioNormalizado(usuario)
@@ -724,11 +727,13 @@
 
     const dados = new FormData(formCadastro);
     const nome = String(dados.get('nome') || '').trim();
+    const email = String(dados.get('email') || '').trim().toLowerCase();
     const celular = normalizarCelular(dados.get('celular'));
     const senha = String(dados.get('senha') || '');
+    const emailValido = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    if (!nome || !celularValido(celular) || senha.length < 6) {
-      feedback.textContent = 'Use um celular com DDD + 9 números e senha de no mínimo 6 caracteres.';
+    if (!nome || !celularValido(celular) || senha.length < 6 || !emailValido) {
+      feedback.textContent = 'Use nome válido, celular com DDD + 9 números, senha de no mínimo 6 caracteres e e-mail válido (se preencher).';
       return;
     }
 
@@ -742,16 +747,26 @@
     }
 
     const senhaHash = await hashSenha(senha);
-    const novoUsuario = criarUsuarioNormalizado({ nome, celular, senha: senhaHash, foto: '' });
+    const novoUsuario = criarUsuarioNormalizado({
+      nome,
+      email,
+      celular,
+      senha: senhaHash,
+      foto: '',
+      ativo: true
+    });
     usuarios.push(novoUsuario);
     salvarUsuarios(usuarios);
 
     if (supabaseDisponivel()) {
       const cadastroRemoto = await supabaseApi.cadastrarCliente({
         nome: novoUsuario.nome,
+        email: novoUsuario.email,
+        senha: senhaHash,
         celular: novoUsuario.celular,
         foto: novoUsuario.foto,
-        receber_novidades: false
+        receber_novidades: false,
+        ativo: true
       });
       if (!cadastroRemoto) {
         const erroSupabase = supabaseApi?.getLastError?.();
@@ -812,6 +827,7 @@
     ));
 
     salvarUsuarios(usuariosAtualizados);
+    await sincronizarClienteRemoto(celular, { senha: novaSenhaHash });
     feedback.textContent = 'Senha redefinida com sucesso. Agora você já pode fazer login.';
     formRecuperacao.reset();
     trocarAba('login');
