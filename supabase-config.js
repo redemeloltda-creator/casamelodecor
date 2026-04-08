@@ -514,6 +514,22 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       || mensagem.includes('not found');
   };
 
+  const erroIndicaPermissaoNegada = (error) => {
+    if (!error) return false;
+
+    const status = Number(error?.status || 0);
+    const codigo = String(error?.code || '').trim();
+    const mensagem = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+
+    return status === 401
+      || status === 403
+      || codigo === '42501'
+      || mensagem.includes('permission denied')
+      || mensagem.includes('jwt')
+      || mensagem.includes('not authorized')
+      || mensagem.includes('row-level security');
+  };
+
   const avisarConfiguracaoDesativada = () => {
     if (avisoConfiguracaoExibido || config.enabled) return;
 
@@ -547,6 +563,17 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           const { error } = await client.from(tabela).select('*', { head: true, count: 'exact' }).limit(1);
 
           if (error) {
+            if (erroIndicaPermissaoNegada(error)) {
+              supabaseDisponivel = false;
+              ultimoErro = resumirErroSupabase(error);
+              console.warn(
+                `[Casa Melo Decor] Supabase desativado: a role anon não tem permissão para acessar public.${tabela}. ` +
+                'As avaliações continuarão funcionando apenas localmente até ajustar as policies no Supabase.',
+                error
+              );
+              return false;
+            }
+
             if (erroIndicaEstruturaIncompativel(error)) {
               supabaseDisponivel = false;
               avisarEstruturaIncompativel(origem, error);
@@ -1193,6 +1220,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         for (const colunaData of consultasOrdenacao) {
           const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: false });
           if (!error && Array.isArray(data)) return data.map(mapearComentario);
+          if (erroIndicaPermissaoNegada(error)) {
+            supabaseDisponivel = false;
+            ultimoErro = resumirErroSupabase(error);
+            return [];
+          }
         }
 
         return [];

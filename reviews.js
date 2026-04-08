@@ -18,6 +18,12 @@
   const supabaseApi = window.CASAMELO_SUPABASE || null;
   const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
   const supabase = supabaseApi?.getClient?.() || null;
+  const supabaseApiAvaliacoes = Boolean(
+    supabaseApi
+    && typeof supabaseApi.listarAvaliacoes === 'function'
+    && typeof supabaseApi.adicionarAvaliacao === 'function'
+    && typeof supabaseApi.excluirAvaliacao === 'function'
+  );
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
@@ -146,6 +152,15 @@
   };
 
   const carregarAvaliacoesRemotas = async () => {
+    if (supabaseApiAvaliacoes) {
+      try {
+        const data = await supabaseApi.listarAvaliacoes();
+        return normalizarListaAvaliacoes((data || []).map(mapearAvaliacaoSupabase));
+      } catch (erro) {
+        return [];
+      }
+    }
+
     if (supabaseAtivo && supabase) {
       try {
         const colunasOrdenacao = ['data_avaliacao', 'criado_em', 'created_at'];
@@ -169,6 +184,16 @@
   };
 
   const adicionarAvaliacaoRemota = async (avaliacao) => {
+    if (supabaseApiAvaliacoes) {
+      try {
+        const data = await supabaseApi.adicionarAvaliacao(avaliacao);
+        if (data) return mapearAvaliacaoSupabase(data);
+        return null;
+      } catch (erro) {
+        return null;
+      }
+    }
+
     if (supabaseAtivo && supabase) {
       try {
         const payload = {
@@ -193,6 +218,14 @@
   };
 
   const excluirAvaliacaoRemota = async (avaliacao, celular) => {
+    if (supabaseApiAvaliacoes) {
+      try {
+        return Boolean(await supabaseApi.excluirAvaliacao(avaliacao?.id, celular || avaliacao?.celular));
+      } catch (erro) {
+        return false;
+      }
+    }
+
     if (supabaseAtivo && supabase) {
       try {
         const celularNormalizado = normalizarCelular(celular || avaliacao?.celular);
