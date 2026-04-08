@@ -148,7 +148,7 @@
   const carregarAvaliacoesRemotas = async () => {
     if (supabaseAtivo && supabase) {
       try {
-        const colunasOrdenacao = ['created_at', 'data_avaliacao', 'criado_em'];
+        const colunasOrdenacao = ['data_avaliacao', 'criado_em', 'created_at'];
 
         for (const coluna of colunasOrdenacao) {
           const { data, error } = await supabase
