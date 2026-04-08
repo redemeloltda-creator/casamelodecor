@@ -26,22 +26,21 @@ export function filtrarCampos(obj = {}) {
 }
 
 function prepararPayloadCliente(dados = {}) {
-  const limpo = limparPayload(dados);
-  const filtrado = filtrarCampos(limpo);
+  const payload = filtrarCampos(limparPayload(dados));
 
-  if (typeof filtrado.nome === 'string') {
-    filtrado.nome = filtrado.nome.trim();
+  if (typeof payload.nome === 'string') {
+    payload.nome = payload.nome.trim();
   }
 
-  if (typeof filtrado.celular === 'string') {
-    filtrado.celular = filtrado.celular.replace(/\D/g, '');
+  if (typeof payload.celular === 'string') {
+    payload.celular = payload.celular.replace(/\D/g, '');
   }
 
-  if (typeof filtrado.email === 'string') {
-    filtrado.email = filtrado.email.trim().toLowerCase();
+  if (typeof payload.email === 'string') {
+    payload.email = payload.email.trim().toLowerCase();
   }
 
-  return limparPayload(filtrado);
+  return limparPayload(payload);
 }
 
 export async function criarConta(email, password) {
@@ -69,13 +68,13 @@ export async function loginComEmail(email, password) {
 export async function cadastrarCliente(dados = {}) {
   const payload = prepararPayloadCliente(dados);
 
-  if (Object.keys(payload).length === 0) {
-    throw new Error('Payload inválido: informe nome, celular e/ou email.');
+  if (!payload.nome || !payload.celular) {
+    throw new Error('Payload inválido: informe nome e celular.');
   }
 
   const { data, error } = await supabase
     .from('clientes')
-    .insert([payload])
+    .insert(payload)
     .select('*')
     .single();
 
