@@ -285,15 +285,16 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
   const limparPayload = (obj = {}) => removerCamposNulosOuIndefinidos(obj);
 
-  const filtrarCamposValidos = (obj = {}) => Object.entries(obj).reduce((acumulador, [chave, valor]) => {
+  const filtrarCampos = (obj = {}) => Object.entries(obj).reduce((acumulador, [chave, valor]) => {
     if (!COLUNAS_CLIENTES_VALIDAS.has(chave)) return acumulador;
     acumulador[chave] = valor;
     return acumulador;
   }, {});
+  const filtrarCamposValidos = filtrarCampos;
 
   const sanitizarPayloadCliente = (payload = {}) => {
     const semNulos = limparPayload(payload);
-    const permitido = filtrarCamposValidos(semNulos);
+    const permitido = filtrarCampos(semNulos);
 
     if (typeof permitido.nome === 'string') permitido.nome = permitido.nome.trim();
     if (typeof permitido.celular === 'string') permitido.celular = normalizarCelular(permitido.celular);
@@ -639,7 +640,9 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       return resumo;
     },
     normalizarCelular,
+    CAMPOS_VALIDOS: [...CAMPOS_VALIDOS],
     limparPayload,
+    filtrarCampos,
     async listarClientes() {
       return executarConsulta('listarClientes', [], async () => {
         const { data, error } = await buscarTodosClientes();
@@ -808,10 +811,20 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           });
         }
 
-        const payloadTentativa = filtrarCamposValidos(limparPayload(payload));
-        const payloadSanitizado = sanitizarPayloadCliente(payloadTentativa);
+        const payloadSanitizado = sanitizarPayloadCliente(payload);
         console.log('[Casa Melo Decor] atualizarCliente ENVIANDO payload sanitizado:', JSON.stringify(payloadSanitizado, null, 2));
-        if (!Object.keys(payloadSanitizado).length) return null;
+        if (!Object.keys(payloadSanitizado).length) {
+          await registrarFalhaOperacao('atualizarCliente', {
+            celular: celularNormalizado,
+            payloadRecebido: payload,
+            error: {
+              message: 'Payload vazio após sanitização.',
+              details: 'Nenhum campo válido/restante para UPDATE em public.clientes.',
+              hint: `Envie apenas campos permitidos: ${CAMPOS_VALIDOS.join(', ')}`
+            }
+          });
+          return null;
+        }
 
         const { data, error } = await client
           .from('clientes')
@@ -823,7 +836,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         if (error) {
           await registrarFalhaOperacao('atualizarCliente', {
             payload,
-            payloadTentativa: payloadSanitizado,
+            payloadSanitizado,
             celular: celularNormalizado,
             error: resumirErroSupabase(error)
           });
