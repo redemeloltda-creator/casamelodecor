@@ -12,23 +12,26 @@ drop policy if exists "clientes_auth_delete" on public.clientes;
 drop policy if exists "clientes_anon_select" on public.clientes;
 drop policy if exists "clientes_anon_insert" on public.clientes;
 drop policy if exists "clientes_anon_update" on public.clientes;
+drop policy if exists "select publico clientes" on public.clientes;
+drop policy if exists "insert publico clientes" on public.clientes;
+drop policy if exists "update publico clientes" on public.clientes;
 
 -- Permite SELECT para requests com role anon.
-create policy "clientes_anon_select"
+create policy "select publico clientes"
 on public.clientes
 for select
 to anon
 using (true);
 
 -- Permite INSERT para requests com role anon.
-create policy "clientes_anon_insert"
+create policy "insert publico clientes"
 on public.clientes
 for insert
 to anon
 with check (true);
 
 -- Permite UPDATE para requests com role anon.
-create policy "clientes_anon_update"
+create policy "update publico clientes"
 on public.clientes
 for update
 to anon
@@ -38,5 +41,8 @@ with check (true);
 -- Garante privilégios SQL mínimos para o role anon via PostgREST.
 grant usage on schema public to anon;
 grant select, insert, update on table public.clientes to anon;
+
+-- Debug temporário (NÃO recomendado em produção):
+-- alter table public.clientes disable row level security;
 
 -- Se usar SERIAL/IDENTITY, mantenha grants de sequence (não necessário para UUID padrão).
