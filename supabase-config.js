@@ -83,6 +83,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   let validacaoEstruturaPromise = null;
   let avisoEstruturaExibido = false;
   let avisoConfiguracaoExibido = false;
+  const tabelasSemPermissao = new Set();
   let ultimoErro = null;
 
   const resumirErroSupabase = (error) => {
@@ -570,6 +571,25 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     );
   };
 
+  const avisarPermissaoNegadaTabela = (tabela, origem, error) => {
+    if (!tabela || tabelasSemPermissao.has(tabela)) return;
+
+    tabelasSemPermissao.add(tabela);
+    console.warn(
+      `[Casa Melo Decor] A role anon não tem permissão para acessar public.${tabela} durante "${origem}". `
+      + 'Os recursos que dependem dessa tabela podem operar em modo local até ajustar as policies no Supabase.',
+      error
+    );
+  };
+
+  const extrairTabelaDoErro = (error, origem = '') => {
+    const mensagem = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''} ${origem}`;
+    if (!mensagem) return null;
+
+    const correspondencia = mensagem.match(/public\.([a-zA-Z_][a-zA-Z0-9_]*)/i);
+    return correspondencia?.[1]?.toLowerCase() || null;
+  };
+
   const garantirEstruturaCompativel = async (origem = 'inicialização') => {
     if (!client || !supabaseDisponivel) return false;
 
@@ -582,14 +602,9 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
 
           if (error) {
             if (erroIndicaPermissaoNegada(error)) {
-              supabaseDisponivel = false;
               ultimoErro = resumirErroSupabase(error);
-              console.warn(
-                `[Casa Melo Decor] Supabase desativado: a role anon não tem permissão para acessar public.${tabela}. ` +
-                'As avaliações continuarão funcionando apenas localmente até ajustar as policies no Supabase.',
-                error
-              );
-              return false;
+              avisarPermissaoNegadaTabela(tabela, origem, error);
+              continue;
             }
 
             if (erroIndicaEstruturaIncompativel(error)) {
@@ -631,6 +646,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       return await operacao();
     } catch (error) {
       ultimoErro = resumirErroSupabase(error);
+
+      if (erroIndicaPermissaoNegada(error)) {
+        avisarPermissaoNegadaTabela(extrairTabelaDoErro(error, origem), origem, error);
+        return fallback;
+      }
 
       if (erroIndicaEstruturaIncompativel(error)) {
         supabaseDisponivel = false;
