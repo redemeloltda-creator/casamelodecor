@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -8,7 +10,11 @@ const OPENAI_URL = process.env.OPENAI_RESPONSES_URL || 'https://api.openai.com/v
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json({ limit: '1mb' }));
+app.use(express.static(__dirname));
 
 const logEstruturado = (nivel, payload) => {
   const base = {
@@ -43,12 +49,21 @@ const validarCliente = (payload = {}) => (
   && validarCelular(payload?.celular)
 );
 
-const supabaseRest = async (path, { method = 'POST', body }) => {
+const parseJsonSeguro = (conteudo) => {
+  if (!conteudo) return null;
+  try {
+    return JSON.parse(conteudo);
+  } catch {
+    return null;
+  }
+};
+
+const supabaseRest = async (pathUrl, { method = 'POST', body }) => {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas.');
   }
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${pathUrl}`, {
     method,
     headers: {
       apikey: SUPABASE_SERVICE_ROLE_KEY,
@@ -60,7 +75,7 @@ const supabaseRest = async (path, { method = 'POST', body }) => {
   });
 
   const responseText = await response.text();
-  const responseBody = responseText ? JSON.parse(responseText) : null;
+  const responseBody = parseJsonSeguro(responseText);
 
   if (!response.ok) {
     throw new Error(responseBody?.message || responseBody?.hint || responseText || 'Falha no Supabase REST');
@@ -183,5 +198,5 @@ app.get('/health', (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`API proxy rodando em http://localhost:${PORT}`);
+  console.log(`API e site rodando em http://localhost:${PORT}`);
 });
