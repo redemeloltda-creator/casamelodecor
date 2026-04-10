@@ -8,6 +8,7 @@
 ## 2. Crie o banco de dados usado pelo site
 - No SQL Editor do Supabase, execute o arquivo `database/schema.supabase.sql`.
 - Se você já criou tabelas manualmente e o console mostra erros `404` para `/rest/v1/clientes`, `/carrinhos` ou `/historico_compras`, aplique `database/supabase-compat.sql`.
+- Para melhorar performance/consistência em projetos já em produção, rode também `database/supabase-performance-hardening.sql` (índices, checks e triggers de `atualizado_em`).
 - Esse script cria as tabelas:
   - `clientes`
   - `carrinhos`
