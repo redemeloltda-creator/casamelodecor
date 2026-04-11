@@ -16,6 +16,7 @@
   const chaveAvaliacoes = 'casamelo_avaliacoes';
   const chavesAvaliacoesLegadas = ['casamelo_comentarios', 'avaliacoes'];
   const supabaseApi = window.CASAMELO_SUPABASE || null;
+  const rotaApiAvaliacoes = '/api/avaliacoes';
   const supabaseAtivo = Boolean(supabaseApi?.isConfigured?.());
   const supabase = supabaseApi?.getClient?.() || null;
   const supabaseApiAvaliacoes = Boolean(
@@ -24,6 +25,7 @@
     && typeof supabaseApi.adicionarAvaliacao === 'function'
     && typeof supabaseApi.excluirAvaliacao === 'function'
   );
+  const apiServidorDisponivel = typeof fetch === 'function';
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
@@ -189,6 +191,18 @@
       }
     }
 
+    if (apiServidorDisponivel) {
+      try {
+        const resposta = await fetch(rotaApiAvaliacoes, { method: 'GET' });
+        if (!resposta.ok) return [];
+        const data = await resposta.json();
+        const ordenadas = ordenarAvaliacoesMaisRecentes(data || []);
+        return normalizarListaAvaliacoes(ordenadas.map(mapearAvaliacaoSupabase));
+      } catch (erro) {
+        return [];
+      }
+    }
+
     return [];
   };
 
@@ -218,6 +232,23 @@
 
         if (!error && data) return mapearAvaliacaoSupabase(data);
         return null;
+      } catch (erro) {
+        return null;
+      }
+    }
+
+    if (apiServidorDisponivel) {
+      try {
+        const resposta = await fetch(rotaApiAvaliacoes, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(avaliacao)
+        });
+        if (!resposta.ok) return null;
+        const data = await resposta.json();
+        return mapearAvaliacaoSupabase(data);
       } catch (erro) {
         return null;
       }
@@ -279,6 +310,23 @@
         }
 
         return false;
+      } catch (erro) {
+        return false;
+      }
+    }
+
+    if (apiServidorDisponivel) {
+      try {
+        const idAvaliacao = String(avaliacao?.id || '').trim();
+        if (!idAvaliacao) return false;
+        const celularNormalizado = normalizarCelular(celular || avaliacao?.celular);
+        const parametros = celularNormalizado
+          ? `?celular=${encodeURIComponent(celularNormalizado)}`
+          : '';
+        const resposta = await fetch(`${rotaApiAvaliacoes}/${encodeURIComponent(idAvaliacao)}${parametros}`, {
+          method: 'DELETE'
+        });
+        return resposta.ok;
       } catch (erro) {
         return false;
       }
