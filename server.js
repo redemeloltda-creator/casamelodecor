@@ -31,17 +31,38 @@ const logEstruturado = (nivel, payload) => {
   console.log(JSON.stringify(base));
 };
 
-const validarCelular = (valor) => String(valor || '').replace(/\D/g, '').length >= 10;
-
-const validarItens = (itens) => {
-  if (!Array.isArray(itens) || itens.length === 0) return false;
-  return itens.every((item) => (
-    typeof item?.nome === 'string'
-    && item.nome.trim()
-    && Number.isFinite(Number(item?.quantidade || 0))
-    && Number(item.quantidade) > 0
-  ));
+const normalizarCelular = (valor) => {
+  const celular = String(valor || '').replace(/\D/g, '');
+  if (celular.length === 13 && celular.startsWith('55')) {
+    return celular.slice(2);
+  }
+  return celular;
 };
+
+const validarCelular = (valor) => {
+  const celular = normalizarCelular(valor);
+  return celular.length === 10 || celular.length === 11;
+};
+
+const normalizarItens = (itens = []) => {
+  if (!Array.isArray(itens)) return [];
+
+  return itens
+    .map((item = {}) => {
+      const nome = String(item?.nome || item?.name || '').trim();
+      const quantidade = Number(item?.quantidade ?? item?.quantity ?? 0);
+      if (!nome || !Number.isFinite(quantidade) || quantidade <= 0) return null;
+
+      return {
+        ...item,
+        nome,
+        quantidade
+      };
+    })
+    .filter(Boolean);
+};
+
+const validarItens = (itens) => normalizarItens(itens).length > 0;
 
 const validarCliente = (payload = {}) => (
   typeof payload?.nome === 'string'
@@ -56,6 +77,28 @@ const parseJsonSeguro = (conteudo) => {
   } catch {
     return null;
   }
+};
+
+const normalizarPayloadOpenAI = (body = {}) => {
+  if (Array.isArray(body?.messages) && !body?.input) {
+    return {
+      model: body.model || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+      input: body.messages,
+      temperature: body.temperature
+    };
+  }
+
+  if (typeof body === 'string') {
+    return {
+      model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+      input: body
+    };
+  }
+
+  return {
+    model: body.model || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    ...body
+  };
 };
 
 const supabaseRest = async (pathUrl, { method = 'POST', body }) => {
@@ -86,8 +129,16 @@ const supabaseRest = async (pathUrl, { method = 'POST', body }) => {
 
 app.post('/api/chat', async (req, res) => {
   if (!OPENAI_API_KEY) {
-    return res.status(500).json({
-      error: 'OPENAI_API_KEY não configurada no servidor.'
+    return res.status(503).json({
+      error: 'Chat indisponível: OPENAI_API_KEY não configurada no servidor.'
+    });
+  }
+
+  const payload = normalizarPayloadOpenAI(req.body || {});
+
+  if (!payload?.input) {
+    return res.status(400).json({
+      error: 'Payload inválido para /api/chat. Envie "input" (Responses API) ou "messages" (compatibilidade).'
     });
   }
 
@@ -98,10 +149,23 @@ app.post('/api/chat', async (req, res) => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${OPENAI_API_KEY}`
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(payload)
     });
 
     const contentType = upstream.headers.get('content-type') || '';
+
+    if (upstream.status === 401) {
+      const bodyErro = contentType.includes('application/json') ? await upstream.json() : await upstream.text();
+      logEstruturado('error', {
+        operacao: 'proxyOpenAI',
+        status: 401,
+        detalhe: bodyErro
+      });
+
+      return res.status(502).json({
+        error: 'Falha de autenticação no provedor de IA. Verifique OPENAI_API_KEY no servidor.'
+      });
+    }
 
     if (contentType.includes('application/json')) {
       const data = await upstream.json();
@@ -127,7 +191,7 @@ app.post('/api/clientes', async (req, res) => {
   try {
     const data = await supabaseRest('clientes', {
       method: 'POST',
-      body: [{ nome: payload.nome.trim(), celular: String(payload.celular).replace(/\D/g, '') }]
+      body: [{ nome: payload.nome.trim(), celular: normalizarCelular(payload.celular) }]
     });
     return res.status(201).json(Array.isArray(data) ? data[0] : data);
   } catch (error) {
@@ -143,7 +207,9 @@ app.post('/api/clientes', async (req, res) => {
 
 app.post('/api/carrinho', async (req, res) => {
   const payload = req.body || {};
-  if (!validarCelular(payload?.celular) || !validarItens(payload?.itens)) {
+  const itensNormalizados = normalizarItens(payload?.itens);
+
+  if (!validarCelular(payload?.celular) || !itensNormalizados.length) {
     return res.status(400).json({ error: 'Payload inválido para carrinho.' });
   }
 
@@ -151,8 +217,8 @@ app.post('/api/carrinho', async (req, res) => {
     const data = await supabaseRest('carrinhos', {
       method: 'POST',
       body: [{
-        celular: String(payload.celular).replace(/\D/g, ''),
-        itens: payload.itens
+        celular: normalizarCelular(payload.celular),
+        itens: itensNormalizados
       }]
     });
     return res.status(201).json(Array.isArray(data) ? data[0] : data);
@@ -169,7 +235,9 @@ app.post('/api/carrinho', async (req, res) => {
 
 app.post('/api/historico', async (req, res) => {
   const payload = req.body || {};
-  if (!validarCelular(payload?.celular) || !validarItens(payload?.itens)) {
+  const itensNormalizados = normalizarItens(payload?.itens);
+
+  if (!validarCelular(payload?.celular) || !itensNormalizados.length) {
     return res.status(400).json({ error: 'Payload inválido para histórico.' });
   }
 
@@ -177,8 +245,8 @@ app.post('/api/historico', async (req, res) => {
     const data = await supabaseRest('historico_compras', {
       method: 'POST',
       body: [{
-        celular: String(payload.celular).replace(/\D/g, ''),
-        itens: payload.itens
+        celular: normalizarCelular(payload.celular),
+        itens: itensNormalizados
       }]
     });
     return res.status(201).json(Array.isArray(data) ? data[0] : data);
