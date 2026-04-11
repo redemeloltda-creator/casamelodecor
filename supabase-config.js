@@ -515,6 +515,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       dicas.push('Se a sua intenção é exigir login, troque o fluxo para supabase.auth.signInWithPassword antes do insert e use as policies de database/supabase-auth-clientes.sql.');
     }
 
+    if (mensagemErro.includes('no api key found in request') || mensagemErro.includes('invalid api key')) {
+      dicas.push('A requisição REST chegou sem apikey válida. Evite chamar /rest/v1 diretamente no navegador sem headers; prefira supabase.from(...).select(...) para o client enviar apikey + Authorization automaticamente.');
+      dicas.push('Se precisar testar a URL REST manualmente, envie os headers apikey e Authorization com a anon key do mesmo projeto configurado em window.CASAMELO_SUPABASE_CONFIG.');
+    }
+
     if (mensagemErro.includes('null value') && mensagemErro.includes('user_id')) {
       dicas.push('A coluna user_id continua nula. Se a policy depender dela, aplique alter table public.clientes alter column user_id set default auth.uid();');
     }
@@ -559,6 +564,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
       || mensagem.includes('permission denied')
       || mensagem.includes('jwt')
       || mensagem.includes('not authorized')
+      || mensagem.includes('api key')
       || mensagem.includes('row-level security');
   };
 
