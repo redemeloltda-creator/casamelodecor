@@ -625,7 +625,11 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
           return false;
         }
 
-        throw error;
+        registrarFalhaOperacao('garantirEstruturaCompativel', {
+          origem,
+          error
+        }).catch(() => {});
+        return false;
       });
     }
 
@@ -658,7 +662,8 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         return fallback;
       }
 
-      throw error;
+      await registrarFalhaOperacao(origem, { error });
+      return fallback;
     }
   };
 
