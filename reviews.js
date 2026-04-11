@@ -29,6 +29,7 @@
 
   let notaSelecionada = 0;
   let avaliacoesCache = [];
+  let sincronizacaoEmAndamento = false;
 
   const normalizarCelular = (valor) => String(valor || '').replace(/\D/g, '');
 
@@ -89,6 +90,19 @@
       return dataB - dataA;
     });
   };
+
+  const obterAssinaturaAvaliacoes = (avaliacoes = []) => JSON.stringify(
+    [...normalizarListaAvaliacoes(avaliacoes)]
+      .map((avaliacao) => ({
+        id: obterIdAvaliacao(avaliacao),
+        nome: String(avaliacao.nome || ''),
+        celular: normalizarCelular(avaliacao.celular),
+        comentario: obterComentarioTexto(avaliacao),
+        nota: Number(avaliacao.nota) || 0,
+        dataAvaliacao: String(avaliacao.dataAvaliacao || '')
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id))
+  );
 
   const carregarSessao = () => {
     try {
@@ -606,5 +620,36 @@
     renderizarAvaliacoes();
   };
 
-  iniciarAvaliacoes();
+  const sincronizarAvaliacoesRemotas = async () => {
+    if (sincronizacaoEmAndamento) return;
+    sincronizacaoEmAndamento = true;
+
+    try {
+      const avaliacoesRemotas = await carregarAvaliacoesRemotas();
+      if (!avaliacoesRemotas.length) return;
+
+      const assinaturaAtual = obterAssinaturaAvaliacoes(avaliacoesCache);
+      const cacheMesclado = mesclarAvaliacoes(avaliacoesCache, avaliacoesRemotas);
+      const assinaturaNova = obterAssinaturaAvaliacoes(cacheMesclado);
+
+      if (assinaturaAtual === assinaturaNova) return;
+
+      const { listaFinal } = await salvarAvaliacoes(cacheMesclado);
+      avaliacoesCache = listaFinal;
+      renderizarAvaliacoes();
+    } finally {
+      sincronizacaoEmAndamento = false;
+    }
+  };
+
+  iniciarAvaliacoes().then(() => {
+    setInterval(sincronizarAvaliacoesRemotas, 15000);
+  });
+
+  window.addEventListener('focus', sincronizarAvaliacoesRemotas);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      sincronizarAvaliacoesRemotas();
+    }
+  });
 })();
