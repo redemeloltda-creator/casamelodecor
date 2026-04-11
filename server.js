@@ -70,6 +70,24 @@ const validarCliente = (payload = {}) => (
   && validarCelular(payload?.celular)
 );
 
+const normalizarAvaliacao = (payload = {}) => {
+  const nome = String(payload?.nome || '').trim();
+  const comentario = String(payload?.comentario || payload?.mensagem || '').trim();
+  const celular = normalizarCelular(payload?.celular);
+  const foto = String(payload?.foto || '').trim();
+  const nota = Math.max(1, Math.min(5, Number(payload?.nota) || 0));
+  const dataAvaliacao = payload?.dataAvaliacao || payload?.data_avaliacao || payload?.created_at || new Date().toISOString();
+
+  return {
+    nome,
+    comentario,
+    celular,
+    foto,
+    nota,
+    dataAvaliacao
+  };
+};
+
 const parseJsonSeguro = (conteudo) => {
   if (!conteudo) return null;
   try {
@@ -258,6 +276,89 @@ app.post('/api/historico', async (req, res) => {
       fallback: false
     });
     return res.status(500).json({ error: 'Falha ao registrar compra.' });
+  }
+});
+
+app.get('/api/avaliacoes', async (_req, res) => {
+  try {
+    const data = await supabaseRest('comentarios?select=*&order=created_at.desc.nullslast,data_avaliacao.desc.nullslast,criado_em.desc.nullslast', {
+      method: 'GET'
+    });
+
+    return res.json(Array.isArray(data) ? data : []);
+  } catch (error) {
+    logEstruturado('error', {
+      operacao: 'listarAvaliacoes',
+      erro: error.message
+    });
+    return res.status(500).json({ error: 'Falha ao carregar avaliações.' });
+  }
+});
+
+app.post('/api/avaliacoes', async (req, res) => {
+  const payload = normalizarAvaliacao(req.body || {});
+
+  if (!payload.nome || !payload.comentario || !payload.nota) {
+    return res.status(400).json({ error: 'Payload inválido para avaliações.' });
+  }
+
+  const tentativas = [
+    {
+      nome: payload.nome,
+      comentario: payload.comentario,
+      nota: payload.nota,
+      data_avaliacao: payload.dataAvaliacao,
+      ...(payload.celular ? { celular: payload.celular } : {}),
+      ...(payload.foto ? { foto: payload.foto } : {})
+    },
+    {
+      nome: payload.nome,
+      mensagem: payload.comentario,
+      created_at: payload.dataAvaliacao,
+      ...(payload.celular ? { celular: payload.celular } : {})
+    }
+  ];
+
+  for (const tentativa of tentativas) {
+    try {
+      const data = await supabaseRest('comentarios', {
+        method: 'POST',
+        body: [tentativa]
+      });
+      return res.status(201).json(Array.isArray(data) ? data[0] : data);
+    } catch (error) {
+      logEstruturado('error', {
+        operacao: 'adicionarAvaliacao',
+        erro: error.message,
+        payload: tentativa
+      });
+    }
+  }
+
+  return res.status(500).json({ error: 'Falha ao publicar avaliação.' });
+});
+
+app.delete('/api/avaliacoes/:id', async (req, res) => {
+  const id = String(req.params?.id || '').trim();
+  const celular = normalizarCelular(req.query?.celular);
+
+  if (!id) return res.status(400).json({ error: 'Informe um id válido.' });
+
+  const filtroCelular = celular ? `&celular=eq.${encodeURIComponent(celular)}` : '';
+
+  try {
+    await supabaseRest(`comentarios?id=eq.${encodeURIComponent(id)}${filtroCelular}`, {
+      method: 'DELETE'
+    });
+    return res.status(204).send();
+  } catch (error) {
+    logEstruturado('error', {
+      operacao: 'excluirAvaliacao',
+      erro: error.message,
+      id,
+      celular
+    });
+    return res.status(500).json({ error: 'Falha ao excluir avaliação.' });
   }
 });
 
