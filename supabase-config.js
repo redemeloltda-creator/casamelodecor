@@ -124,6 +124,19 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     dataAvaliacao: comentario.data_avaliacao || comentario.dataAvaliacao || comentario.created_at || comentario.criado_em || null
   });
 
+  const ordenarComentariosMaisRecentes = (comentarios = []) => {
+    const paraTimestamp = (valor) => {
+      const data = valor ? Date.parse(valor) : Number.NaN;
+      return Number.isFinite(data) ? data : 0;
+    };
+
+    return [...comentarios].sort((a, b) => {
+      const dataB = paraTimestamp(b?.data_avaliacao || b?.created_at || b?.criado_em || b?.dataAvaliacao);
+      const dataA = paraTimestamp(a?.data_avaliacao || a?.created_at || a?.criado_em || a?.dataAvaliacao);
+      return dataB - dataA;
+    });
+  };
+
   const obterSessaoLocal = () => {
     try {
       return JSON.parse(localStorage.getItem('casamelo_usuario_logado') || 'null');
@@ -1273,20 +1286,15 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
     },
     async listarAvaliacoes() {
       return executarConsulta('listarAvaliacoes', [], async () => {
-
-        const consultasOrdenacao = ['data_avaliacao', 'criado_em', 'created_at'];
-
-        for (const colunaData of consultasOrdenacao) {
-          const { data, error } = await client.from('comentarios').select('*').order(colunaData, { ascending: false });
-          if (!error && Array.isArray(data)) return data.map(mapearComentario);
-          if (erroIndicaPermissaoNegada(error)) {
-            supabaseDisponivel = false;
-            ultimoErro = resumirErroSupabase(error);
-            return [];
-          }
+        const { data, error } = await client.from('comentarios').select('*');
+        if (erroIndicaPermissaoNegada(error)) {
+          supabaseDisponivel = false;
+          ultimoErro = resumirErroSupabase(error);
+          return [];
         }
+        if (error || !Array.isArray(data)) return [];
 
-        return [];
+        return ordenarComentariosMaisRecentes(data).map(mapearComentario);
       });
     },
     async buscarComentarios() {

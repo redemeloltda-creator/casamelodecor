@@ -75,6 +75,19 @@
     dataAvaliacao: avaliacao.created_at || avaliacao.data_avaliacao || avaliacao.criado_em || null
   });
 
+  const ordenarAvaliacoesMaisRecentes = (avaliacoes = []) => {
+    const paraTimestamp = (valor) => {
+      const data = valor ? Date.parse(valor) : Number.NaN;
+      return Number.isFinite(data) ? data : 0;
+    };
+
+    return [...avaliacoes].sort((a, b) => {
+      const dataB = paraTimestamp(b?.created_at || b?.data_avaliacao || b?.criado_em || b?.dataAvaliacao);
+      const dataA = paraTimestamp(a?.created_at || a?.data_avaliacao || a?.criado_em || a?.dataAvaliacao);
+      return dataB - dataA;
+    });
+  };
+
   const carregarSessao = () => {
     try {
       return JSON.parse(localStorage.getItem(chaveSessao) || 'null');
@@ -163,17 +176,13 @@
 
     if (supabaseAtivo && supabase) {
       try {
-        const colunasOrdenacao = ['data_avaliacao', 'criado_em', 'created_at'];
+        const { data, error } = await supabase
+          .from('comentarios')
+          .select('*');
 
-        for (const coluna of colunasOrdenacao) {
-          const { data, error } = await supabase
-            .from('comentarios')
-            .select('*')
-            .order(coluna, { ascending: false });
-
-          if (!error) {
-            return normalizarListaAvaliacoes((data || []).map(mapearAvaliacaoSupabase));
-          }
+        if (!error) {
+          const ordenadas = ordenarAvaliacoesMaisRecentes(data || []);
+          return normalizarListaAvaliacoes(ordenadas.map(mapearAvaliacaoSupabase));
         }
       } catch (erro) {
         return [];
