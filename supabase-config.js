@@ -598,7 +598,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
         const tabelasObrigatorias = ['clientes', 'carrinhos', 'historico_compras', 'comentarios'];
 
         for (const tabela of tabelasObrigatorias) {
-          const { error } = await client.from(tabela).select('*', { head: true, count: 'exact' }).limit(1);
+          const { error } = await client.from(tabela).select('*', { count: 'exact' }).limit(1);
 
           if (error) {
             if (erroIndicaPermissaoNegada(error)) {
