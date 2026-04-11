@@ -6,14 +6,14 @@ const CASAMELO_SUPABASE_EXEMPLO = {
 
 window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   ...CASAMELO_SUPABASE_EXEMPLO,
-  enabled: true
+  enabled: false
 };
 
 (function () {
   const CONFIG_PADRAO = {
     ...CASAMELO_SUPABASE_EXEMPLO,
     schema: 'public',
-    enabled: true
+    enabled: false
   };
 
   const configGlobal = window.CASAMELO_SUPABASE_CONFIG || {};
@@ -28,7 +28,7 @@ window.CASAMELO_SUPABASE_CONFIG = window.CASAMELO_SUPABASE_CONFIG || {
   const config = {
     ...CONFIG_PADRAO,
     ...configGlobal,
-    enabled: Boolean(configGlobal.enabled) || credenciaisPersonalizadas
+    enabled: Boolean(configGlobal.enabled === true) || credenciaisPersonalizadas
   };
 
   const normalizarCelular = (valor) => {
